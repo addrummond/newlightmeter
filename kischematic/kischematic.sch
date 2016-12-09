@@ -133,7 +133,7 @@ U 1 1 584AADD9
 P 7100 4700
 F 0 "Y2" H 7291 4746 50  0000 L CNN
 F 1 "32M" H 7291 4655 50  0000 L CNN
-F 2 "" H 7100 4700 50  0001 C CNN
+F 2 "newlightmeter:CRYSTAL5x3.2" H 7100 4700 50  0001 C CNN
 F 3 "" H 7100 4700 50  0000 C CNN
 	1    7100 4700
 	1    0    0    -1  
@@ -221,7 +221,7 @@ U 1 1 584AB57C
 P 7100 3200
 F 0 "Y1" H 7100 3468 50  0000 C CNN
 F 1 "32k" H 7100 3377 50  0000 C CNN
-F 2 "" H 7100 3200 50  0001 C CNN
+F 2 "newlightmeter:CRYSTAL3.2x1.5mm" H 7100 3200 50  0001 C CNN
 F 3 "" H 7100 3200 50  0000 C CNN
 	1    7100 3200
 	1    0    0    -1  
@@ -355,9 +355,9 @@ Connection ~ 4900 4500
 Wire Wire Line
 	5650 4900 5650 5100
 Wire Wire Line
-	5650 5100 5250 5100
+	5250 5100 5650 5100
 Wire Wire Line
-	5250 5100 5250 4900
+	5250 4900 5250 5100
 Connection ~ 5250 4900
 Wire Wire Line
 	5550 4900 5550 5000
@@ -385,7 +385,7 @@ Wire Wire Line
 Wire Wire Line
 	6650 4100 7300 4100
 Wire Wire Line
-	7300 4100 7300 4700
+	7300 4100 7300 5300
 Wire Wire Line
 	6900 4700 6950 4700
 Wire Wire Line
@@ -395,8 +395,6 @@ Wire Wire Line
 Wire Wire Line
 	7100 4900 7100 5000
 Connection ~ 6900 4700
-Wire Wire Line
-	7300 4750 7300 5300
 Wire Wire Line
 	7300 5600 7300 5800
 Wire Wire Line
@@ -521,8 +519,6 @@ Wire Wire Line
 	8000 3300 8250 3300
 Text GLabel 8250 3300 2    60   Input ~ 0
 ANT
-Wire Wire Line
-	6900 2750 7300 2750
 Connection ~ 7300 3200
 Connection ~ 6900 3200
 $Comp
@@ -576,4 +572,5 @@ F 3 "" H 7100 1900 50  0000 C CNN
 	1    7100 1900
 	-1   0    0    1   
 $EndComp
+Connection ~ 7300 4700
 $EndSCHEMATC
