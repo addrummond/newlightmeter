@@ -256,12 +256,12 @@
       (net 1 GND))
   )
 
-  (module Pin_Headers:Pin_Header_Straight_1x01 (layer F.Cu) (tedit 584C618E) (tstamp 584C6B26)
+  (module Pin_Headers:Pin_Header_Straight_1x01 (layer F.Cu) (tedit 584C750A) (tstamp 584C6B26)
     (at 96.6 56.4)
     (descr "Through hole pin header")
     (tags "pin header")
     (path /584C869F)
-    (fp_text reference P2 (at 0 -5.1) (layer F.SilkS)
+    (fp_text reference P2 (at 0 -5.1) (layer F.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value CONN_01X01 (at 0 -3.1) (layer F.Fab)
@@ -312,12 +312,12 @@
     )
   )
 
-  (module Pin_Headers:Pin_Header_Straight_1x01 (layer F.Cu) (tedit 54EA08DC) (tstamp 584C2695)
+  (module Pin_Headers:Pin_Header_Straight_1x01 (layer F.Cu) (tedit 584C7510) (tstamp 584C2695)
     (at 77.8 56.8)
     (descr "Through hole pin header")
     (tags "pin header")
     (path /584CA50F)
-    (fp_text reference P5 (at 0 -5.1) (layer F.SilkS)
+    (fp_text reference P5 (at 0 -5.1) (layer F.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_text value CONN_01X01 (at 0 -3.1) (layer F.Fab)
