@@ -1583,7 +1583,7 @@
   (gr_text "CS\n" (at 97.2 60.075) (layer F.SilkS) (tstamp 584C42C3)
     (effects (font (size 0.75 0.75) (thickness 0.1875)))
   )
-  (gr_text "VREG\n" (at 80.05 68.35) (layer F.SilkS) (tstamp 584C429D)
+  (gr_text "VREG\n" (at 80.75 68.25) (layer F.SilkS) (tstamp 584C429D)
     (effects (font (size 0.5 0.5) (thickness 0.125)))
   )
   (gr_text "IRQ\n" (at 77.85 74.35) (layer F.SilkS) (tstamp 584C429A)
