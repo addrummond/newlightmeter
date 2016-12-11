@@ -1,0 +1,8 @@
+(module CX70M (layer F.Cu) (tedit 584DB5F6)
+  (fp_text reference REF** (at 3.1 6.7) (layer F.SilkS)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (fp_text value CX70M (at 3 8.3) (layer F.Fab)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+)
