@@ -298,7 +298,7 @@
   )
 
   (module Resistors_SMD:R_0402 (layer F.Cu) (tedit 58307A8A) (tstamp 584E249E)
-    (at 31.45 32)
+    (at 99.55 49)
     (descr "Resistor SMD 0402, reflow soldering, Vishay (see dcrcw.pdf)")
     (tags "resistor 0402")
     (path /584E3930)
@@ -435,7 +435,7 @@
   )
 
   (module Resistors_SMD:R_0402 (layer F.Cu) (tedit 58307A8A) (tstamp 584DF89C)
-    (at 142.29133 36.461373)
+    (at 101.65 33.6)
     (descr "Resistor SMD 0402, reflow soldering, Vishay (see dcrcw.pdf)")
     (tags "resistor 0402")
     (path /584E56D6)
@@ -468,7 +468,7 @@
   )
 
   (module Resistors_SMD:R_0402 (layer F.Cu) (tedit 58307A8A) (tstamp 584DF88C)
-    (at 138.93133 36.461373)
+    (at 98.65 33.2)
     (descr "Resistor SMD 0402, reflow soldering, Vishay (see dcrcw.pdf)")
     (tags "resistor 0402")
     (path /584E6EF8)
@@ -501,7 +501,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584DC47A)
-    (at 133.203529 22.979837)
+    (at 93.4 31.6)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /5851EDDE)
@@ -534,7 +534,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584DC0B4)
-    (at 129.753529 22.979837)
+    (at 101.15 31.4)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /585179A6)
@@ -567,7 +567,7 @@
   )
 
   (module Resistors_SMD:R_0402 (layer F.Cu) (tedit 58307A8A) (tstamp 584DBE7C)
-    (at 126.208291 28.729837)
+    (at 98.6 31.4)
     (descr "Resistor SMD 0402, reflow soldering, Vishay (see dcrcw.pdf)")
     (tags "resistor 0402")
     (path /5851F8D8)
@@ -600,7 +600,7 @@
   )
 
   (module Resistors_SMD:R_0402 (layer F.Cu) (tedit 58307A8A) (tstamp 584DBE6C)
-    (at 126.303529 23.079837)
+    (at 96.05 31.4)
     (descr "Resistor SMD 0402, reflow soldering, Vishay (see dcrcw.pdf)")
     (tags "resistor 0402")
     (path /5851C112)
@@ -633,7 +633,7 @@
   )
 
   (module newlightmeter:APDS-9303 (layer F.Cu) (tedit 584C86F0) (tstamp 584DBCDE)
-    (at 121.902933 23.130181)
+    (at 100.2 28.6)
     (path /58513FEB)
     (fp_text reference IC6 (at 0 3.8) (layer F.SilkS)
       (effects (font (size 0.5 0.5) (thickness 0.125)))
@@ -661,7 +661,7 @@
   )
 
   (module newlightmeter:APDS-9303 (layer F.Cu) (tedit 584C86F0) (tstamp 584DBCC2)
-    (at 116.952933 23.130181)
+    (at 95.5 28.6)
     (path /585145F7)
     (fp_text reference IC7 (at 0 3.8) (layer F.SilkS)
       (effects (font (size 0.5 0.5) (thickness 0.125)))
@@ -689,7 +689,7 @@
   )
 
   (module newlightmeter:SOT25 (layer F.Cu) (tedit 584D4D48) (tstamp 584DA1C9)
-    (at 50.758198 -1.635614)
+    (at 79.6 38.2)
     (path /5850A9AD)
     (fp_text reference IC5 (at 2.8 -0.5) (layer F.SilkS)
       (effects (font (size 0.5 0.5) (thickness 0.125)))
@@ -715,7 +715,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D90E6)
-    (at 63.160578 -1.769364)
+    (at 82.95 34.8)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /5850B638)
@@ -748,7 +748,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D904E)
-    (at 54.900578 3.880636)
+    (at 79.6 35.6)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /5850DF7B)
@@ -781,7 +781,7 @@
   )
 
   (module newlightmeter:CDRH2D14 (layer F.Cu) (tedit 584D6A52) (tstamp 584D8CF8)
-    (at 58 0)
+    (at 83.6 37.8)
     (path /5850D4E4)
     (fp_text reference L8 (at -0.6 2.2) (layer F.SilkS)
       (effects (font (size 0.5 0.5) (thickness 0.125)))
@@ -1241,7 +1241,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D0667)
-    (at 58.195095 37.863662)
+    (at 101.05 46.4)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /584DDBF2)
@@ -1274,7 +1274,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D03C3)
-    (at 54.745095 37.863662)
+    (at 97.6 42.2)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /584DBC3B)
@@ -1307,7 +1307,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D0395)
-    (at 51.295095 37.863662)
+    (at 100.2 41.2)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /584DB92F)
@@ -1340,7 +1340,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D0367)
-    (at 58.005095 32.413662)
+    (at 102.2 50.6)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /584DA6F7)
@@ -1373,7 +1373,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D0339)
-    (at 54.555095 32.413662)
+    (at 93.2 50.6)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /584DE9F2)
@@ -1406,7 +1406,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D030B)
-    (at 47.845095 37.863662)
+    (at 100.2 44.6)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /584DDFC0)
@@ -1439,7 +1439,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D02BF)
-    (at 44.395095 38.063662)
+    (at 96.4 51.8)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /584F43E0)
@@ -1472,7 +1472,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D0291)
-    (at 51.105095 32.413662)
+    (at 91.2 48.8)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /584DCBFD)
@@ -1505,7 +1505,7 @@
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 584D0263)
-    (at 47.655095 32.413662)
+    (at 94.25 41.2)
     (descr "Capacitor SMD 0402, reflow soldering, AVX (see smccp.pdf)")
     (tags "capacitor 0402")
     (path /584DC928)
@@ -1538,7 +1538,7 @@
   )
 
   (module Resistors_SMD:R_0402 (layer F.Cu) (tedit 58307A8A) (tstamp 584D0139)
-    (at 44.299857 32.513662)
+    (at 91.15 43.2)
     (descr "Resistor SMD 0402, reflow soldering, Vishay (see dcrcw.pdf)")
     (tags "resistor 0402")
     (path /584FC55B)
@@ -1571,7 +1571,7 @@
   )
 
   (module Resistors_SMD:R_0402 (layer F.Cu) (tedit 58307A8A) (tstamp 584D010B)
-    (at 37.859857 40.603662)
+    (at 99.65 51.4)
     (descr "Resistor SMD 0402, reflow soldering, Vishay (see dcrcw.pdf)")
     (tags "resistor 0402")
     (path /584FC7DB)
