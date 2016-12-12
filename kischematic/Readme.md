@@ -14,3 +14,7 @@ http://www.farnell.com/cad/1993947.pdf?_ga=1.47058095.988751352.1481488664
 Notes on USB C configuration:
 
 https://www.scorpia.co.uk/2016/03/17/using-usb-type-c-on-hobyist-projects/
+
+3.2V LDO:
+
+http://www2.mouser.com/ProductDetail/ROHM-Semiconductor/BU32TD3WG-TR/?qs=sGAEpiMZZMsGz1a6aV8DcPH%252bYFoKpp%252bQXAL4Sdb5MQA%3d
