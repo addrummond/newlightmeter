@@ -1,4 +1,4 @@
-update=Friday, December 09, 2016 'PMt' 01:13:40 PM
+update=Monday, December 12, 2016 'AMt' 01:22:48 AM
 version=1
 last_client=kicad
 [pcbnew]
@@ -59,3 +59,4 @@ LibName27=atmel
 LibName28=contrib
 LibName29=valves
 LibName30=newlightmeter
+LibName31=switches
