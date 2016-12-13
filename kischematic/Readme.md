@@ -18,3 +18,7 @@ https://www.scorpia.co.uk/2016/03/17/using-usb-type-c-on-hobyist-projects/
 3.2V LDO:
 
 http://www2.mouser.com/ProductDetail/ROHM-Semiconductor/BU32TD3WG-TR/?qs=sGAEpiMZZMsGz1a6aV8DcPH%252bYFoKpp%252bQXAL4Sdb5MQA%3d
+
+Little pogo pins:
+
+http://www.digikey.co.uk/product-detail/en/mill-max-manufacturing-corp/0921-1-15-20-75-14-11-0/ED1655-ND/2784010
