@@ -828,7 +828,7 @@
   )
 
   (module Resistors_SMD:R_0402 (layer F.Cu) (tedit 58307A8A) (tstamp 584DF88C)
-    (at 104.5 32)
+    (at 81.13 47.62)
     (descr "Resistor SMD 0402, reflow soldering, Vishay (see dcrcw.pdf)")
     (tags "resistor 0402")
     (path /584E6EF8)
