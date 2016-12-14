@@ -22,3 +22,10 @@ http://www2.mouser.com/ProductDetail/ROHM-Semiconductor/BU32TD3WG-TR/?qs=sGAEpiM
 Little pogo pins:
 
 http://www.digikey.co.uk/product-detail/en/mill-max-manufacturing-corp/0921-1-15-20-75-14-11-0/ED1655-ND/2784010
+
+Trace impedance calc:
+
+http://emclab.mst.edu/pcbtlc2/microstrip/
+
+Trace thickness: 0.03556
+Relative permittivity: 4.8
