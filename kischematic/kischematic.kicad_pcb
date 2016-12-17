@@ -3,9 +3,9 @@
   (general
     (links 242)
     (no_connects 41)
-    (area 75.694999 24.924999 102.775001 75.075001)
+    (area 75.924999 24.924999 102.775001 75.075001)
     (thickness 1.6)
-    (drawings 16)
+    (drawings 17)
     (tracks 1581)
     (zones 0)
     (modules 98)
@@ -3626,6 +3626,8 @@
       (net 7 "Net-(C7-Pad2)"))
   )
 
+  (gr_line (start 76 53.6) (end 76 75) (layer Edge.Cuts) (width 0.15))
+  (gr_line (start 76 24.99) (end 76 44.09) (layer Edge.Cuts) (width 0.15))
   (gr_line (start 82.66 53.6) (end 76 53.6) (layer Edge.Cuts) (width 0.15))
   (gr_line (start 82.66 44.11) (end 82.66 53.6) (layer Edge.Cuts) (width 0.15))
   (gr_line (start 82.88 44.09) (end 76 44.09) (layer Edge.Cuts) (width 0.15))
@@ -3674,7 +3676,6 @@
     (arrow2a (pts (xy 75.831928 23.167464) (xy 76.958432 23.753885)))
     (arrow2b (pts (xy 75.831928 23.167464) (xy 76.958432 22.581043)))
   )
-  (gr_line (start 76 75) (end 76 25) (layer Edge.Cuts) (width 0.15))
   (gr_line (start 102.7 75) (end 76 75) (layer Edge.Cuts) (width 0.15))
   (gr_line (start 102.7 25) (end 102.7 75) (layer Edge.Cuts) (width 0.15))
   (gr_line (start 76 25) (end 102.7 25) (layer Edge.Cuts) (width 0.15))
