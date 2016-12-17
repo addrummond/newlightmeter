@@ -3626,9 +3626,9 @@
       (net 7 "Net-(C7-Pad2)"))
   )
 
-  (gr_line (start 82.66 53.6) (end 75.83 53.6) (layer Edge.Cuts) (width 0.15))
+  (gr_line (start 82.66 53.6) (end 76 53.6) (layer Edge.Cuts) (width 0.15))
   (gr_line (start 82.66 44.11) (end 82.66 53.6) (layer Edge.Cuts) (width 0.15))
-  (gr_line (start 82.66 44.11) (end 75.77 44.11) (layer Edge.Cuts) (width 0.15))
+  (gr_line (start 82.88 44.09) (end 76 44.09) (layer Edge.Cuts) (width 0.15))
   (dimension 19.301036 (width 0.3) (layer Dwgs.User)
     (gr_text "19.301 mm" (at 63.348188 34.782143 270.5937174) (layer Dwgs.User) (tstamp 5854520E)
       (effects (font (size 1.5 1.5) (thickness 0.3)))
