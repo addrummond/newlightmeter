@@ -2,11 +2,11 @@
 
   (general
     (links 242)
-    (no_connects 4)
+    (no_connects 1)
     (area 75.924999 24.914999 102.775001 75.075001)
     (thickness 1.6)
     (drawings 22)
-    (tracks 1801)
+    (tracks 1800)
     (zones 0)
     (modules 99)
     (nets 101)
@@ -4589,7 +4589,7 @@
   (segment (start 87.44 57.35) (end 86.59 57.35) (width 0.29) (layer F.Cu) (net 2))
   (segment (start 86.59 57.35) (end 85.99 56.75) (width 0.29) (layer F.Cu) (net 2))
   (segment (start 85.99 56.75) (end 85.99 55.26) (width 0.29) (layer F.Cu) (net 2))
-  (segment (start 85.99 55.26) (end 87.07 54.18) (width 0.155) (layer F.Cu) (net 2))
+  (segment (start 85.99 55.26) (end 87.07 54.18) (width 0.29) (layer F.Cu) (net 2))
   (segment (start 87.44 57.35) (end 86.936 57.854) (width 0.29) (layer B.Cu) (net 2))
   (segment (start 86.936 57.854) (end 86.936 59.027) (width 0.29) (layer B.Cu) (net 2))
   (segment (start 85.325 61.925) (end 85.43 61.82) (width 0.29) (layer F.Cu) (net 2))
@@ -4626,10 +4626,9 @@
   (segment (start 77.8 68.6) (end 78.55 67.85) (width 0.5) (layer F.Cu) (net 2))
   (segment (start 78.55 67.85) (end 78.55 66.5) (width 0.5) (layer F.Cu) (net 2))
   (segment (start 77.8 68.95) (end 77.8 68.6) (width 0.5) (layer F.Cu) (net 2))
-  (segment (start 78.4 66.65) (end 78.55 66.5) (width 0.5) (layer F.Cu) (net 2))
   (segment (start 79.28 65.02) (end 80.01 65.02) (width 0.25) (layer F.Cu) (net 2))
   (segment (start 78.55 65.25) (end 79.05 65.25) (width 0.25) (layer F.Cu) (net 2))
-  (segment (start 78.55 65.25) (end 78.55 66.5) (width 0.29) (layer F.Cu) (net 2))
+  (segment (start 78.55 65.25) (end 78.55 66.5) (width 0.5) (layer F.Cu) (net 2))
   (segment (start 88 67.2) (end 87.95 67.2) (width 0.29) (layer B.Cu) (net 2))
   (segment (start 87.95 67.2) (end 86.5 65.75) (width 0.29) (layer B.Cu) (net 2))
   (segment (start 88 67.2) (end 88 67.65) (width 0.29) (layer F.Cu) (net 2))
@@ -5807,8 +5806,8 @@
     )
     (filled_polygon
       (pts
-        (xy 87.679999 54.7) (xy 87.68 54.700005) (xy 87.68 55.09674) (xy 87.19 55.58674) (xy 87.19 54.595)
-        (xy 87.700886 54.595)
+        (xy 87.679999 54.7) (xy 87.68 54.700005) (xy 87.68 55.09674) (xy 87.19 55.58674) (xy 87.19 54.646899)
+        (xy 87.241899 54.595) (xy 87.700886 54.595)
       )
     )
     (filled_polygon
