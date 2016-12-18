@@ -1,3 +1,16 @@
+USB-C connector protrusion above top layer: 0.475
+USB-C connector protrusion above bottom layer: 2.265
+USB-C total height: 3.34
+
+EFM32 height: 0.85
+BlueNRG-MS height: 0.85
+AP9101C height: 1.4mm (max)
+MMA8653FC height: 1.0
+APDS-9303 height: 0.55
+LM3670: 1.55
+Skyworks thing: 0.75
+Screen: 1.45mm
+
 Shielded inductor:
 
 http://www2.mouser.com/ProductDetail/Sumida/CDRH2D18-HPNP-100NC/?qs=sGAEpiMZZMsg%252by3WlYCkU%252bh%252bN6dP7ETY7aXNPTXOGEY%3d
