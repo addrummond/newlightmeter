@@ -6,21 +6,26 @@ EFM32 height: 0.85
 BlueNRG-MS height: 0.85
 AP9101C height: 1.4mm (max)
 MMA8653FC height: 1.0
-APDS-9303 height: 0.55
-LM3670: 1.55
+APDS-9303 height: 1.55
+TPS62230: 0.65
 Skyworks thing: 0.75
+Inductor: 1.0
 Screen: 1.45mm
 
 New buck:
 
 http://www2.mouser.com/ProductDetail/Texas-Instruments/TPS62237DRYR/?qs=sGAEpiMZZMtitjHzVIkrqbYrYgRelM8b2WQIr2d%2f%2fYU%3d
 
-Shielded inductor:
+Low profile shileded inductor (1.0mm):
+
+http://www2.mouser.com/ProductDetail/Bourns/SRP2010-1R0M/?qs=sGAEpiMZZMsg%252by3WlYCkU8UvYHBUd1aBW8CnykdJK88%3d
+
+Old shielded inductor:
 
 http://www2.mouser.com/ProductDetail/Sumida/CDRH2D18-HPNP-100NC/?qs=sGAEpiMZZMsg%252by3WlYCkU%252bh%252bN6dP7ETY7aXNPTXOGEY%3d
 http://www.mouser.com/ds/2/390/cdrh2d18hp-339282.pdf
 
-Buck:
+Old buck:
 
 http://www2.mouser.com/ProductDetail/Texas-Instruments/LM3670MF-33-NOPB/?qs=sGAEpiMZZMtitjHzVIkrqaeIqJaO9bXJbUmg3vjvnY4%3d
 
