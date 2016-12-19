@@ -11,6 +11,10 @@ LM3670: 1.55
 Skyworks thing: 0.75
 Screen: 1.45mm
 
+New buck:
+
+http://www2.mouser.com/ProductDetail/Texas-Instruments/TPS62237DRYR/?qs=sGAEpiMZZMtitjHzVIkrqbYrYgRelM8b2WQIr2d%2f%2fYU%3d
+
 Shielded inductor:
 
 http://www2.mouser.com/ProductDetail/Sumida/CDRH2D18-HPNP-100NC/?qs=sGAEpiMZZMsg%252by3WlYCkU%252bh%252bN6dP7ETY7aXNPTXOGEY%3d

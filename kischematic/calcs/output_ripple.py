@@ -5,7 +5,7 @@
 import math
 
 max_output_current = 0.005
-freq = 1000000
+freq = 2000000
 vout = 3.3
 vin = 5.5
 equiv_series_r = 0.000245
