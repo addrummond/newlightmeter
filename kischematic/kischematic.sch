@@ -2661,7 +2661,6 @@ Wire Wire Line
 	1250 5700 1600 5700
 Wire Wire Line
 	1350 5900 1600 5900
-Connection ~ 1450 5800
 Connection ~ 1450 5700
 Wire Wire Line
 	1350 5700 1350 5500
@@ -2689,7 +2688,7 @@ Wire Wire Line
 Wire Wire Line
 	3000 7100 3000 6900
 Wire Wire Line
-	3000 6900 1000 6900
+	1000 6900 3200 6900
 Connection ~ 3000 7600
 Wire Wire Line
 	3000 8000 3000 9350
@@ -2779,4 +2778,9 @@ Text GLabel 3250 9350 2    60   Input ~ 0
 BAT-
 Wire Wire Line
 	1500 9350 1500 9250
+Connection ~ 3000 6900
+Text GLabel 3200 6900 2    60   Input ~ 0
+BAT+
+Wire Wire Line
+	1450 5800 1450 5700
 $EndSCHEMATC
