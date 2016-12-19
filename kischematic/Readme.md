@@ -4,13 +4,19 @@ USB-C total height: 3.34
 
 EFM32 height: 0.85
 BlueNRG-MS height: 0.85
-AP9101C height: 1.4mm (max)
+BQ2971 height: 0.8
 MMA8653FC height: 1.0
-APDS-9303 height: 1.55
+APDS-9303 height: 0.55
 TPS62230: 0.65
 Skyworks thing: 0.75
-Inductor: 1.0
-Screen: 1.45mm
+Inductor height: 1.0
+Antenna height: 1.07
+Dual MOSFET height: 0.9
+Screen: 1.45
+
+New dual MOSFET:
+
+http://www2.mouser.com/ProductDetail/Infineon-Technologies/BSD840NH6327XTSA1/?qs=sGAEpiMZZMshyDBzk1%2fWi4lI00SCTc04GvAMPB9W6%252bI%3d
 
 New buck:
 
