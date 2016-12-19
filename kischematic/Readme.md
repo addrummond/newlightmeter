@@ -12,6 +12,7 @@ Skyworks thing: 0.75
 Inductor height: 1.0
 Antenna height: 1.07
 Dual MOSFET height: 0.9
+EZMate thing: 1.4
 Screen: 1.45
 
 New dual MOSFET:
