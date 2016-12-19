@@ -2683,11 +2683,9 @@ $EndComp
 Wire Wire Line
 	1600 5800 1450 5800
 Wire Wire Line
-	1450 5700 1450 5900
-Wire Wire Line
 	1250 5700 1600 5700
 Wire Wire Line
-	1450 5900 1600 5900
+	1350 5900 1600 5900
 Connection ~ 1450 5800
 Connection ~ 1450 5700
 Text GLabel 1250 5700 0    60   Input ~ 0
@@ -2737,7 +2735,7 @@ Wire Wire Line
 Wire Wire Line
 	3350 5800 3350 5700
 Wire Wire Line
-	3200 5700 3500 5700
+	3200 5700 3600 5700
 Connection ~ 3350 5700
 Wire Wire Line
 	3500 5700 3500 5900
@@ -2776,4 +2774,18 @@ F 3 "" H 1900 6150 60  0001 C CNN
 	1    1900 6150
 	1    0    0    -1  
 $EndComp
+$Comp
+L GND #PWR061
+U 1 1 585E1552
+P 1350 5900
+F 0 "#PWR061" H 1350 5650 50  0001 C CNN
+F 1 "GND" H 1355 5727 50  0000 C CNN
+F 2 "" H 1350 5900 50  0000 C CNN
+F 3 "" H 1350 5900 50  0000 C CNN
+	1    1350 5900
+	0    1    1    0   
+$EndComp
+Connection ~ 3500 5700
+Text GLabel 3600 5700 2    60   Input ~ 0
+VREG
 $EndSCHEMATC
