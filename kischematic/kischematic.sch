@@ -2817,28 +2817,24 @@ Wire Wire Line
 Wire Wire Line
 	7900 5850 8050 5850
 Text GLabel 8050 6150 2    60   Input ~ 0
-DISPLAY_RESET
+SPI_MISO
 Text GLabel 8050 6050 2    60   Input ~ 0
 SPI_CLK
 Text GLabel 8050 5950 2    60   Input ~ 0
 DISPLAY_CS
 Text GLabel 8050 5850 2    60   Input ~ 0
-SPI_MISO
+DISPLAY_RESET
 $Comp
 L CONN_01X06 P8
 U 1 1 5862323A
 P 7700 6000
 F 0 "P8" H 7619 5525 50  0000 C CNN
 F 1 "CONN_01X06" H 7619 5616 50  0000 C CNN
-F 2 "newlightmeter:FFC6-0.3" H 7700 6000 50  0001 C CNN
+F 2 "newlightmeter:FFC6-0.5" H 7700 6000 50  0001 C CNN
 F 3 "" H 7700 6000 50  0000 C CNN
 	1    7700 6000
 	-1   0    0    1   
 $EndComp
-Wire Wire Line
-	7900 5750 8050 5750
-Text GLabel 8050 5750 2    60   Input ~ 0
-SPI_MOSI
 Wire Wire Line
 	10600 5900 10600 5750
 Text GLabel 10600 5750 1    60   Input ~ 0
@@ -2849,4 +2845,8 @@ Wire Wire Line
 	10900 5100 10950 5100
 Text GLabel 10950 5100 2    60   Input ~ 0
 DISPLAY_CS
+Wire Wire Line
+	7900 6250 8050 6250
+Text GLabel 8050 6250 2    60   Input ~ 0
+SPI_MOSI
 $EndSCHEMATC
