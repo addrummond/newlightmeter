@@ -952,7 +952,7 @@ F 3 "" H 10800 4600 50  0000 C CNN
 	-1   0    0    1   
 $EndComp
 Text GLabel 10050 6200 0    60   Input ~ 0
-BNRG_SPI_IRQ
+DISPLAY_CS
 $Comp
 L R R2
 U 1 1 584FC55B
@@ -1317,7 +1317,7 @@ $EndComp
 Text GLabel 13650 7000 0    60   Input ~ 0
 MAINBUTTON
 Text GLabel 10700 5750 1    60   Input ~ 0
-DISPLAY_CS
+BNRG_SPI_IRQ
 $Comp
 L Screw_Terminal_1x02 J1
 U 1 1 584F1E7F
