@@ -1317,7 +1317,7 @@ $EndComp
 Text GLabel 13650 7000 0    60   Input ~ 0
 MAINBUTTON
 Text GLabel 10700 5750 1    60   Input ~ 0
-MAINBUTTON
+DISPLAY_CS
 $Comp
 L Screw_Terminal_1x02 J1
 U 1 1 584F1E7F
@@ -2844,7 +2844,7 @@ Wire Wire Line
 Wire Wire Line
 	10900 5100 10950 5100
 Text GLabel 10950 5100 2    60   Input ~ 0
-DISPLAY_CS
+MAINBUTTON
 Wire Wire Line
 	7900 6250 8050 6250
 Text GLabel 8050 6250 2    60   Input ~ 0
