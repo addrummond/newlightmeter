@@ -2819,11 +2819,11 @@ Wire Wire Line
 Text GLabel 8050 6150 2    60   Input ~ 0
 SPI_MISO
 Text GLabel 8050 6050 2    60   Input ~ 0
-SPI_CLK
+DISPLAY_RESET
 Text GLabel 8050 5950 2    60   Input ~ 0
 DISPLAY_CS
 Text GLabel 8050 5850 2    60   Input ~ 0
-DISPLAY_RESET
+SPI_CLK
 $Comp
 L CONN_01X06 P8
 U 1 1 5862323A
