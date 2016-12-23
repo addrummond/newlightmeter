@@ -952,7 +952,7 @@ F 3 "" H 10800 4600 50  0000 C CNN
 	-1   0    0    1   
 $EndComp
 Text GLabel 10050 6200 0    60   Input ~ 0
-DISPLAY_CS
+DISPLAY_RESET
 $Comp
 L R R2
 U 1 1 584FC55B
@@ -2745,7 +2745,7 @@ PIEZO-
 Wire Wire Line
 	10600 5900 10600 5750
 Text GLabel 10600 5750 1    60   Input ~ 0
-DISPLAY_RESET
+DISPLAY_CS
 Wire Wire Line
 	10900 5900 10900 5100
 Wire Wire Line
@@ -2865,4 +2865,25 @@ F 3 "" H 7400 6050 50  0000 C CNN
 	1    7400 6050
 	-1   0    0    1   
 $EndComp
+$Comp
+L R R17
+U 1 1 585DADE9
+P 8150 7200
+F 0 "R17" V 7943 7200 50  0000 C CNN
+F 1 "0" V 8034 7200 50  0000 C CNN
+F 2 "Resistors_SMD:R_0402" V 8080 7200 50  0001 C CNN
+F 3 "" H 8150 7200 50  0000 C CNN
+	1    8150 7200
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	8300 7200 8450 7200
+Wire Wire Line
+	8000 7200 7850 7200
+Text GLabel 7850 7200 0    60   Input ~ 0
+VREG
+Text GLabel 8450 7200 2    60   Input ~ 0
+VREG
+Text Label 8000 7100 0    60   ~ 0
+Jumper
 $EndSCHEMATC
