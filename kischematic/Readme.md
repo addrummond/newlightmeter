@@ -15,6 +15,10 @@ Dual MOSFET height: 0.9
 EZMate thing: 1.4
 Screen: 1.45
 
+Useful info on EFM32 3-wire SPI:
+
+http://community.silabs.com/t5/32-bit-MCU-Knowledge-Base/EFM32-as-a-3-wire-SPI-master/ta-p/123022
+
 New dual MOSFET:
 
 http://www2.mouser.com/ProductDetail/Infineon-Technologies/BSD840NH6327XTSA1/?qs=sGAEpiMZZMshyDBzk1%2fWi4lI00SCTc04GvAMPB9W6%252bI%3d
