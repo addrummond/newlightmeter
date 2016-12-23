@@ -2822,11 +2822,11 @@ Wire Wire Line
 Text GLabel 13850 2400 2    60   Input ~ 0
 SPI_CLK
 Text GLabel 13850 2500 2    60   Input ~ 0
-DISPLAY_CS
-Text GLabel 13850 2600 2    60   Input ~ 0
-SPI_MOSI
-Text GLabel 13850 2700 2    60   Input ~ 0
 DISPLAY_RESET
+Text GLabel 13850 2600 2    60   Input ~ 0
+DISPLAY_CS
+Text GLabel 13850 2700 2    60   Input ~ 0
+SPI_MOSI
 Wire Wire Line
 	7600 5900 7750 5900
 Wire Wire Line
@@ -2838,11 +2838,11 @@ Wire Wire Line
 Text GLabel 7750 5900 2    60   Input ~ 0
 SPI_CLK
 Text GLabel 7750 6000 2    60   Input ~ 0
-DISPLAY_CS
-Text GLabel 7750 6100 2    60   Input ~ 0
 SPI_MOSI
-Text GLabel 7750 6200 2    60   Input ~ 0
+Text GLabel 7750 6100 2    60   Input ~ 0
 DISPLAY_RESET
+Text GLabel 7750 6200 2    60   Input ~ 0
+DISPLAY_CS
 $Comp
 L CONN_01X04 P9
 U 1 1 585C8A1F
