@@ -15,6 +15,10 @@ Dual MOSFET height: 0.9
 EZMate thing: 1.4
 Screen: 1.45
 
+Side mount switch:
+
+http://uk.rs-online.com/web/p/products/7856443/?grossPrice=Y&cm_mmc=UK-PLA-_-google-_-PLA_UK_EN_Switches-_-Tactile_Switches_And_Accessories&mkwid=slV9EyTsH_dc|pcrid|88057077243|pkw||pmt||prd|7856443&gclid=Cj0KEQiAnIPDBRC7t5zJs4uQu5UBEiQA7u5Nez5Wsqkz7oU2pIy9AWAJCai1eRbfQIoq8IcizyYJO9QaAkB28P8HAQ
+
 Useful info on EFM32 3-wire SPI:
 
 http://community.silabs.com/t5/32-bit-MCU-Knowledge-Base/EFM32-as-a-3-wire-SPI-master/ta-p/123022
