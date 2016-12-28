@@ -15,6 +15,10 @@ Dual MOSFET height: 0.9
 EZMate thing: 1.4
 Screen: 1.45
 
+Suitable flat flex cable (cut in half):
+
+http://www.digikey.co.uk/product-detail/en/molex-llc/0152660073/WM11348-ND/3160809
+
 Side mount switch:
 
 http://uk.rs-online.com/web/p/products/7856443/?grossPrice=Y&cm_mmc=UK-PLA-_-google-_-PLA_UK_EN_Switches-_-Tactile_Switches_And_Accessories&mkwid=slV9EyTsH_dc|pcrid|88057077243|pkw||pmt||prd|7856443&gclid=Cj0KEQiAnIPDBRC7t5zJs4uQu5UBEiQA7u5Nez5Wsqkz7oU2pIy9AWAJCai1eRbfQIoq8IcizyYJO9QaAkB28P8HAQ
