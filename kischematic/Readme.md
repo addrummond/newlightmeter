@@ -15,6 +15,10 @@ Dual MOSFET height: 0.9
 EZMate thing: 1.4
 Screen: 1.45
 
+Magic micro:
+
+https://www.silabs.com/Support%20Documents/TechnicalDocs/EFM32ZG108.pdf
+
 Suitable flat flex cable (cut in half):
 
 http://www.digikey.co.uk/product-detail/en/molex-llc/0152660073/WM11348-ND/3160809
