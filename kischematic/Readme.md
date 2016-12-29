@@ -17,7 +17,7 @@ Screen: 1.45
 
 Magic micro:
 
-https://www.silabs.com/Support%20Documents/TechnicalDocs/EFM32ZG108.pdf
+http://www.silabs.com/support%20documents/technicaldocs/efm32hg309.pdf
 
 Suitable flat flex cable (cut in half):
 
