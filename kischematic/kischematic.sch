@@ -3129,4 +3129,11 @@ Wire Wire Line
 	3100 10500 3250 10500
 Text GLabel 3250 10500 2    60   Input ~ 0
 BNRG_SPI_IRQ
+Wire Wire Line
+	5300 9100 5300 8850
+Wire Wire Line
+	5300 8850 5000 8850
+Connection ~ 5300 9100
+Text GLabel 5000 8850 0    60   Input ~ 0
+SWDIO
 $EndSCHEMATC
