@@ -3136,4 +3136,23 @@ Wire Wire Line
 Connection ~ 5300 9100
 Text GLabel 5000 8850 0    60   Input ~ 0
 SWDIO
+$Comp
+L R J?
+U 1 1 5872311C
+P 8150 7750
+F 0 "J?" V 7943 7750 50  0000 C CNN
+F 1 "0" V 8034 7750 50  0000 C CNN
+F 2 "Resistors_SMD:R_0402" V 8080 7750 50  0001 C CNN
+F 3 "" H 8150 7750 50  0000 C CNN
+	1    8150 7750
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	8300 7750 8450 7750
+Wire Wire Line
+	8000 7750 7850 7750
+Text GLabel 8450 7750 2    60   Input ~ 0
+PSTAT1
+Text GLabel 7850 7750 0    60   Input ~ 0
+PSTAT1
 $EndSCHEMATC
