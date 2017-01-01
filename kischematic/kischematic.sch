@@ -3125,8 +3125,6 @@ F 3 "" H 3550 9550 50  0000 C CNN
 	1    3550 9550
 	1    0    0    -1  
 $EndComp
-Text GLabel 2500 9750 1    60   Input ~ 0
-VREG
 Wire Wire Line
 	1900 10700 1800 10700
 Wire Wire Line
@@ -3134,4 +3132,8 @@ Wire Wire Line
 Wire Wire Line
 	1800 10200 1850 10200
 Connection ~ 1850 10200
+Wire Wire Line
+	1850 10200 1850 9750
+Wire Wire Line
+	1850 9750 2500 9750
 $EndSCHEMATC
