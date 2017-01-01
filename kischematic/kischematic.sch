@@ -2102,17 +2102,6 @@ Text GLabel 8700 10400 3    60   Input ~ 0
 BAT+
 Text GLabel 9050 10400 3    60   Input ~ 0
 BAT-
-$Comp
-L GND #PWR061
-U 1 1 586C4679
-P 4050 8250
-F 0 "#PWR061" H 4050 8000 50  0001 C CNN
-F 1 "GND" H 4055 8077 50  0000 C CNN
-F 2 "" H 4050 8250 50  0000 C CNN
-F 3 "" H 4050 8250 50  0000 C CNN
-	1    4050 8250
-	1    0    0    -1  
-$EndComp
 Text GLabel 5800 7000 1    60   Input ~ 0
 USBD+
 Text GLabel 5900 7000 1    60   Input ~ 0
@@ -3136,4 +3125,8 @@ Wire Wire Line
 	1850 10200 1850 9750
 Wire Wire Line
 	1850 9750 2500 9750
+Wire Wire Line
+	3100 10500 3250 10500
+Text GLabel 3250 10500 2    60   Input ~ 0
+BNRG_SPI_IRQ
 $EndSCHEMATC
