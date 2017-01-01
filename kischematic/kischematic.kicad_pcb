@@ -6,7 +6,7 @@
     (area 75.974999 24.974999 102.725001 75.025001)
     (thickness 1.6)
     (drawings 276)
-    (tracks 2177)
+    (tracks 2176)
     (zones 0)
     (modules 116)
     (nets 115)
@@ -37,7 +37,7 @@
   )
 
   (setup
-    (last_trace_width 0.16)
+    (last_trace_width 0.29)
     (user_trace_width 0.16)
     (user_trace_width 0.2)
     (user_trace_width 0.27)
@@ -608,7 +608,7 @@
   )
 
   (module newlightmeter:SMALLWIREPAD (layer F.Cu) (tedit 5867D5C9) (tstamp 58669901)
-    (at 82.8 34)
+    (at 83.44 34.06)
     (path /586BE154)
     (fp_text reference TP4 (at 0 -1.5) (layer F.SilkS) hide
       (effects (font (size 0.5 0.5) (thickness 0.125)))
@@ -6047,12 +6047,11 @@
   (segment (start 84.3 35.3) (end 84.15 35.3) (width 0.29) (layer F.Cu) (net 40) (status 30))
   (segment (start 84.15 35.3) (end 83.38 36.07) (width 0.29) (layer F.Cu) (net 40) (status 10))
   (via (at 83.38 36.07) (size 0.62) (drill 0.31) (layers F.Cu B.Cu) (net 40))
+  (segment (start 82.16 35.46) (end 82.16 35.34) (width 0.29) (layer F.Cu) (net 41))
+  (segment (start 82.16 35.34) (end 83.44 34.06) (width 0.29) (layer F.Cu) (net 41))
   (segment (start 85.79 41) (end 86.38 40.41) (width 0.29) (layer F.Cu) (net 41))
   (segment (start 84.875 41) (end 85.79 41) (width 0.29) (layer F.Cu) (net 41) (status 10))
   (segment (start 86.38 40.41) (end 86.38 39.2) (width 0.29) (layer F.Cu) (net 41))
-  (segment (start 82.16 35.46) (end 82.4 35.22) (width 0.29) (layer F.Cu) (net 41))
-  (segment (start 82.4 35.22) (end 82.4 34.4) (width 0.29) (layer F.Cu) (net 41))
-  (segment (start 82.4 34.4) (end 82.8 34) (width 0.29) (layer F.Cu) (net 41))
   (segment (start 82.74 36.81) (end 83.13 37.2) (width 0.29) (layer F.Cu) (net 41) (status 20))
   (segment (start 83.13 37.2) (end 83.2 37.2) (width 0.29) (layer F.Cu) (net 41) (status 30))
   (segment (start 82.74 35.87) (end 82.74 36.81) (width 0.29) (layer F.Cu) (net 41))
