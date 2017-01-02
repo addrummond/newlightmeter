@@ -2176,7 +2176,7 @@
   (module newlightmeter:APDS-9303 (layer F.Cu) (tedit 584C86F0) (tstamp 584DBCC2)
     (at 92.5 30 270)
     (path /585145F7)
-    (fp_text reference IC7 (at 1.3 1.918 270) (layer F.SilkS)
+    (fp_text reference IC7 (at -0.26 1.81 450) (layer F.SilkS)
       (effects (font (size 0.5 0.5) (thickness 0.125)))
     )
     (fp_text value APDS-9303 (at 0.2 2.8 270) (layer F.Fab)
