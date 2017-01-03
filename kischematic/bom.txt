@@ -49,7 +49,7 @@
 1   http://www.digikey.co.uk/product-detail/en/avx-corporation/HLC025R6BTTR/478-7205-1-ND/3528417
 2   http://www.digikey.co.uk/product-detail/en/murata-electronics-north-america/LQW18AN3N9D10D/490-12790-1-ND/5797759
 1   http://www.digikey.co.uk/product-detail/en/samsung-electro-mechanics-america-inc/CL05A105JQ5NNNC/1276-1444-6-ND/3891958
-
+1   http://www.digikey.co.uk/product-detail/en/molex-llc/0152660073/WM11348-ND/3160809
 
 * Find 2k2 resistor and make it 0.1%
 * C16, C13, C11, C4 change to 0204.
