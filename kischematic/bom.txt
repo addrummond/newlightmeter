@@ -53,6 +53,4 @@
 10  http://www.digikey.co.uk/product-detail/en/mill-max-manufacturing-corp/0921-1-15-20-75-14-11-0/ED1655-ND/2784010
 
 * Find 2k2 resistor and make it 0.1%
-* C16, C13, C11, C4 change to 0204.
-* C15, C14, C12, C6, C5 change to 0204.
 * L4, L5, L6, L7 to 0402.
