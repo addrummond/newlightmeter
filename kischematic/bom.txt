@@ -15,11 +15,10 @@
 1   http://www.digikey.co.uk/product-detail/en/texas-instruments/BQ29702DSER/296-39945-1-ND/5177822
 1   http://www.digikey.co.uk/product-detail/en/texas-instruments/TPS62237DRYR/296-39454-1-ND/5143402
 1   http://www.digikey.co.uk/product-detail/en/murata-electronics-north-america/GRM1555C1H101JA01D/490-5922-1-ND/3721279
-1   http://www.digikey.co.uk/product-detail/en/taiyo-yuden/JMK105BJ105KV-F/587-1231-1-ND/931008
+5   http://www.digikey.co.uk/product-detail/en/taiyo-yuden/JMK105BJ105KV-F/587-1231-1-ND/931008
 4   http://www.digikey.co.uk/product-detail/en/yageo/RC0402FR-071KL/311-1.00KLRCT-ND/729460
 1   http://www.digikey.co.uk/product-detail/en/silicon-labs/EFM32ZG108F4-QFN24T/EFM32ZG108F4-QFN24T-ND/4333722
 4   http://www.digikey.co.uk/product-detail/en/murata-electronics-north-america/GRM155R60J475ME47D/490-5915-1-ND/3719860
-4   http://www.digikey.co.uk/product-detail/en/taiyo-yuden/JMK105BJ105KV-F/587-1231-1-ND/931008
 1   http://www.digikey.co.uk/product-detail/en/yageo/RC0402FR-0791KL/311-91.0KLRCT-ND/729618
 1   http://www.digikey.co.uk/product-detail/en/nxp-usa-inc/MMA8653FCR1/MMA8653FCR1CT-ND/3831441
 1   http://www.digikey.co.uk/product-detail/en/murata-electronics-north-america/GRM155R61A225KE95D/490-10451-1-ND/5026361
