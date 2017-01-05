@@ -117,20 +117,36 @@ http://www.mouser.co.uk/ProductDetail/NXP-Freescale/MMA8653FCR1/?qs=sGAEpiMZZMuJ
 
 ***SKYWORKS OUT OF MOUSER STOCK*** TODO ****
 
-36;"R4";"R_0402";1;"2k2%";;;
-37;"R5";"R_0402";1;"330%";;;
-38;"R6";"R_0402";1;"2M7%";;;
-39;"R7";"R_0402";1;"1M6%";;;
-40;"TH1";"R_0603";1;"10k";;;
+1
+http://www.mouser.co.uk/ProductDetail/TE-Connectivity-Neohm/CPF0402B2K2E1/?qs=sGAEpiMZZMu61qfTUdNhGxAfPTOoMd3MGZDask%2fUogU%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/KOA-Speer/RN731ETTP3300B25/?qs=sGAEpiMZZMu61qfTUdNhGzcH3lSOO42x%252bnYWy6oBlx4%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/Vishay/CRCW04022M70FKED/?qs=sGAEpiMZZMu61qfTUdNhGwALI1ohWcNjoHTNidzBAnQ%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/Vishay/CRCW04021M60FKED/?qs=sGAEpiMZZMu61qfTUdNhGwALI1ohWcNjhMl5yZ5yBOE%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/STMicroelectronics/BLUENRG-MSQTR/?qs=sGAEpiMZZMu6TJb8E8Cjr4TjLDDwE%2fWXJ3IaQIMZc1g%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/Taiyo-Yuden/CBMF1608T4R7M/?qs=sGAEpiMZZMsg%252by3WlYCkU5iuzh4MJmq02AHA%2fd4o8zE%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/ABRACON/ABM3B-16000MHZ-10-1-U-T/?qs=sGAEpiMZZMsBj6bBr9Q9acVJ3l36SOAP0No2hV9uGrw%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/IQD/LFXTAL009678Cutt/?qs=sGAEpiMZZMsBj6bBr9Q9aR%2fuGiDjvlIS1mrlrYBo3LN6WQYw9PUZ5g%3d%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/Murata-Electronics/NCP18XH103F03RB/?qs=sGAEpiMZZMuBd0%252bwiCVS20%252b%2fOc5%252bkSJfn1OkHduPUvQ%3d
+
+
 41;"IC4";"AAT3672IWO";1;"AAT3672IWO-4.2-1";;;
-42;"IC1";"QFN32";1;"BlueNRG";;;
 
 16;"D1";"SOD-523";1;"1V FVD";;;
 
 
-
-
-51;"Y2";"CRYSTAL5x3.2";1;"16M";;;
-
-57;"L1";"R_0603";1;"DC-DC 4u7";;;
-58;"Y1";"CRYSTAL3.2x1.5mm";1;"32k";;;
