@@ -11,7 +11,7 @@ http://www.mouser.co.uk/ProductDetail/AVX/01016D104KATUA/?qs=sGAEpiMZZMs0AnBnWHy
 http://www.mouser.co.uk/ProductDetail/Yageo/CC0100KRX5R5BB103/?qs=sGAEpiMZZMs0AnBnWHyRQEGbLOF2VP1i4YHmEgThakWmb03MVGr32Q%3d%3d
 
 1
-http://www.mouser.co.uk/ProductDetail/AVX/0603ZD105JAT2A/?qs=sGAEpiMZZMs0AnBnWHyRQO2a6rsPNabdWHyEu%252bSTcYc%3d
+http://www.mouser.co.uk/ProductDetail/AVX/02016D105KAT2A/?qs=sGAEpiMZZMs0AnBnWHyRQHzHPE94NOakZzFL8rkwtwk%3d
 
 5
 http://www.mouser.co.uk/ProductDetail/Taiyo-Yuden/AMK105BJ475MV-F/?qs=%2fha2pyFaduhVTjMV72%252bFuqia8z6AHs6bZXdm5jTEvqyB7R8zGucH1w%3d%3d
@@ -68,7 +68,7 @@ http://www.mouser.co.uk/ProductDetail/Yageo/RC0402FR-0710KL/?qs=sGAEpiMZZMtlubZb
 http://uk.rs-online.com/web/p/tactile-switches/7856443/?searchTerm=434333045822&relevancy-data=636F3D3126696E3D4931384E4B6E6F776E41734D504E266C753D656E266D6D3D6D61746368616C6C7061727469616C26706D3D5E285C642B5B2D5C2E5C732F5D292B285C642B293F247C5E5C642B2426706F3D313326736E3D592673743D4B4559574F52445F53494E474C455F4F525F4D554C54495F4E554D455249432677633D424F5448267573743D343334333333303435383232267374613D34333433333330343538323226
 
 1
-http://www.mouser.co.uk/Passive-Components/Resistors/_/N-5g9n?P=1yzekioZ1yzmouc&Ns=Pricing|0
+http://www.mouser.co.uk/ProductDetail/Panasonic/ERJ-2RKF2201X/?qs=sGAEpiMZZMtlubZbdhIBIH%2fX%2fXYrlp18D0d83EkUQDQ%3d
 
 3
 http://www.mouser.co.uk/ProductDetail/Panasonic/ERJ-2RKF9102X/?qs=sGAEpiMZZMtlubZbdhIBIEpCgapuOP%252boa7gUCipFOy4%3d
@@ -117,7 +117,7 @@ http://www.mouser.co.uk/ProductDetail/NXP-Freescale/MMA8653FCR1/?qs=sGAEpiMZZMuJ
 http://www.mouser.co.uk/ProductDetail/TE-Connectivity-Neohm/CPF0402B2K2E1/?qs=sGAEpiMZZMu61qfTUdNhGxAfPTOoMd3MGZDask%2fUogU%3d
 
 1
-http://www.mouser.co.uk/ProductDetail/KOA-Speer/RN731ETTP3300B25/?qs=sGAEpiMZZMu61qfTUdNhGzcH3lSOO42x%252bnYWy6oBlx4%3d
+http://www.mouser.co.uk/ProductDetail/TE-Connectivity-Neohm/CPF0402B330RE1/?qs=sGAEpiMZZMu61qfTUdNhGxAfPTOoMd3MC5LleYIYA9M%3d
 
 1
 http://www.mouser.co.uk/ProductDetail/Vishay/CRCW04022M70FKED/?qs=sGAEpiMZZMu61qfTUdNhGwALI1ohWcNjoHTNidzBAnQ%3d
