@@ -26,7 +26,7 @@ http://www.mouser.co.uk/ProductDetail/Wurth-Electronics/885012105012/?qs=sGAEpiM
 http://www.mouser.co.uk/ProductDetail/AVX/04026D225KAT2A/?qs=sGAEpiMZZMs0AnBnWHyRQIy6V77pvJNhXv%252bScKJE18o%3d
 
 2
-http://www.mouser.co.uk/ProductDetail/Johanson-Technology/201R07S1R3BV4T/?qs=sGAEpiMZZMuMW9TJLBQkXtsgbCNY%252bzqvq3SNWZExZwk%3d
+http://www.mouser.co.uk/ProductDetail/Murata-Electronics/GJM1555C1HR50WB01D/?qs=sGAEpiMZZMs0AnBnWHyRQHSMLfoHgeTX07%252bGLRFrltk%3d
 
 3
 http://www.mouser.co.uk/ProductDetail/Johanson-Technology/201R07S0R5AV4T/?qs=sGAEpiMZZMs0AnBnWHyRQMEhg08ZZBbf8SDWoIpws0c%3d
@@ -135,7 +135,7 @@ http://www.mouser.co.uk/ProductDetail/Taiyo-Yuden/CBMF1608T4R7M/?qs=sGAEpiMZZMsg
 http://www.mouser.co.uk/ProductDetail/ABRACON/ABM3B-16000MHZ-10-1-U-T/?qs=sGAEpiMZZMsBj6bBr9Q9acVJ3l36SOAP0No2hV9uGrw%3d
 
 1
-http://www.mouser.co.uk/ProductDetail/IQD/LFXTAL009678Cutt/?qs=sGAEpiMZZMsBj6bBr9Q9aR%2fuGiDjvlIS1mrlrYBo3LN6WQYw9PUZ5g%3d%3d
+http://www.mouser.co.uk/ProductDetail/ECS/ECS-327-125-34B-TR/?qs=sGAEpiMZZMsBj6bBr9Q9ad3bzrWc2O4btTY9xjEuGhg%3d
 
 1
 http://www.mouser.co.uk/ProductDetail/Murata-Electronics/NCP18XH103F03RB/?qs=sGAEpiMZZMuBd0%252bwiCVS20%252b%2fOc5%252bkSJfn1OkHduPUvQ%3d
@@ -148,4 +148,4 @@ http://www.mouser.co.uk/ProductDetail/Panasonic/DZ2S068M0L/?qs=%2fha2pyFadujKEJK
 http://www.mouser.co.uk/ProductDetail/Skyworks/AAT3672IWO-42-1-T1/?qs=%2fha2pyFadugROh3v2irXVDNBHtJmFCGOVeOBHMnpTvna4k8ej%2fd9tQ%3d%3d
 
 
-
+* Change C23 to 0603.
