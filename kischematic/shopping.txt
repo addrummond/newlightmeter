@@ -13,8 +13,8 @@ http://www.mouser.co.uk/ProductDetail/Yageo/CC0100KRX5R5BB103/?qs=sGAEpiMZZMs0An
 1
 http://www.mouser.co.uk/ProductDetail/AVX/0603ZD105JAT2A/?qs=sGAEpiMZZMs0AnBnWHyRQO2a6rsPNabdWHyEu%252bSTcYc%3d
 
-4 TODO LOW ESR FOR DC DC 4u7
-====> http://www.mouser.co.uk/ProductDetail/AVX/04026D475MAT2A/?qs=sGAEpiMZZMs0AnBnWHyRQJ6PNHLRUJRUxt7%2fTQfvuoI%3d
+5
+http://www.mouser.co.uk/ProductDetail/Taiyo-Yuden/AMK105BJ475MV-F/?qs=%2fha2pyFaduhVTjMV72%252bFuqia8z6AHs6bZXdm5jTEvqyB7R8zGucH1w%3d%3d
 
 2
 http://www.mouser.co.uk/ProductDetail/Taiyo-Yuden/JMK105BJ105MC-F/?qs=sGAEpiMZZMs0AnBnWHyRQC2E6Mcmylamyb7qEFlVNV%2fRJ0KIRK8QWw%3d%3d
@@ -96,7 +96,7 @@ http://www.mouser.co.uk/ProductDetail/Coilcraft/0603CS-3N9XGLU/?qs=sGAEpiMZZMukH
 
 **** TODO TRY TO FIND CHEAPER
 1
-http://www.mouser.co.uk/ProductDetail/Coilcraft/0402HP-2N4XGLU/?qs=sGAEpiMZZMukHu%252bjC5l7YWnJ3tgDLLHleb4Ju9mzmS8%3d
+http://www.mouser.co.uk/ProductDetail/Coilcraft/0603CS-2N2XJLW/?qs=sGAEpiMZZMsg%252by3WlYCkU2kWFds1hA9DqPwQElxPxms%3d
 
 4
 http://www.mouser.co.uk/ProductDetail/Panasonic/ERJ-2RKF1001X/?qs=sGAEpiMZZMtlubZbdhIBIHcx2Q2RnT7KmxXeXdcMsdM%3d
