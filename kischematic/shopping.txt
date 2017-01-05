@@ -1,5 +1,3 @@
-"Id";"Designator";"Package";"Quantity";"Designation";"Supplier and ref";
-
 5
 http://www.mouser.co.uk/ProductDetail/Murata-Electronics/GRM155R60G106ME44D/?qs=sGAEpiMZZMsh%252b1woXyUXj9DchB33R5nknu3pcLYYoE4%3d
 
@@ -115,8 +113,6 @@ http://www.mouser.co.uk/ProductDetail/Broadcom-Limited/APDS-9303-020/?qs=%2fha2p
 1
 http://www.mouser.co.uk/ProductDetail/NXP-Freescale/MMA8653FCR1/?qs=sGAEpiMZZMuJJ6wbRIs2btaRRQKJJnyc
 
-***SKYWORKS OUT OF MOUSER STOCK*** TODO ****
-
 1
 http://www.mouser.co.uk/ProductDetail/TE-Connectivity-Neohm/CPF0402B2K2E1/?qs=sGAEpiMZZMu61qfTUdNhGxAfPTOoMd3MGZDask%2fUogU%3d
 
@@ -144,9 +140,12 @@ http://www.mouser.co.uk/ProductDetail/IQD/LFXTAL009678Cutt/?qs=sGAEpiMZZMsBj6bBr
 1
 http://www.mouser.co.uk/ProductDetail/Murata-Electronics/NCP18XH103F03RB/?qs=sGAEpiMZZMuBd0%252bwiCVS20%252b%2fOc5%252bkSJfn1OkHduPUvQ%3d
 
+1
+http://www.mouser.co.uk/ProductDetail/Panasonic/DZ2S068M0L/?qs=%2fha2pyFadujKEJKbwlxC5fxy5Dw4JAYAx1YvNiq8vLWLGrYA4USxig%3d%3d
 
-41;"IC4";"AAT3672IWO";1;"AAT3672IWO-4.2-1";;;
+*** NON STOCK ***
+1
+http://www.mouser.co.uk/ProductDetail/Skyworks/AAT3672IWO-42-1-T1/?qs=%2fha2pyFadugROh3v2irXVDNBHtJmFCGOVeOBHMnpTvna4k8ej%2fd9tQ%3d%3d
 
-16;"D1";"SOD-523";1;"1V FVD";;;
 
 
