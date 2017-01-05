@@ -51,33 +51,72 @@ http://www.mouser.co.uk/ProductDetail/Wurth-Electronics/885012205055/?qs=sGAEpiM
 4
 http://www.mouser.co.uk/ProductDetail/Wurth-Electronics/885012105012/?qs=sGAEpiMZZMs0AnBnWHyRQEGbLOF2VP1iSo4ZKZRmr2uZ4wVs0QZlqg%3d%3d
 
+1
+http://www.mouser.co.uk/ProductDetail/TE-Connectivity/2129691-1/?qs=%2fha2pyFaduhqQRZkg0pn4QNUwS%2f7yjD6WCIhOd1DDZeh71kFITfoNA%3d%3d
 
-1;"U1";"2129691-1";1;"USB-C";;;
-3;"J1,J7,J4";"R_0402";3;"0";;;
-4;"U3";"DFN-10-1EP_3x3mm_Pitch0.5mm";1;"FT200XD";;;
+3
+http://www.mouser.co.uk/ProductDetail/Vishay/CRCW04020000Z0ED/?qs=sGAEpiMZZMtlubZbdhIBIGYNrShSckG0f3kM0NdIj0s%3d
 
-8;"R11,R12";"R_0402";2;"27R";;;
-9;"TP3,TP4,TP1,TP2";"SMALLWIREPAD";4;"TEST";;;
-10;"AE1";"AN2051";1;"Antenna_Dipole";;;
-11;"R1,R8";"R_0402";2;"10k";;;
-12;"SW2";"434333045822";1;"SW_Push";;;
-13;"R10";"R_0402";1;"2k2";;;
-15;"R17,R14,R9";"R_0402";3;"91k";;;
-16;"D1";"SOD-523";1;"1V FVD";;;
-17;"P8,P9";"FFC4-0.5";2;"CONN_01X04";;;
-19;"IC8";"SOT-363";1;"BSD840NH6327XTSA1";;;
-20;"IC3";"WSON6";1;"BQ297xx";;;
-21;"IC5";"TPS6223xx";1;"TPS6223xx";;;
-22;"L8";"SRP2010";1;"DC-DC 1u";;;
-23;"J2,J3,J5,J6";"M1.4MOUNTHOLE";4;"Screw_Terminal_1x01";;;
-24;"R15,R13,R2,R3";"R_0402";4;"1k";;;
-25;"IC2";"QFN24";1;"EFM32ZG108";;;
-27;"IC10";"ER-OLED096-1";1;"128x64OLED";;;
-29;"P2,P5,P1,P3,P4,P6,P7";"Pin_Header_Straight_1x01";7;"CONN_01X01";;;
-31;"IC9";"DFN10";1;"MMA8653FC";;;
-32;"U2";"SWD_SPRING";1;"SWD_SPRING";;;
-34;"SW1";"KXT131LHS";1;"SW_Push";;;
-35;"IC6,IC7";"APDS-9303";2;"APDS-9303";;;
+1
+http://www.mouser.co.uk/ProductDetail/FTDI/FT200XD-R/?qs=sGAEpiMZZMvVkErl6zY%252bqaOuKzgOTT%2fR
+
+2
+http://www.mouser.co.uk/ProductDetail/Yageo/RT0402FRE0727RL/?qs=sGAEpiMZZMtlubZbdhIBILzAkmRldA9hfCto7XdLxWU%3d
+
+2
+http://www.mouser.co.uk/ProductDetail/Yageo/RC0402FR-0710KL/?qs=sGAEpiMZZMtlubZbdhIBIPp9I5DmXL4oTFYHT01xAts%3d
+
+1
+http://uk.rs-online.com/web/p/tactile-switches/7856443/?searchTerm=434333045822&relevancy-data=636F3D3126696E3D4931384E4B6E6F776E41734D504E266C753D656E266D6D3D6D61746368616C6C7061727469616C26706D3D5E285C642B5B2D5C2E5C732F5D292B285C642B293F247C5E5C642B2426706F3D313326736E3D592673743D4B4559574F52445F53494E474C455F4F525F4D554C54495F4E554D455249432677633D424F5448267573743D343334333333303435383232267374613D34333433333330343538323226
+
+1
+http://www.mouser.co.uk/Passive-Components/Resistors/_/N-5g9n?P=1yzekioZ1yzmouc&Ns=Pricing|0
+
+3
+http://www.mouser.co.uk/ProductDetail/Panasonic/ERJ-2RKF9102X/?qs=sGAEpiMZZMtlubZbdhIBIEpCgapuOP%252boa7gUCipFOy4%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/Infineon-Technologies/BSD840NH6327XTSA1/?qs=sGAEpiMZZMshyDBzk1%2fWi4lI00SCTc04GvAMPB9W6%252bI%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/Texas-Instruments/BQ29702DSER/?qs=sGAEpiMZZMsfD%252bbMpEGFJTSOn9Rup8r7QiY4fqM7Ttw%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/Texas-Instruments/TPS62237DRYR/?qs=sGAEpiMZZMtitjHzVIkrqbYrYgRelM8b2WQIr2d%2f%2fYU%3d
+
+1
+http://www2.mouser.com/ProductDetail/Bourns/SRP2010-1R0M/?qs=sGAEpiMZZMsg%252by3WlYCkU8UvYHBUd1aBW8CnykdJK88%3d
+
+2
+http://www.mouser.co.uk/ProductDetail/Murata-Electronics/LQP02HQ1N3C02E/?qs=sGAEpiMZZMukHu%252bjC5l7YcDcVPtPovhfWvuKlmdVWDw%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/Coilcraft/0603CS-5N6XJLU/?qs=sGAEpiMZZMukHu%252bjC5l7YWnJ3tgDLLHlbm0%252bGoKVIfY%3d
+
+2
+http://www.mouser.co.uk/ProductDetail/Coilcraft/0603CS-3N9XGLU/?qs=sGAEpiMZZMukHu%252bjC5l7YWnJ3tgDLLHlpv9LtakV2Wo%3d
+
+**** TODO TRY TO FIND CHEAPER
+1
+http://www.mouser.co.uk/ProductDetail/Coilcraft/0402HP-2N4XGLU/?qs=sGAEpiMZZMukHu%252bjC5l7YWnJ3tgDLLHleb4Ju9mzmS8%3d
+
+4
+http://www.mouser.co.uk/ProductDetail/Panasonic/ERJ-2RKF1001X/?qs=sGAEpiMZZMtlubZbdhIBIHcx2Q2RnT7KmxXeXdcMsdM%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/Silicon-Labs/EFM32ZG108F8-QFN24/?qs=sGAEpiMZZMuoKKEcg8mMKBN3KfvXoKGCf5cDMSHepAg%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/CK-Components/KXT-131-LHS/?qs=sGAEpiMZZMsgGjVA3toVBKGS4jrxpRGOQQHmSlVYzcQ%3d
+
+2
+http://www.mouser.co.uk/ProductDetail/Broadcom-Limited/APDS-9303-020/?qs=%2fha2pyFadugHWmphw2NMsuOFzii2B69n0YlQo22ftqE%3d
+
+1
+http://www.mouser.co.uk/ProductDetail/NXP-Freescale/MMA8653FCR1/?qs=sGAEpiMZZMuJJ6wbRIs2btaRRQKJJnyc
+
+***SKYWORKS OUT OF MOUSER STOCK*** TODO ****
+
 36;"R4";"R_0402";1;"2k2%";;;
 37;"R5";"R_0402";1;"330%";;;
 38;"R6";"R_0402";1;"2M7%";;;
@@ -86,16 +125,12 @@ http://www.mouser.co.uk/ProductDetail/Wurth-Electronics/885012105012/?qs=sGAEpiM
 41;"IC4";"AAT3672IWO";1;"AAT3672IWO-4.2-1";;;
 42;"IC1";"QFN32";1;"BlueNRG";;;
 
-46;"L4,L6";"R_0603";2;"RF1n3";;;
-47;"L5";"R_0603";1;"RF2n4";;;
-48;"L7";"R_0603";1;"RF5n6";;;
+16;"D1";"SOD-523";1;"1V FVD";;;
+
+
+
 
 51;"Y2";"CRYSTAL5x3.2";1;"16M";;;
 
-56;"L3,L2";"R_0603";2;"3n9";;;
 57;"L1";"R_0603";1;"DC-DC 4u7";;;
 58;"Y1";"CRYSTAL3.2x1.5mm";1;"32k";;;
-
-
-* Change C41 to 0603
-* Change C3 to 0603.
