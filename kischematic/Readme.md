@@ -14,6 +14,12 @@ Antenna height: 1.07
 Dual MOSFET height: 0.9
 EZMate thing: 1.4
 Screen: 1.45
+Low freq crystal: 0.9
+High freq crystal: 0.85
+
+Newest pair of crystals (available on Mouser):
+http://www.mouser.co.uk/Search/ProductDetail.aspx?R=ECS-.327-12.5-34B-TRvirtualkey59070000virtualkey520-327-12.5-34B
+http://www.mouser.co.uk/Search/ProductDetail.aspx?R=ECS-160-8-30B-CKMvirtualkey59070000virtualkey520-160-8-30B-CKM
 
 Magic micro:
 
