@@ -147,5 +147,3 @@ http://www.mouser.co.uk/ProductDetail/Panasonic/DZ2S068M0L/?qs=%2fha2pyFadujKEJK
 1
 http://www.mouser.co.uk/ProductDetail/Skyworks/AAT3672IWO-42-1-T1/?qs=%2fha2pyFadugROh3v2irXVDNBHtJmFCGOVeOBHMnpTvna4k8ej%2fd9tQ%3d%3d
 
-
-* Change C23 to 0603.
