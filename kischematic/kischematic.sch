@@ -1650,17 +1650,6 @@ F 3 "" H 9950 10000 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Screw_Terminal_1x01 J3
-U 1 1 585BB810
-P 9950 10550
-F 0 "J3" H 10030 10792 50  0000 C CNN
-F 1 "Screw_Terminal_1x01" H 10030 10701 50  0000 C CNN
-F 2 "newlightmeter:M1.4MOUNTHOLE" H 9950 10425 50  0001 C CNN
-F 3 "" H 9950 10450 50  0001 C CNN
-	1    9950 10550
-	1    0    0    -1  
-$EndComp
-$Comp
 L Screw_Terminal_1x01 J5
 U 1 1 585BB96D
 P 11050 10100
