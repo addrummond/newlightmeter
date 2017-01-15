@@ -6083,7 +6083,7 @@
   (segment (start 96.4 39.6) (end 97 39) (width 0.2) (layer F.Cu) (net 35))
   (segment (start 96.4 40) (end 96.4 39.6) (width 0.2) (layer F.Cu) (net 35))
   (segment (start 96.6 40.2) (end 96.4 40) (width 0.2) (layer F.Cu) (net 35))
-  (segment (start 100.27 32.33) (end 100.2 32.4) (width 0.29) (layer F.Cu) (net 35))
+  (segment (start 100.27 32.33) (end 100.2 32.4) (width 0.2) (layer F.Cu) (net 35))
   (segment (start 91.3 31.1) (end 91.3 30.92) (width 0.2) (layer F.Cu) (net 35) (status 30))
   (segment (start 91.3 31.1) (end 91.3 30.97) (width 0.2) (layer F.Cu) (net 35) (status 30))
   (segment (start 91.3 31.1) (end 91.3 30.98) (width 0.2) (layer F.Cu) (net 35) (status 30))
