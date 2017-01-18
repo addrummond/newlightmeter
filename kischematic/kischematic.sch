@@ -1274,8 +1274,6 @@ Text GLabel 13650 7000 0    60   Input ~ 0
 MAINBUTTON
 Text GLabel 10700 5750 1    60   Input ~ 0
 BNRG_SPI_IRQ
-Text GLabel 5100 2800 1    60   Input ~ 0
-VREG
 $Comp
 L SWD_SPRING U2
 U 1 1 58520069
@@ -3160,4 +3158,6 @@ F 3 "" H 7100 8850 50  0000 C CNN
 	1    7100 8850
 	0    -1   -1   0   
 $EndComp
+Text GLabel 5100 2800 1    60   Input ~ 0
+DISPLAY_RESET
 $EndSCHEMATC
