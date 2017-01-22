@@ -2773,7 +2773,7 @@ Wire Wire Line
 Wire Wire Line
 	4900 2800 4900 3050
 Wire Wire Line
-	5000 1500 5050 1500
+	4700 1500 5050 1500
 Connection ~ 4800 1500
 Wire Wire Line
 	4800 1500 4800 3050
@@ -2786,8 +2786,6 @@ Wire Wire Line
 	4700 1150 5050 1150
 Wire Wire Line
 	5050 1500 5050 1450
-Wire Wire Line
-	4700 1500 4800 1500
 Wire Wire Line
 	5000 1650 5000 1500
 Wire Wire Line
@@ -3160,4 +3158,5 @@ F 3 "" H 7100 8850 50  0000 C CNN
 $EndComp
 Text GLabel 5100 2800 1    60   Input ~ 0
 DISPLAY_RESET
+Connection ~ 5000 1500
 $EndSCHEMATC
