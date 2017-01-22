@@ -2,7 +2,7 @@
 
   (general
     (links 281)
-    (no_connects 11)
+    (no_connects 10)
     (area 75.974999 24.974999 102.725001 75.025001)
     (thickness 1.6)
     (drawings 223)
@@ -3839,7 +3839,7 @@
     (fp_text reference C6 (at -0.05 -0.86) (layer F.SilkS)
       (effects (font (size 1 1) (thickness 0.15)))
     )
-    (fp_text value BY100n (at 0 1.7) (layer F.Fab)
+    (fp_text value BY1u (at 0 1.7) (layer F.Fab)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_line (start -0.5 0.25) (end -0.5 -0.25) (layer F.Fab) (width 0.15))
@@ -3905,7 +3905,7 @@
     (fp_text reference C4 (at -1.55 0) (layer F.SilkS)
       (effects (font (size 0.5 0.5) (thickness 0.125)))
     )
-    (fp_text value BY1u (at 0 1.7) (layer F.Fab)
+    (fp_text value BY100n (at 0 1.7) (layer F.Fab)
       (effects (font (size 1 1) (thickness 0.15)))
     )
     (fp_line (start -0.5 0.25) (end -0.5 -0.25) (layer F.Fab) (width 0.15))
