@@ -176,7 +176,7 @@ int main()
 
     printf("Got high IRQ following reset.\n");
     printf("Setting up SPI...\n");
-    wiringPiSPISetup(0, 0);
+    wiringPiSPISetup(0, 500000);
     printf("SPI set up.\n");
 
     printf("Going through initialization sequence...\n");
