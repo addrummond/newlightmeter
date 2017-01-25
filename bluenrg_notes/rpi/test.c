@@ -51,6 +51,7 @@ int wait_to_write_n(unsigned n)
         if (r < 0)
             return r;
     }
+    return 0;
 }
 
 int read_n_bytes(unsigned offset, uint8_t rbuf[], unsigned n)
@@ -84,7 +85,7 @@ int send_command(unsigned command, const Param params[], unsigned n_params)
     }
     unsigned buflen = parm_total_length + 9;
 
-    int r = wait_to_write_n(buflen);
+    int r = wait_to_write_n(parm_total_length + 1);
     if (r < 0)
         return r;
 
@@ -165,7 +166,7 @@ int main()
 
     wiringPiSetup();
     pinMode(0, INPUT);
-    pullUpDnControl(1, PUD_DOWN);
+    pullUpDnControl(1, PUD_OFF);
     pinMode(1, OUTPUT);
 
     digitalWrite(1, 0);
@@ -215,8 +216,8 @@ int main()
 
     printf("Setting Bluetooth address...\n");
 
-    uint8_t addr_off_len[] = { 0, 6 };
-    Param addr_params[] = {
+    const uint8_t addr_off_len[] = { 0, 6 };
+    const Param addr_params[] = {
         { 2, addr_off_len },
         { 6, SERVER_BDADDR }
     };
