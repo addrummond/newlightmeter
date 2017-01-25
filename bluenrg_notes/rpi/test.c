@@ -144,17 +144,23 @@ int send_command_and_get_status(unsigned command, const Param params[], unsigned
             total_read += n;
 
             if (total_read == 7) {
-                if (status_buf[0] != 0x04 || status_buf[1] != 0x0e || status_buf[2] != 0x04 || status_buf[3] != 0x01)
+                if (status_buf[0] == 0) {
+                    printf("IGNORING DUMMY INFO %x %x %x %x\n", status_buf[0], status_buf[1], status_buf[2], status_buf[3]);
+                    total_read = 0;
+                }
+                else if (status_buf[0] == 0x04 && status_buf[1] != 0x0e && status_buf[2] != 0x04 && status_buf[3] != 0x01) {
                     return -1;
+                }
+                else {
+                    unsigned cmd = (unsigned)(status_buf[4]) | ((unsigned)(status_buf[5]) << 8);
+                    if (cmd != command)
+                        return -1;
                 
-                unsigned cmd = (unsigned)(status_buf[4]) | ((unsigned)(status_buf[5]) << 8);
-                if (cmd != command)
-                    return -1;
+                    if (status)
+                        *status = status_buf[6];
                 
-                if (status)
-                    *status = status_buf[6];
-                
-                return 0;
+                    return 0;
+                }
             }
         }
     }
@@ -162,6 +168,8 @@ int send_command_and_get_status(unsigned command, const Param params[], unsigned
 
 int main()
 {
+    int ec;
+
     printf("Starting...\n");
 
     wiringPiSetup();
@@ -189,8 +197,10 @@ int main()
 
     for (;;) {
         r = poll_read_write(&read, &write);
-        if (r < 0)
+        if (r < 0) {
+            ec = 1;
             goto err;
+        }
         if (read == 6)
             break;
         else if (read != 0) {
@@ -205,8 +215,10 @@ int main()
 
     uint8_t buf1[6];
     r = read_n_bytes(0, buf1, 6);
-    if (r < 0)
+    if (r < 0) {
+        ec = 2;
         goto err;
+    }
     if (buf1[0] != 0x04 || buf1[1] != 0xff || buf1[2] != 0x03 || buf1[3] != 0x01 || buf1[4] != 0x00 || buf1[5] != 0x01) {
         fprintf(stderr, "Initial response from BlueNRG unexpected: %x %x %x %x %x %x\n", buf1[0], buf1[1], buf1[2], buf1[3], buf1[4], buf1[5]);
         return 1;
@@ -223,13 +235,15 @@ int main()
     };
     unsigned addr_status;
     r = send_command_and_get_status(0xFC0C, addr_params, 2, &addr_status);
-    if (r < 0)
+    if (r < 0) {
+        ec = 3;
         goto err;
+    }
     printf("Address command status: %u\n", addr_status);
     
     return 0;
 
 err:
-    printf("ERROR!\n");
+    printf("ERROR! %i\n", ec);
     return 1;
 }
