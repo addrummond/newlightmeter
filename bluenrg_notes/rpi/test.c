@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#define __USE_POSIX199309
+#include <time.h>
 
 static const uint8_t SERVER_BDADDR[] = {0x12, 0x34, 0x00, 0xE1, 0x80, 0x02};
 
@@ -38,6 +40,26 @@ void wait_for_irq()
         ;
 }
 
+int wait_for_irq_with_timeout()
+{
+    struct timespec ts;
+    if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
+        return -1;
+    long t1n = ts.tv_nsec;
+
+    for (;;) {
+        if (digitalRead(0))
+            return 1;
+        
+        if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
+            return -1;
+        
+        long diff = ts.tv_nsec - t1n;
+        if (diff > 1000000)
+            return 0;
+    }
+}
+
 int irq_is_high()
 {
     return digitalRead(0);
@@ -68,11 +90,6 @@ int read_n_bytes(unsigned offset, uint8_t rbuf[], unsigned n)
     for (unsigned i = 0; i < n; ++i) {
         rbuf[i] = buf[i + 5];
     }
-
-    for (unsigned i = 0; i < n + 5; ++i) {
-        printf("%x ", buf[i]);
-    }
-    printf("\n");
 
     return 0;
 }
@@ -116,18 +133,21 @@ int send_command(unsigned command, const Param params[], unsigned n_params)
 
 int send_command_and_get_status(unsigned command, const Param params[], unsigned n_params, unsigned *status)
 {
-    int r = send_command(command, params, n_params);
-    if (r < 0)
-        return r;
-    
-    wait_for_irq();
+    for (;;) {
+        int r = send_command(command, params, n_params);
+        if (r < 0)
+            return r;
+
+        if (wait_for_irq_with_timeout())
+            break;
+    }
     
     unsigned total_read = 0;
     uint8_t status_buf[7];
 
     while (irq_is_high()) {
         unsigned read;
-        r = poll_read_write(&read, NULL);
+        int r = poll_read_write(&read, NULL);
         if (r < 0)
             return r;
                 
