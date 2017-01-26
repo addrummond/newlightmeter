@@ -6,5 +6,5 @@ commands and prints the responses.
 
 Compile and run:
 
-    gcc -std=c99 test.c -o test -lwiringPi && sudo ./test
+    gcc -O2 -std=c99 test.c -o test -lwiringPi -lrt && sudo ./test
 
