@@ -150,6 +150,11 @@ int send_command(unsigned command, const Param params[], unsigned n_params)
     buf[7] = command >> 8;
     buf[8] = parm_total_length;
 
+    printf("WRITING: ");
+    for (unsigned i = 0; i < buflen; ++i)
+        printf("%02x ", buf[i]);
+    printf("\n");
+
     r = wiringPiSPIDataRW(0, buf, buflen);
     if (r < 0)
         return r;
@@ -200,6 +205,12 @@ int send_command_and_get_response(unsigned command, const Param params[], unsign
         }
     }
 
+    printf("STATBUF: ");
+    for (unsigned i = 0; i < total_read; ++i) {
+        printf("%02x ", status_buf[i]);
+    }
+    printf("\n");
+
     if (status_buf[0] != 0x04) {
          fprintf(stderr, "Unexpected packet start %u\n", status_buf[0]);
          return -1;
@@ -207,9 +218,9 @@ int send_command_and_get_response(unsigned command, const Param params[], unsign
     else {
         unsigned evt_code = status_buf[1];
         unsigned total_length = status_buf[2];
-        unsigned param_length = status_buf[3];
+        unsigned param_length = total_length - 3;
 
-        if (total_length != param_length + 3)
+        if (status_buf[3] != 1)
             return -1;
 
         unsigned cmd = (unsigned)(status_buf[4]) | ((unsigned)(status_buf[5]) << 8);
