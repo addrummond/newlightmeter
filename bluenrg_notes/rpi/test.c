@@ -250,6 +250,8 @@ int send_command_and_get_status(unsigned command, const Param params[], unsigned
     return 0;
 }
 
+#define PR(x) { sizeof(x)/sizeof(uint8_t), x }
+
 int main()
 {
     int ec;
@@ -396,6 +398,64 @@ int main()
     }
     printf("Device name successfully set.\n");
 
+    printf("Adding a GATT service...\n");
+    const uint8_t gas_service_uuid_type[] = { 0x01 };
+    const uint8_t gas_service_uuid[] = { 0x01, 0xA0 };
+    const uint8_t gas_service_type[] = { 0x01 };
+    const uint8_t gas_max_attribute_records[] = { 0x06 };
+    const Param gas_params[] = {
+        { 1, gas_service_uuid_type },
+        { 2, gas_service_uuid },
+        { 1, gas_service_type },
+        { 1, gas_max_attribute_records }
+    };
+    uint8_t gas_response[3];
+    r = send_command_and_get_response(0xFD02, gas_params, sizeof(gas_params)/sizeof(gas_params[0]), gas_response, 3);
+
+    printf("Add service status: %u\n", gas_response[0]);
+    if (gas_response[0] != 0) {
+        fprintf(stderr, "Adding service failed\n");
+        return 1;
+    }
+    unsigned service_u = ((unsigned)(gas_response[1])) + (((unsigned)(gas_response[2])) << 8);
+    printf("Service was added: %04x\n", service_u);
+
+#if 0
+    // See p. 24 of http://www.st.com/content/ccc/resource/technical/document/user_manual/11/7b/ae/96/a8/b9/48/bf/DM00099259.pdf/files/DM00099259.pdf/jcr:content/translations/en.DM00099259.pdf
+    printf("Adding a service characteristic...\n");
+    const uint8_t gac_service_handle[] = { service_u & 0xFF, service_u >> 8 };
+    const uint8_t gac_char_uuid_type[] = { 0x01 };
+    const uint8_t gac_char_uuid[] = { 0x01, 0xA0 };
+    const uint8_t gac_char_value_length[] = { 10 };
+    const uint8_t gac_char_properties[] = { 0x1A };
+    const uint8_t gac_security_permissions[] = { 0x00 };
+    const uint8_t gac_event_mask[] = { 0x01 };
+    const uint8_t gac_encryption_key_size[] = { 0x07 };
+    const uint8_t gac_is_variable[] = { 0x01 };
+    const Param gac_params[] = {
+        PR(gac_service_handle),
+        PR(gac_char_uuid_type),
+        PR(gac_char_uuid),
+        PR(gac_char_value_length),
+        PR(gac_char_properties),
+        PR(gac_security_permissions),
+        PR(gac_event_mask),
+        PR(gac_encryption_key_size),
+        PR(gac_is_variable)
+    };
+    uint8_t gac_response[3];
+    r = send_command_and_get_response(0xFD04, gac_params, sizeof(gac_params)/sizeof(gac_params[0]), gac_response, 3);
+
+    printf("Add service charac status: %u\n", gac_response[0]);
+    if (gac_response[0] != 0) {
+        fprintf(stderr, "Failed to add service characteristic.\n");
+        return 1;
+    }
+    printf("Successfully added service characteristic.\n");
+
+    unsigned service_charac_handle = ((unsigned)(gac_response[0])) + (((unsigned)(gac_response[1])) << 8);
+#endif
+
     printf("Setting auth requirement...\n");
 
     const uint8_t sar_mimt_mode[] = { 0x00 };
@@ -443,28 +503,6 @@ int main()
         return 1;
     }
     printf("Power level successfully set.\n");
-
-    printf("Adding a GATT service...\n");
-    const uint8_t gas_service_uuid_type[] = { 0x01 };
-    const uint8_t gas_service_uuid[] = { 0xAB, 0xCD };
-    const uint8_t gas_service_type[] = { 0x01 };
-    const uint8_t gas_max_attribute_records[] = { 0x01 };
-    const Param gas_params[] = {
-        { 1, gas_service_uuid_type },
-        { 2, gas_service_uuid },
-        { 1, gas_service_type },
-        { 1, gas_max_attribute_records }
-    };
-    uint8_t gas_response[3];
-    r = send_command_and_get_response(0xFD02, gas_params, sizeof(gas_params)/sizeof(gas_params[0]), gas_response, 3);
-
-    printf("Add service status: %u\n", gas_response[0]);
-    if (gas_response[0] != 0) {
-        fprintf(stderr, "Adding service failed\n");
-        return 1;
-    }
-    unsigned service_u = ((unsigned)(gas_response[1])) + (((unsigned)(gas_response[2])) << 8);
-    printf("Service was added: %04x\n", service_u);
 
     // p. 1061
     // Set_advertising_parameters
@@ -546,16 +584,16 @@ int main()
     const unsigned conn_interval_min = (100*1000)/1250;
     const unsigned conn_interval_max = (300*1000)/1250;
     const uint8_t gsd_adv_event_type[] = { 0x00 };
-    const uint8_t gsd_adv_interval_min[] = { 0x00, 0x00 }; //{ adv_interval_min & 0xFF, adv_interval_min >> 8 };
-    const uint8_t gsd_adv_interval_max[] = { 0x00, 0x00 }; //{ adv_interval_max & 0xFF, adv_interval_max >> 8 };
+    const uint8_t gsd_adv_interval_min[] = { 0x00, 0x08 }; //{ adv_interval_min & 0xFF, adv_interval_min >> 8 };
+    const uint8_t gsd_adv_interval_max[] = { 0x00, 0x09 }; //{ adv_interval_max & 0xFF, adv_interval_max >> 8 };
     const uint8_t gsd_address_type[] = { 0x00 };//{ 0x01 };
     const uint8_t gsd_adv_filter_policy[] = { 0x00 };
     const uint8_t gsd_local_name[] = "Vaquita Porpoise";
     const uint8_t gsd_local_name_length[] = { sizeof(gsd_local_name)/sizeof(uint8_t) };
     const uint8_t gsd_service_uuid_length[] = { 0x00 };
     //const uint8_t gsd_service_uuid_list[] = { service_u & 0xFF, service_u >> 8 };
-    const uint8_t gsd_slave_conn_interval_min[] = { conn_interval_min & 0xFF, conn_interval_min >> 8 };
-    const uint8_t gsd_slave_conn_interval_max[] = { conn_interval_max & 0xFF, conn_interval_max >> 8 };
+    const uint8_t gsd_slave_conn_interval_min[] = { 0x00, 0x00 }; //{ conn_interval_min & 0xFF, conn_interval_min >> 8 };
+    const uint8_t gsd_slave_conn_interval_max[] = { 0x00, 0x00 }; //{ conn_interval_max & 0xFF, conn_interval_max >> 8 };
     const Param gsd_params[] = {
         { 1,  gsd_adv_event_type }, 
         { 2,  gsd_adv_interval_min },
