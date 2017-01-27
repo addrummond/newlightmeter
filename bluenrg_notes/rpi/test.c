@@ -466,6 +466,46 @@ int main()
     unsigned service_u = ((unsigned)(gas_response[1])) + (((unsigned)(gas_response[2])) << 8);
     printf("Service was added: %04x\n", service_u);*/
 
+
+    printf("Setting discoverable...\n");
+    //const unsigned adv_interval_min = (800*1000)/625;
+    //const unsigned adv_interval_max = (900*1000)/625;
+    const unsigned conn_interval_min = (100*1000)/1250;
+    const unsigned conn_interval_max = (300*1000)/1250;
+    const uint8_t gsd_adv_event_type[] = { 0x00 };
+    const uint8_t gsd_adv_interval_min[] = { 0x00, 0x00 }; //{ adv_interval_min & 0xFF, adv_interval_min >> 8 };
+    const uint8_t gsd_adv_interval_max[] = { 0x00, 0x00 }; //{ adv_interval_max & 0xFF, adv_interval_max >> 8 };
+    const uint8_t gsd_address_type[] = { 0x01 };
+    const uint8_t gsd_adv_filter_policy[] = { 0x00 };
+    const uint8_t gsd_local_name_length[] = { 0x10 };
+    const uint8_t gsd_local_name[] = "Vaquita Porpoise";
+    const uint8_t gsd_service_uuid_length[] = { 0x00 };
+    //const uint8_t gsd_service_uuid_list[] = { service_u & 0xFF, service_u >> 8 };
+    const uint8_t gsd_slave_conn_interval_min[] = { conn_interval_min & 0xFF, conn_interval_min >> 8 };
+    const uint8_t gsd_slave_conn_interval_max[] = { conn_interval_max & 0xFF, conn_interval_max >> 8 };
+    const Param gsd_params[] = {
+        { 1,  gsd_adv_event_type }, 
+        { 2,  gsd_adv_interval_min },
+        { 2,  gsd_adv_interval_max },
+        { 1,  gsd_address_type},
+        { 1,  gsd_adv_filter_policy },
+        { 1,  gsd_local_name_length },
+        { 16, gsd_local_name },
+        { 1,  gsd_service_uuid_length },
+        //{ 2,  gsd_service_uuid_list },
+        { 2,  gsd_slave_conn_interval_min },
+        { 2,  gsd_slave_conn_interval_max }
+    };
+    unsigned gsd_status;
+    r = send_command_and_get_status(0xFC83, gsd_params, sizeof(gsd_params)/sizeof(gsd_params[0]), &gsd_status);
+
+    printf("Set discoverable status: %u\n", gsd_status);
+    if (gsd_status != 0) {
+        fprintf(stderr, "Fail to set discoverable.\n");
+        return 1;
+    }
+    printf("Device now discoverable.\n");
+
     // Set_advertising_parameters
     // Set_advertising_data
     // Set_scan_resp_data
@@ -551,45 +591,6 @@ int main()
         return 1;
     }
     printf("Adv enabled.\n");
-
-    printf("Setting discoverable...\n");
-    const unsigned adv_interval_min = (800*1000)/625;
-    const unsigned adv_interval_max = (900*1000)/625;
-    const unsigned conn_interval_min = (100*1000)/1250;
-    const unsigned conn_interval_max = (300*1000)/1250;
-    const uint8_t gsd_adv_event_type[] = { 0x00 };
-    const uint8_t gsd_adv_interval_min[] = { 0x00, 0x08 }; //{ adv_interval_min & 0xFF, adv_interval_min >> 8 };
-    const uint8_t gsd_adv_interval_max[] = { 0x00, 0x08 }; //{ adv_interval_max & 0xFF, adv_interval_max >> 8 };
-    const uint8_t gsd_address_type[] = { 0x01 };
-    const uint8_t gsd_adv_filter_policy[] = { 0x00 };
-    const uint8_t gsd_local_name_length[] = { 0x10 };
-    const uint8_t gsd_local_name[] = "Vaquita Porpoise";
-    const uint8_t gsd_service_uuid_length[] = { 0x00 };
-    //const uint8_t gsd_service_uuid_list[] = { service_u & 0xFF, service_u >> 8 };
-    const uint8_t gsd_slave_conn_interval_min[] = { conn_interval_min & 0xFF, conn_interval_min >> 8 };
-    const uint8_t gsd_slave_conn_interval_max[] = { conn_interval_max & 0xFF, conn_interval_max >> 8 };
-    const Param gsd_params[] = {
-        { 1,  gsd_adv_event_type }, 
-        { 2,  gsd_adv_interval_min },
-        { 2,  gsd_adv_interval_max },
-        { 1,  gsd_address_type},
-        { 1,  gsd_adv_filter_policy },
-        { 1,  gsd_local_name_length },
-        { 16, gsd_local_name },
-        { 1,  gsd_service_uuid_length },
-        //{ 2,  gsd_service_uuid_list },
-        { 2,  gsd_slave_conn_interval_min },
-        { 2,  gsd_slave_conn_interval_max }
-    };
-    unsigned gsd_status;
-    r = send_command_and_get_status(0xFC83, gsd_params, sizeof(gsd_params)/sizeof(gsd_params[0]), &gsd_status);
-
-    printf("Set discoverable status: %u\n", gsd_status);
-    if (gsd_status != 0) {
-        fprintf(stderr, "Fail to set discoverable.\n");
-        return 1;
-    }
-    printf("Device now discoverable.\n");
 
     return 0;
 
