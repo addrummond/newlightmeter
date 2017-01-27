@@ -7,6 +7,10 @@
 #include <time.h>
 #include <assert.h>
 
+#define NORMAL_TIMEOUT_NS             1000000
+#define NORMAL_LOOP_COUNT_TIMEOUT     100000
+#define READ_LOOP_MAX_COUNTS_PER_BYTE 10
+
 static const uint8_t SERVER_BDADDR[] = {0x12, 0x34, 0x00, 0xE1, 0x80, 0x02};
 
 typedef struct Param {
@@ -43,12 +47,15 @@ void wait_for_irq()
 
 int wait_for_irq_with_timeout()
 {
+    // Seems to be occasional bug with timeout based on CLOCK_REALTIME,
+    // so we also use a loop count timeout (which should last longer).
+
     struct timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
         return -1;
     long t1n = ts.tv_nsec;
 
-    for (;;) {
+    for (unsigned i = 0; i < NORMAL_LOOP_COUNT_TIMEOUT; ++i) {
         if (digitalRead(0))
             return 1;
         
@@ -56,9 +63,11 @@ int wait_for_irq_with_timeout()
             return -1;
         
         long diff = ts.tv_nsec - t1n;
-        if (diff > 1000000)
+        if (diff > NORMAL_TIMEOUT_NS)
             return 0;
     }
+
+    return 0;
 }
 
 int irq_is_high()
@@ -81,8 +90,11 @@ int read_n_bytes(unsigned offset, uint8_t rbuf[], unsigned n)
 {
     uint8_t buf[n + 5];
     unsigned start = 0;
-    
-    while (start < n) {
+    for (unsigned i = 0; start < n; ++i) {
+        // Timeout logic.
+        if (i > n * READ_LOOP_MAX_COUNTS_PER_BYTE)
+            return -3;
+
         buf[start] = 0x0B;
         for (unsigned i = start+1; i < n + 5 - start; ++i)
             buf[i] = 0;
@@ -145,59 +157,86 @@ int send_command(unsigned command, const Param params[], unsigned n_params)
     return 0;
 }
 
-int send_command_and_get_status(unsigned command, const Param params[], unsigned n_params, unsigned *status)
+int send_command_and_get_response(unsigned command, const Param params[], unsigned n_params, uint8_t response[], unsigned max_response_len)
 {
+    assert(response != NULL || max_response_len == 0);
+
     for (;;) {
         int r = send_command(command, params, n_params);
         if (r < 0)
             return r;
 
-        if (wait_for_irq_with_timeout())
+        r = wait_for_irq_with_timeout();
+        if (r < 0)
+            return r;
+        if (r == 1)
             break;
     }
+
+    unsigned max_status_len = max_response_len + 6;
     
     unsigned total_read = 0;
-    uint8_t status_buf[7];
+    uint8_t status_buf[max_status_len];
 
-    while (irq_is_high()) {
+    for (unsigned i = 0; irq_is_high(); ++i) {
+        // Timeout logic.
+        if (i > READ_LOOP_MAX_COUNTS_PER_BYTE)
+            return -3;
+
         unsigned read;
         int r = poll_read_write(&read, NULL);
         if (r < 0)
             return r;
+        
+        if (total_read + read > max_status_len)
+            return -2;
                 
         if (read > 0) {
-            unsigned n = 7 - total_read;
-
-            if (read > n)
-                return -1;
-
-            r = read_n_bytes(total_read, status_buf, n);
+            r = read_n_bytes(total_read, status_buf, read);
             if (r < 0)
                 return r;
             
-            total_read += n;
-
-            if (total_read == 7) {
-                if (status_buf[0] == 0) {
-                    //printf("IGNORING DUMMY INFO\n");
-                    total_read = 0;
-                }
-                else if (status_buf[0] == 0x04 && status_buf[1] != 0x0e && status_buf[2] != 0x04 && status_buf[3] != 0x01) {
-                    return -1;
-                }
-                else {
-                    unsigned cmd = (unsigned)(status_buf[4]) | ((unsigned)(status_buf[5]) << 8);
-                    if (cmd != command)
-                        return -1;
-                
-                    if (status)
-                        *status = status_buf[6];
-                
-                    return 0;
-                }
-            }
+            total_read += read;
         }
     }
+
+    if (status_buf[0] != 0x04) {
+         fprintf(stderr, "Unexpected packet start %u\n", status_buf[0]);
+         return -1;
+    }
+    else {
+        unsigned evt_code = status_buf[1];
+        unsigned total_length = status_buf[2];
+        unsigned param_length = status_buf[3];
+
+        if (total_length != param_length + 3)
+            return -1;
+
+        unsigned cmd = (unsigned)(status_buf[4]) | ((unsigned)(status_buf[5]) << 8);
+        if (cmd != command)
+            return -1;
+                    
+        if (param_length > max_response_len)
+            return -2;
+                    
+        memcpy(response, status_buf + 6, param_length);
+
+        return param_length;
+    }
+}
+
+int send_command_and_get_status(unsigned command, const Param params[], unsigned n_params, unsigned *status)
+{
+    uint8_t response[1];
+
+    int r = send_command_and_get_response(command, params, n_params, response, 1);
+    if (r < 0)
+        return r;
+    
+    if (status)
+        *status = response[0];
+    
+    return 0;
 }
 
 int main()
@@ -290,6 +329,30 @@ int main()
         return 1;
     }
     printf("GATT initialized successfully.\n");
+
+    printf("Initializing GAP...\n");
+
+    uint8_t gap_init_response[7];
+    gap_init_response[0] = 255;
+    const uint8_t gap_role[] = { 0x01/*peripheral*/ };
+    const Param gap_init_params[] = {
+        { 1, gap_role }
+    };
+    r = send_command_and_get_response(0xFC8A, gap_init_params, 1, gap_init_response, 7);
+
+    printf("GAP_Init; read = %i, command status = %u\n", r, gap_init_response[0]);
+    if (gap_init_response[0] != 0) {
+        fprintf(stderr, "Failed to initialize GAP\n");
+        return 1;
+    }
+
+    printf("GAP_Init response: ");
+    for (unsigned i = 1; i < r; ++i) {
+        printf("%02x ", gap_init_response[i]);
+    }
+    printf("\n");
+
+    printf("GAP initialized successfully.\n");
     
     return 0;
 
