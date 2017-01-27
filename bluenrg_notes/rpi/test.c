@@ -369,6 +369,36 @@ int main()
     printf("\n");
 
     printf("GAP initialized successfully.\n");
+
+    printf("Setting auth requirement...\n");
+
+    const uint8_t sar_mimt_mode[] = { 0x00 };
+    const uint8_t sar_oob_enable[] = { 0x00 };
+    const uint8_t sar_oob_data[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    const uint8_t sar_min_encryption_key_size[] = { 0x07 };
+    const uint8_t sar_max_encryption_key_size[] = { 0x10 };
+    const uint8_t sar_use_fixed_pin[] = { 0x01 };
+    const uint8_t sar_fixed_pin[] = { 123, 0x00, 0x00, 0x00 };
+    const uint8_t sar_bonding_mode[] = { 0x01 };
+    const Param sar_params[] = {
+        { 1,  sar_mimt_mode },
+        { 1,  sar_oob_enable },
+        { 16, sar_oob_data },
+        { 1,  sar_min_encryption_key_size },
+        { 1,  sar_max_encryption_key_size },
+        { 1,  sar_use_fixed_pin },
+        { 4,  sar_fixed_pin },
+        { 1,  sar_bonding_mode }
+    };
+    unsigned sar_response;
+    r = send_command_and_get_status(0xFC86, sar_params, sizeof(sar_params)/sizeof(sar_params[0]), &sar_response);
+
+    printf("Set auth requirment status: %u\n", sar_response);
+    if (sar_response != 0) {
+        fprintf(stderr, "Failed to SAR\n");
+        return 1;
+    }
+    printf("Auth requirement successfully set.\n");
     
     return 0;
 
