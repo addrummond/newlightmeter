@@ -444,7 +444,7 @@ int main()
     }
     printf("Power level successfully set.\n");
 
-    /*printf("Adding a GATT service...\n");
+    printf("Adding a GATT service...\n");
     const uint8_t gas_service_uuid_type[] = { 0x01 };
     const uint8_t gas_service_uuid[] = { 0xAB, 0xCD };
     const uint8_t gas_service_type[] = { 0x01 };
@@ -464,52 +464,14 @@ int main()
         return 1;
     }
     unsigned service_u = ((unsigned)(gas_response[1])) + (((unsigned)(gas_response[2])) << 8);
-    printf("Service was added: %04x\n", service_u);*/
+    printf("Service was added: %04x\n", service_u);
 
-
-    printf("Setting discoverable...\n");
-    //const unsigned adv_interval_min = (800*1000)/625;
-    //const unsigned adv_interval_max = (900*1000)/625;
-    const unsigned conn_interval_min = (100*1000)/1250;
-    const unsigned conn_interval_max = (300*1000)/1250;
-    const uint8_t gsd_adv_event_type[] = { 0x00 };
-    const uint8_t gsd_adv_interval_min[] = { 0x00, 0x00 }; //{ adv_interval_min & 0xFF, adv_interval_min >> 8 };
-    const uint8_t gsd_adv_interval_max[] = { 0x00, 0x00 }; //{ adv_interval_max & 0xFF, adv_interval_max >> 8 };
-    const uint8_t gsd_address_type[] = { 0x01 };
-    const uint8_t gsd_adv_filter_policy[] = { 0x00 };
-    const uint8_t gsd_local_name_length[] = { 0x10 };
-    const uint8_t gsd_local_name[] = "Vaquita Porpoise";
-    const uint8_t gsd_service_uuid_length[] = { 0x00 };
-    //const uint8_t gsd_service_uuid_list[] = { service_u & 0xFF, service_u >> 8 };
-    const uint8_t gsd_slave_conn_interval_min[] = { conn_interval_min & 0xFF, conn_interval_min >> 8 };
-    const uint8_t gsd_slave_conn_interval_max[] = { conn_interval_max & 0xFF, conn_interval_max >> 8 };
-    const Param gsd_params[] = {
-        { 1,  gsd_adv_event_type }, 
-        { 2,  gsd_adv_interval_min },
-        { 2,  gsd_adv_interval_max },
-        { 1,  gsd_address_type},
-        { 1,  gsd_adv_filter_policy },
-        { 1,  gsd_local_name_length },
-        { 16, gsd_local_name },
-        { 1,  gsd_service_uuid_length },
-        //{ 2,  gsd_service_uuid_list },
-        { 2,  gsd_slave_conn_interval_min },
-        { 2,  gsd_slave_conn_interval_max }
-    };
-    unsigned gsd_status;
-    r = send_command_and_get_status(0xFC83, gsd_params, sizeof(gsd_params)/sizeof(gsd_params[0]), &gsd_status);
-
-    printf("Set discoverable status: %u\n", gsd_status);
-    if (gsd_status != 0) {
-        fprintf(stderr, "Fail to set discoverable.\n");
-        return 1;
-    }
-    printf("Device now discoverable.\n");
-
+    // p. 1061
     // Set_advertising_parameters
     // Set_advertising_data
     // Set_scan_resp_data
     // Set_advertise_enable
+#if 0
     printf("Setting advertizing parameters...\n");
     const uint8_t sap_min_inverval[] = { 0x00, 0x08 };
     const uint8_t sap_max_interval[] = { 0x00, 0x08 };
@@ -557,6 +519,7 @@ int main()
         return 1;
     }
     printf("Advertizing data set.\n");
+#endif
 
     printf("Setting scan resp data.\n");
     const uint8_t srd_data_length[] = { 0x00 };
@@ -570,13 +533,53 @@ int main()
     unsigned srd_status;
     r = send_command_and_get_status(0x2009, srd_params, sizeof(srd_params)/sizeof(srd_params[0]), &srd_status);
 
-    printf("Set scan resp data status: %u\n", sad_status);
-    if (sad_status != 0) {
+    printf("Set scan resp data status: %u\n", srd_status);
+    if (srd_status != 0) {
         fprintf(stderr, "Failed to set scan resp data.\n");
         return 1;
     }
     printf("Scan resp data set.\n");
 
+    printf("Setting discoverable...\n");
+    //const unsigned adv_interval_min = (800*1000)/625;
+    //const unsigned adv_interval_max = (900*1000)/625;
+    const unsigned conn_interval_min = (100*1000)/1250;
+    const unsigned conn_interval_max = (300*1000)/1250;
+    const uint8_t gsd_adv_event_type[] = { 0x00 };
+    const uint8_t gsd_adv_interval_min[] = { 0x00, 0x00 }; //{ adv_interval_min & 0xFF, adv_interval_min >> 8 };
+    const uint8_t gsd_adv_interval_max[] = { 0x00, 0x00 }; //{ adv_interval_max & 0xFF, adv_interval_max >> 8 };
+    const uint8_t gsd_address_type[] = { 0x00 };//{ 0x01 };
+    const uint8_t gsd_adv_filter_policy[] = { 0x00 };
+    const uint8_t gsd_local_name_length[] = { 0x10 };
+    const uint8_t gsd_local_name[] = "Vaquita Porpoise";
+    const uint8_t gsd_service_uuid_length[] = { 0x00 };
+    //const uint8_t gsd_service_uuid_list[] = { service_u & 0xFF, service_u >> 8 };
+    const uint8_t gsd_slave_conn_interval_min[] = { conn_interval_min & 0xFF, conn_interval_min >> 8 };
+    const uint8_t gsd_slave_conn_interval_max[] = { conn_interval_max & 0xFF, conn_interval_max >> 8 };
+    const Param gsd_params[] = {
+        { 1,  gsd_adv_event_type }, 
+        { 2,  gsd_adv_interval_min },
+        { 2,  gsd_adv_interval_max },
+        { 1,  gsd_address_type},
+        { 1,  gsd_adv_filter_policy },
+        { 1,  gsd_local_name_length },
+        { 16, gsd_local_name },
+        { 1,  gsd_service_uuid_length },
+        //{ 2,  gsd_service_uuid_list },
+        { 2,  gsd_slave_conn_interval_min },
+        { 2,  gsd_slave_conn_interval_max }
+    };
+    unsigned gsd_status;
+    r = send_command_and_get_status(0xFC83, gsd_params, sizeof(gsd_params)/sizeof(gsd_params[0]), &gsd_status);
+
+    printf("Set discoverable status: %u\n", gsd_status);
+    if (gsd_status != 0) {
+        fprintf(stderr, "Fail to set discoverable.\n");
+        return 1;
+    }
+    printf("Device now discoverable.\n");
+
+#if 0
     printf("Setting advertizing enable...\n");
     const uint8_t sae_en[] = { 0x01 };
     const Param sae_params[] = {
@@ -591,6 +594,7 @@ int main()
         return 1;
     }
     printf("Adv enabled.\n");
+#endif
 
     return 0;
 
