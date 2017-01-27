@@ -346,10 +346,15 @@ int main()
     uint8_t gap_init_response[7];
     gap_init_response[0] = 255;
     const uint8_t gap_role[] = { 0x01/*peripheral*/ };
+    const uint8_t gap_privacy[] = { 0x00 };
+    const uint8_t gap_name_len[] = { 0x10 };
     const Param gap_init_params[] = {
-        { 1, gap_role }
+        { 1, gap_role },
+        // These parameters are new for -MS, documented on p. 46 of http://www.st.com/content/ccc/resource/technical/document/programming_manual/1c/7e/d3/a6/d0/52/4a/35/DM00141271.pdf/files/DM00141271.pdf/jcr:content/translations/en.DM00141271.pdf
+        { 1, gap_privacy },
+        { 1, gap_name_len }
     };
-    r = send_command_and_get_response(0xFC8A, gap_init_params, 1, gap_init_response, 7);
+    r = send_command_and_get_response(0xFC8A, gap_init_params, 3, gap_init_response, 7);
 
     printf("GAP_Init; read = %i, command status = %u\n", r, gap_init_response[0]);
     if (gap_init_response[0] != 0) {
