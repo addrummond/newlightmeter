@@ -165,7 +165,7 @@ int send_command_and_get_status(unsigned command, const Param params[], unsigned
 
             if (total_read == 7) {
                 if (status_buf[0] == 0) {
-                    printf("IGNORING DUMMY INFO\n");
+                    //printf("IGNORING DUMMY INFO\n");
                     total_read = 0;
                 }
                 else if (status_buf[0] == 0x04 && status_buf[1] != 0x0e && status_buf[2] != 0x04 && status_buf[3] != 0x01) {
