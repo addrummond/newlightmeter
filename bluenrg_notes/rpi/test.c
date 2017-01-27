@@ -5,6 +5,7 @@
 #include <string.h>
 #define __USE_POSIX199309
 #include <time.h>
+#include <assert.h>
 
 static const uint8_t SERVER_BDADDR[] = {0x12, 0x34, 0x00, 0xE1, 0x80, 0x02};
 
@@ -79,14 +80,25 @@ int wait_to_write_n(unsigned n)
 int read_n_bytes(unsigned offset, uint8_t rbuf[], unsigned n)
 {
     uint8_t buf[n + 5];
-    buf[0] = 0x0B;
-    for (unsigned i = 1; i < n + 5; ++i)
-        buf[i] = 0;
+    unsigned start = 0;
     
-    int r = wiringPiSPIDataRW(0, buf, n + 5);
-    if (r < 0)
-        return r;
-    
+    while (start < n) {
+        buf[start] = 0x0B;
+        for (unsigned i = start+1; i < n + 5 - start; ++i)
+            buf[i] = 0;
+
+        int r = wiringPiSPIDataRW(start, buf, n + 5 - start);
+        if (r < 0)
+            return r;
+        
+        if (buf[0] != 2) {
+            fprintf(stderr, "Unexpected packet code in read_n_bytes.\n");
+            return -1;
+        }
+
+        start += buf[3] + (((unsigned)buf[4]) << 8);
+    }
+
     for (unsigned i = 0; i < n; ++i) {
         rbuf[i] = buf[i + 5];
     }
@@ -96,6 +108,8 @@ int read_n_bytes(unsigned offset, uint8_t rbuf[], unsigned n)
 
 int send_command(unsigned command, const Param params[], unsigned n_params)
 {
+    assert(params != NULL || n_params == 0);
+
     unsigned parm_total_length = 0;
     for (unsigned i = 0; i < n_params; ++i) {
         parm_total_length += params[i].length;
@@ -229,8 +243,6 @@ int main()
         }
     }
 
-    printf("Got 6\n");
-
     wait_for_irq();
 
     uint8_t buf1[6];
@@ -259,7 +271,25 @@ int main()
         ec = 3;
         goto err;
     }
+
     printf("Address command status: %u\n", addr_status);
+    if (addr_status != 0) {
+        fprintf(stderr, "Failed to set bluetooth address.\n");
+        return 1;
+    }
+    printf("Address updated successfully.\n");
+
+    printf("Initializing GATT...\n");
+
+    unsigned gatt_init_status;
+    r = send_command_and_get_status(0xFD01, NULL, 0, &gatt_init_status);
+    
+    printf("GATT_Init command status: %u\n", gatt_init_status);
+    if (gatt_init_status != 0) {
+        fprintf(stderr, "Failed to init GATT.\n");
+        return 1;
+    }
+    printf("GATT initialized successfully.\n");
     
     return 0;
 
