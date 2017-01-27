@@ -428,8 +428,8 @@ int main()
 
     printf("Setting power level...\n");
 
-    const uint8_t spl_en_high_power[] = { 0x01 };
-    const uint8_t spl_pa_level[] = { 0x07 };
+    const uint8_t spl_en_high_power[] = { 0x00 };
+    const uint8_t spl_pa_level[] = { 0x04 };
     const Param spl_params[] = {
         { 1, spl_en_high_power },
         { 1, spl_pa_level }
@@ -550,8 +550,8 @@ int main()
     const uint8_t gsd_adv_interval_max[] = { 0x00, 0x00 }; //{ adv_interval_max & 0xFF, adv_interval_max >> 8 };
     const uint8_t gsd_address_type[] = { 0x00 };//{ 0x01 };
     const uint8_t gsd_adv_filter_policy[] = { 0x00 };
-    const uint8_t gsd_local_name_length[] = { 0x10 };
     const uint8_t gsd_local_name[] = "Vaquita Porpoise";
+    const uint8_t gsd_local_name_length[] = { sizeof(gsd_local_name)/sizeof(uint8_t) };
     const uint8_t gsd_service_uuid_length[] = { 0x00 };
     //const uint8_t gsd_service_uuid_list[] = { service_u & 0xFF, service_u >> 8 };
     const uint8_t gsd_slave_conn_interval_min[] = { conn_interval_min & 0xFF, conn_interval_min >> 8 };
