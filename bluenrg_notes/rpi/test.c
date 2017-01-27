@@ -368,7 +368,33 @@ int main()
     }
     printf("\n");
 
+    unsigned service_handle = ((unsigned)(gap_init_response[1])) + (((unsigned)gap_init_response[2]) << 8);
+    unsigned dev_name_char_handle = ((unsigned)(gap_init_response[3])) + (((unsigned)gap_init_response[4]) << 8);
+
     printf("GAP initialized successfully.\n");
+
+    printf("Setting device name...\n");
+    const uint8_t ucv_service_handle[] = { service_handle & 0xFF, service_handle >> 8 };
+    const uint8_t ucv_char_handle[] = { dev_name_char_handle & 0xFF, dev_name_char_handle >> 8 };
+    const uint8_t ucv_val_offset[] = { 0 };
+    const uint8_t ucv_char_value_length[] = { 0x10 };
+    const uint8_t ucv_char_value[] = "Vaquita porpoise";
+    const Param ucv_params[] = {
+        { 2,  ucv_service_handle },
+        { 2,  ucv_char_handle },
+        { 1,  ucv_val_offset },
+        { 1,  ucv_char_value_length },
+        { 16, ucv_char_value }
+    };
+    unsigned ucv_status;
+    r = send_command_and_get_status(0xFD06, ucv_params, sizeof(ucv_params)/sizeof(ucv_params[0]), &ucv_status);
+
+    printf("UCV status: %u\n", ucv_status);
+    if (ucv_status != 0) {
+        fprintf(stderr, "Failed to set device name\n");
+        return 1;
+    }
+    printf("Device name successfully set.\n");
 
     printf("Setting auth requirement...\n");
 
@@ -399,6 +425,44 @@ int main()
         return 1;
     }
     printf("Auth requirement successfully set.\n");
+
+    printf("Setting discoverable...\n");
+    const unsigned adv_interval_min = (800*1000)/625;
+    const unsigned adv_interval_max = (900*1000)/625;
+    const unsigned conn_interval_min = (100*1000)/1250;
+    const unsigned conn_interval_max = (300*1000)/1250;
+    const uint8_t gsd_adv_event_type[] = { 0x00 };
+    const uint8_t gsd_adv_interval_min[] = { adv_interval_min & 0xFF, adv_interval_min >> 8 };
+    const uint8_t gsd_adv_interval_max[] = { adv_interval_max & 0xFF, adv_interval_max >> 8 };
+    const uint8_t gsd_address_type[] = { 0x01 };
+    const uint8_t gsd_adv_filter_policy[] = { 0x00 };
+    const uint8_t gsd_local_name_length[] = { 0x10 };
+    const uint8_t gsd_local_name[] = "Vaquita Porpoise";
+    const uint8_t gsd_service_uuid_length[] = { 0x00 };
+    //const uint8_t gsd_service_uuid_list[] = { };
+    const uint8_t gsd_slave_conn_interval_min[] = { conn_interval_min & 0xFF, conn_interval_min >> 8 };
+    const uint8_t gsd_slave_conn_interval_max[] = { conn_interval_max & 0xFF, conn_interval_max >> 8 };
+    const Param gsd_params[] = {
+        { 1,  gsd_adv_event_type }, 
+        { 2,  gsd_adv_interval_min },
+        { 2,  gsd_adv_interval_max },
+        { 1,  gsd_address_type},
+        { 1,  gsd_adv_filter_policy },
+        { 1,  gsd_local_name_length },
+        { 16, gsd_local_name },
+        { 1,  gsd_service_uuid_length },
+        { 2,  gsd_slave_conn_interval_min },
+        { 2,  gsd_slave_conn_interval_max }
+    };
+    unsigned gsd_status;
+    r = send_command_and_get_status(0xFC83, gsd_params, sizeof(gsd_params)/sizeof(gsd_params[0]), &gsd_status);
+
+    printf("Set discoverable status: %u\n", gsd_status);
+    if (gsd_status != 0) {
+        fprintf(stderr, "Fail to set discoverable.\n");
+        return 1;
+    }
+    printf("Device now discoverable.\n");
     
     return 0;
 
