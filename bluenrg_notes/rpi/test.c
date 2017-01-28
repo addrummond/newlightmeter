@@ -420,7 +420,6 @@ int main()
     unsigned service_u = ((unsigned)(gas_response[1])) + (((unsigned)(gas_response[2])) << 8);
     printf("Service was added: %04x\n", service_u);
 
-#if 0
     // See p. 24 of http://www.st.com/content/ccc/resource/technical/document/user_manual/11/7b/ae/96/a8/b9/48/bf/DM00099259.pdf/files/DM00099259.pdf/jcr:content/translations/en.DM00099259.pdf
     printf("Adding a service characteristic...\n");
     const uint8_t gac_service_handle[] = { service_u & 0xFF, service_u >> 8 };
@@ -454,7 +453,6 @@ int main()
     printf("Successfully added service characteristic.\n");
 
     unsigned service_charac_handle = ((unsigned)(gac_response[0])) + (((unsigned)(gac_response[1])) << 8);
-#endif
 
     printf("Setting auth requirement...\n");
 
@@ -581,8 +579,8 @@ int main()
     printf("Setting discoverable...\n");
     //const unsigned adv_interval_min = (800*1000)/625;
     //const unsigned adv_interval_max = (900*1000)/625;
-    const unsigned conn_interval_min = (100*1000)/1250;
-    const unsigned conn_interval_max = (300*1000)/1250;
+    //const unsigned conn_interval_min = (100*1000)/1250;
+    //const unsigned conn_interval_max = (300*1000)/1250;
     const uint8_t gsd_adv_event_type[] = { 0x00 };
     const uint8_t gsd_adv_interval_min[] = { 0x00, 0x08 }; //{ adv_interval_min & 0xFF, adv_interval_min >> 8 };
     const uint8_t gsd_adv_interval_max[] = { 0x00, 0x09 }; //{ adv_interval_max & 0xFF, adv_interval_max >> 8 };
