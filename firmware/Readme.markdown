@@ -31,3 +31,9 @@ Other important points
 It is necessary to do a `monitor reset` and `monitor halt` before loading new
 firmware, since otherwise things like counters and interrupts can get screwed
 up even though most of the code appears to run normally.
+
+
+EFM32 emlib docs
+----
+
+http://devtools.silabs.com/dl/documentation/doxygen/5.0.0/efm32zg/html/index.html
