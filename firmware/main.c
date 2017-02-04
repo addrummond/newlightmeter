@@ -13,7 +13,7 @@
 #define I2C_SCL_PIN 7
 
 #define I2C_ADDR        0b0101001
-#define ACCEL_I2C_ADDR  0x0D
+#define ACCEL_I2C_ADDR  (0x1D << 1)
 
 #define DATA0LOW  0xC
 #define DATA0HIGH 0xD
@@ -54,20 +54,20 @@ static void i2c_init()
         GPIO_PinModeSet(I2C_PORT, I2C_SCL_PIN, gpioModeWiredAndFilter, 1);
     }
 
-    I2C_Init_TypeDef i2c_init = I2C_INIT_DEFAULT;/*{
+    I2C_Init_TypeDef i2c_init = /*I2C_INIT_DEFAULT;*/ {
         .enable = true,
         .master = true,
         .refFreq = 0,
         .freq = I2C_FREQ_STANDARD_MAX,
         .clhr = i2cClockHLRAsymetric
-    };*/
+    };
 
     SEGGER_RTT_printf(0, "Initializing I2C...\n");
     I2C_Init(I2C0, &i2c_init);
     SEGGER_RTT_printf(0, "I2C initialized.\n");
 
     NVIC_ClearPendingIRQ(I2C0_IRQn);
-    NVIC_EnableIRQ(I2C0_IRQn);
+    NVIC_DisableIRQ(I2C0_IRQn);
 }
 
 static void print_stat(int status)
@@ -91,7 +91,7 @@ static void accel_write_reg(uint8_t reg, uint8_t val)
     uint8_t wbuf[] = { reg, val };
     I2C_TransferSeq_TypeDef i2c_transfer = {
         .addr = ACCEL_I2C_ADDR,
-        .flags = I2C_FLAG_WRITE,
+        .flags = I2C_FLAG_WRITE_WRITE,
         .buf[0].data = wbuf,
         .buf[0].len = sizeof(wbuf)/sizeof(wbuf[0])
     };
@@ -102,6 +102,22 @@ static void accel_write_reg(uint8_t reg, uint8_t val)
     SEGGER_RTT_printf(0, "Ending transfer..\n");
     print_stat(status);
 }
+
+/*static uint8_t accel_read_reg(uint8_t reg)
+{
+    uint8_t wbuf[] = { reg };
+    I2C_TransferSeq_TypeDef i2c_transfer = {
+        .addr = ACCEL_I2C_ADDR,
+        .flags = I2C_FLAG_WRITE,
+        .buf[0].data = wbuf,
+        .buf[0].len = sizeof(wbuf)/sizeof(wbuf[0])
+    };
+    SEGGER_RTT_printf(0, "Starting transfer..\n");
+    int status = I2C_TransferInit(I2C0, &i2c_transfer);
+    while (status == i2cTransferInProgress)
+        status = I2C_Transfer(I2C0);
+    SEGGER_RTT_printf(0, "Ending transfer..\n");
+}*/
 
 static void i2c_test1_setup()
 {
@@ -116,8 +132,8 @@ static void i2c_test1_setup()
 static void i2c_test1_read()
 {
     SEGGER_RTT_printf(0, "Trying to read accel reg.\n");    
-    uint8_t wbuf[] = { 0x05 };
-    uint8_t rbuf[1];
+    uint8_t wbuf[] = { 0x01 };
+    uint8_t rbuf[2];
     I2C_TransferSeq_TypeDef i2c_transfer = {
         .addr = ACCEL_I2C_ADDR,
         .flags = I2C_FLAG_WRITE_READ,
@@ -126,7 +142,7 @@ static void i2c_test1_read()
         .buf[1].data = rbuf,
         .buf[1].len = sizeof(rbuf)/sizeof(rbuf[0])
     };
-    SEGGER_RTT_printf(0, "Accel reg read %u\n", rbuf[0]);    
+    SEGGER_RTT_printf(0, "Accel reg read %u %u\n", rbuf[0], rbuf[1]);
     int status = I2C_TransferInit(I2C0, &i2c_transfer);
     while (status == i2cTransferInProgress)
         status = I2C_Transfer(I2C0);
