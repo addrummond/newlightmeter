@@ -3953,10 +3953,10 @@
   (gr_line (start 80.975 43.025) (end 79.475 43.025) (layer Edge.Cuts) (width 0.05))
   (gr_line (start 80.975 42.525) (end 80.975 43.025) (layer Edge.Cuts) (width 0.05))
   (gr_line (start 79.475 42.525) (end 80.975 42.525) (layer Edge.Cuts) (width 0.05))
-  (gr_line (start 82.85 53.82) (end 83.285 53.82) (layer Edge.Cuts) (width 0.05))
-  (gr_line (start 82.875 43.645) (end 83.285 43.645) (layer Edge.Cuts) (width 0.05))
+  (gr_line (start 82.85 53.82) (end 83.31 53.82) (layer Edge.Cuts) (width 0.05))
+  (gr_line (start 82.875 43.645) (end 83.31 43.645) (layer Edge.Cuts) (width 0.05))
   (gr_line (start 82.85 53.82) (end 82.85 53.62) (layer Edge.Cuts) (width 0.05))
-  (gr_line (start 83.285 43.645) (end 83.285 53.82) (layer Edge.Cuts) (width 0.05))
+  (gr_line (start 83.31 43.645) (end 83.31 53.82) (layer Edge.Cuts) (width 0.05))
   (gr_line (start 82.875 44.095) (end 82.875 43.645) (layer Edge.Cuts) (width 0.05))
   (gr_text "C\n" (at 101.85 51.16) (layer F.SilkS) (tstamp 5856F713)
     (effects (font (size 0.35 0.35) (thickness 0.0875)))
@@ -7500,7 +7500,7 @@
     (connect_pads (clearance 0.2))
     (min_thickness 0.254)
     (keepout (tracks allowed) (vias allowed) (copperpour not_allowed))
-    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (fill (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
     (polygon
       (pts
         (xy 82.94 43.75) (xy 84.99 43.7) (xy 85.29 53.75) (xy 83.13 53.9) (xy 82.95 43.75)
