@@ -947,8 +947,6 @@ F 3 "" H 5300 10650 50  0000 C CNN
 	1    5300 10650
 	1    0    0    -1  
 $EndComp
-Text GLabel 5150 9100 0    60   Input ~ 0
-PSTAT1
 Text GLabel 5150 9200 0    60   Input ~ 0
 PSTAT2
 Text GLabel 11700 6400 2    60   Input ~ 0
@@ -2910,5 +2908,22 @@ Wire Wire Line
 Text GLabel 10600 5750 1    60   Input ~ 0
 BNRG_SPI_IRQ
 Text GLabel 10700 5750 1    60   Input ~ 0
+PSTAT1
+$Comp
+L R R?
+U 1 1 5898D822
+P 5150 8900
+F 0 "R?" V 4943 8900 50  0000 C CNN
+F 1 "27R" V 5034 8900 50  0000 C CNN
+F 2 "Resistors_SMD:R_0402" V 5080 8900 50  0001 C CNN
+F 3 "" H 5150 8900 50  0000 C CNN
+	1    5150 8900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5150 9100 5150 9050
+Wire Wire Line
+	5150 8750 5150 8650
+Text GLabel 5150 8650 0    60   Input ~ 0
 PSTAT1
 $EndSCHEMATC
