@@ -1551,8 +1551,6 @@ Text GLabel 3250 9350 2    60   Input ~ 0
 BAT-
 Text GLabel 3200 6900 2    60   Input ~ 0
 BAT+
-Text GLabel 10600 5750 1    60   Input ~ 0
-DISPLAY_CS
 Text GLabel 10950 5100 2    60   Input ~ 0
 MAINBUTTON
 $Comp
@@ -1596,44 +1594,6 @@ Text GLabel 11600 2250 2    60   Input ~ 0
 DISPLAY_CS
 Text GLabel 11700 2850 2    60   Input ~ 0
 SPI_MOSI
-Text GLabel 14550 1150 2    60   Input ~ 0
-SPI_CLK
-Text GLabel 14550 1250 2    60   Input ~ 0
-SPI_MOSI
-Text GLabel 14550 1350 2    60   Input ~ 0
-DISPLAY_RESET
-Text GLabel 14550 1450 2    60   Input ~ 0
-DISPLAY_CS
-Text GLabel 7750 5900 2    60   Input ~ 0
-SPI_CLK
-Text GLabel 7750 6000 2    60   Input ~ 0
-SPI_MOSI
-Text GLabel 7750 6100 2    60   Input ~ 0
-DISPLAY_RESET
-Text GLabel 7750 6200 2    60   Input ~ 0
-DISPLAY_CS
-$Comp
-L CONN_01X04 P9
-U 1 1 585C8A1F
-P 14200 1300
-F 0 "P9" H 14119 925 50  0000 C CNN
-F 1 "CONN_01X04" H 14119 1016 50  0000 C CNN
-F 2 "newlightmeter:FFC4-0.5" H 14200 1300 50  0001 C CNN
-F 3 "" H 14200 1300 50  0000 C CNN
-	1    14200 1300
-	-1   0    0    1   
-$EndComp
-$Comp
-L CONN_01X04 P8
-U 1 1 585C9D18
-P 7400 6050
-F 0 "P8" H 7319 5675 50  0000 C CNN
-F 1 "CONN_01X04" H 7319 5766 50  0000 C CNN
-F 2 "newlightmeter:FFC4-0.5" H 7400 6050 50  0001 C CNN
-F 3 "" H 7400 6050 50  0000 C CNN
-	1    7400 6050
-	-1   0    0    1   
-$EndComp
 Text Label 7950 7600 0    60   ~ 0
 Jumpers
 $Comp
@@ -2596,8 +2556,6 @@ Wire Wire Line
 Wire Wire Line
 	11400 6550 11600 6550
 Wire Wire Line
-	10600 5900 10600 5750
-Wire Wire Line
 	10900 5900 10900 5100
 Wire Wire Line
 	10900 5100 10950 5100
@@ -2619,22 +2577,6 @@ Wire Wire Line
 Connection ~ 11400 2050
 Wire Wire Line
 	11400 1950 11400 1850
-Wire Wire Line
-	14400 1150 14550 1150
-Wire Wire Line
-	14400 1250 14550 1250
-Wire Wire Line
-	14400 1350 14550 1350
-Wire Wire Line
-	14400 1450 14550 1450
-Wire Wire Line
-	7600 5900 7750 5900
-Wire Wire Line
-	7600 6000 7750 6000
-Wire Wire Line
-	7600 6100 7750 6100
-Wire Wire Line
-	7600 6200 7750 6200
 Wire Wire Line
 	11450 6450 11400 6450
 Wire Wire Line
@@ -2968,10 +2910,10 @@ Wire Wire Line
 	14050 3800 14050 3600
 Connection ~ 14050 3600
 $Comp
-L R J?
+L R J3
 U 1 1 58968228
 P 8150 8100
-F 0 "J?" V 7943 8100 50  0000 C CNN
+F 0 "J3" V 7943 8100 50  0000 C CNN
 F 1 "0" V 8034 8100 50  0000 C CNN
 F 2 "Resistors_SMD:R_0402" V 8080 8100 50  0001 C CNN
 F 3 "" H 8150 8100 50  0000 C CNN
@@ -2986,4 +2928,5 @@ Text GLabel 8450 8100 2    60   Input ~ 0
 I2C_SCL
 Text GLabel 7850 8100 0    60   Input ~ 0
 I2C_SCL
+NoConn ~ 10600 5900
 $EndSCHEMATC
