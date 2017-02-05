@@ -14,6 +14,7 @@ Antenna height: 1.07
 Dual MOSFET height: 0.9
 EZMate thing: 1.4
 Screen: 1.45
+Zif connector height: 2
 Low freq crystal: 0.9
 High freq crystal: 0.85
 
