@@ -2909,24 +2909,5 @@ Wire Wire Line
 Wire Wire Line
 	14050 3800 14050 3600
 Connection ~ 14050 3600
-$Comp
-L R J3
-U 1 1 58968228
-P 8150 8100
-F 0 "J3" V 7943 8100 50  0000 C CNN
-F 1 "0" V 8034 8100 50  0000 C CNN
-F 2 "Resistors_SMD:R_0402" V 8080 8100 50  0001 C CNN
-F 3 "" H 8150 8100 50  0000 C CNN
-	1    8150 8100
-	0    -1   -1   0   
-$EndComp
-Wire Wire Line
-	8300 8100 8450 8100
-Wire Wire Line
-	8000 8100 7850 8100
-Text GLabel 8450 8100 2    60   Input ~ 0
-I2C_SCL
-Text GLabel 7850 8100 0    60   Input ~ 0
-I2C_SCL
 NoConn ~ 10600 5900
 $EndSCHEMATC
