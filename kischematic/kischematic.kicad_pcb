@@ -6041,9 +6041,9 @@
   (segment (start 97.48 50.48) (end 97.52 50.48) (width 0.16) (layer F.Cu) (net 106))
   (segment (start 101.41 50.084) (end 100.866 50.084) (width 0.2) (layer F.Cu) (net 106) (status 30))
   (segment (start 89.84 39.73) (end 90 39.57) (width 0.16) (layer F.Cu) (net 107))
-  (segment (start 90 39.57) (end 90 37.03) (width 0.16) (layer F.Cu) (net 107))
-  (segment (start 90 37.03) (end 89.48 36.51) (width 0.16) (layer F.Cu) (net 107))
-  (segment (start 89.48 36.51) (end 88.3925 36.51) (width 0.16) (layer F.Cu) (net 107))
+  (segment (start 90 39.57) (end 90 36.96) (width 0.16) (layer F.Cu) (net 107))
+  (segment (start 90 36.96) (end 89.55 36.51) (width 0.16) (layer F.Cu) (net 107))
+  (segment (start 89.55 36.51) (end 88.3925 36.51) (width 0.16) (layer F.Cu) (net 107))
 
   (zone (net 1) (net_name GND) (layer F.Cu) (tstamp 0) (hatch edge 0.508)
     (connect_pads (clearance 0.2))
