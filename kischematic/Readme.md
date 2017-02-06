@@ -1,3 +1,6 @@
+Low freq crystal: NX3215SA
+High (16MHz) freq crystal: NX3225SA
+
 USB-C connector protrusion above top layer: 0.475
 USB-C connector protrusion above bottom layer: 2.265
 USB-C total height: 3.34
@@ -16,7 +19,7 @@ EZMate thing: 1.4
 Screen: 1.45
 Zif connector height: 2
 Low freq crystal: 0.9
-High freq crystal: 0.85
+High freq crystal: 0.55
 
 Newest pair of crystals (available on Mouser):
 http://www.mouser.co.uk/Search/ProductDetail.aspx?R=ECS-.327-12.5-34B-TRvirtualkey59070000virtualkey520-327-12.5-34B
