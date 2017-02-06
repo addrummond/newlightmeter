@@ -2978,7 +2978,6 @@ F 3 "" H 14000 3600 50  0000 C CNN
 	1    14000 3600
 	0    1    1    0   
 $EndComp
-Connection ~ 14150 3600
 Wire Wire Line
 	15100 3500 15300 3500
 Wire Wire Line
