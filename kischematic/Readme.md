@@ -1,3 +1,6 @@
+PChan MOSFET http://www.mouser.co.uk/ProductDetail/ROHM-Semiconductor/RZM001P02T2L/?qs=sGAEpiMZZMshyDBzk1%2fWi5brl1xcCtmLC2Mq%252brqhxE4aWyoIiu38IQ%3d%3d
+NChan http://www.mouser.co.uk/ProductDetail/ROHM-Semiconductor/RE1C002UNTCL/?qs=sGAEpiMZZMshyDBzk1%2fWi5brl1xcCtmLX9T5kEFqBHnWEMk%2fgV3G4w%3d%3d
+
 Low freq crystal: NX3215SA
 High (16MHz) freq crystal: NX3225SA
 
