@@ -6,7 +6,7 @@
     (area 75.974999 24.974999 102.725001 75.025001)
     (thickness 1.6)
     (drawings 223)
-    (tracks 2317)
+    (tracks 2319)
     (zones 0)
     (modules 107)
     (nets 112)
@@ -4083,6 +4083,8 @@
   (gr_line (start 102.7 25) (end 102.7 75) (layer Edge.Cuts) (width 0.05))
   (gr_line (start 76 25) (end 102.7 25) (layer Edge.Cuts) (width 0.05))
 
+  (segment (start 86.86 40.61) (end 87.6 41.32) (width 0.16) (layer F.Cu) (net 1))
+  (via (at 87.6 41.32) (size 0.7) (drill 0.35) (layers F.Cu B.Cu) (net 1))
   (via (at 95.98 32.56) (size 0.62) (drill 0.31) (layers F.Cu B.Cu) (net 1))
   (segment (start 95.98 32.56) (end 95.62 32.92) (width 0.16) (layer F.Cu) (net 1))
   (segment (start 95.62 32.92) (end 95.2 32.92) (width 0.16) (layer F.Cu) (net 1))
