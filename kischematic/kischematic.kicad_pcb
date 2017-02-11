@@ -67,8 +67,8 @@
     (mod_edge_width 0.15)
     (mod_text_size 1 1)
     (mod_text_width 0.15)
-    (pad_size 1.2 1.2)
-    (pad_drill 0.7)
+    (pad_size 1.1 1.1)
+    (pad_drill 1.1)
     (pad_to_mask_clearance 0)
     (aux_axis_origin 0 0)
     (grid_origin 92.74 40.71)
@@ -1713,8 +1713,8 @@
       (net 75 "Net-(J5-Pad1)"))
   )
 
-  (module newlightmeter:M1.4MOUNTHOLE (layer F.Cu) (tedit 5856E4F6) (tstamp 5857B2C0)
-    (at 99.13 68.208)
+  (module newlightmeter:M1.4MOUNTHOLE (layer F.Cu) (tedit 589F555E) (tstamp 5857B2C0)
+    (at 101.7 72.108)
     (path /585BBAC6)
     (fp_text reference J6 (at 0 -10) (layer F.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)))
@@ -1722,7 +1722,7 @@
     (fp_text value Screw_Terminal_1x01 (at 0 -5) (layer F.Fab) hide
       (effects (font (size 1 1) (thickness 0.15)))
     )
-    (pad 1 thru_hole circle (at 0.11 0.252) (size 1.1 1.1) (drill 1.1) (layers *.Cu *.Mask)
+    (pad 1 thru_hole circle (at -0.5 -0.398) (size 1.1 1.1) (drill 1.1) (layers *.Cu *.Mask)
       (net 74 "Net-(J6-Pad1)"))
   )
 
@@ -7125,7 +7125,7 @@
     (connect_pads (clearance 0.5))
     (min_thickness 0.254)
     (keepout (tracks allowed) (vias allowed) (copperpour not_allowed))
-    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (fill (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
     (polygon
       (pts
         (xy 98.4 55.2) (xy 102.6 55.2) (xy 102.49 73.21) (xy 98.49 73.21) (xy 98.49 69.46)
@@ -7136,7 +7136,7 @@
     (connect_pads (clearance 0.5))
     (min_thickness 0.254)
     (keepout (tracks allowed) (vias allowed) (copperpour not_allowed))
-    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (fill (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
     (polygon
       (pts
         (xy 98.4 55.2) (xy 102.6 55.2) (xy 102.49 73.21) (xy 98.44 73.21) (xy 98.49 69.46)
