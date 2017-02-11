@@ -8,8 +8,8 @@
     (drawings 223)
     (tracks 2082)
     (zones 0)
-    (modules 104)
-    (nets 116)
+    (modules 103)
+    (nets 115)
   )
 
   (page A4)
@@ -214,7 +214,6 @@
   (net 112 "Net-(IC2-Pad24)")
   (net 113 "Net-(IC13-Pad4)")
   (net 114 "Net-(IC13-Pad3)")
-  (net 115 "Net-(J4-Pad1)")
 
   (net_class Default "This is the default net class."
     (clearance 0.1525)
@@ -301,7 +300,6 @@
     (add_net "Net-(J1-Pad1)")
     (add_net "Net-(J2-Pad1)")
     (add_net "Net-(J3-Pad1)")
-    (add_net "Net-(J4-Pad1)")
     (add_net "Net-(J5-Pad1)")
     (add_net "Net-(J6-Pad1)")
     (add_net "Net-(R13-Pad1)")
@@ -342,6 +340,19 @@
     (add_net VUSB)
   )
 
+  (module newlightmeter:M1.4MOUNTHOLE (layer F.Cu) (tedit 5897BD5A) (tstamp 5897D5CA)
+    (at 101.2 25.93)
+    (path /5899522F)
+    (fp_text reference J1 (at 0 -10) (layer F.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)))
+    )
+    (fp_text value Screw_Terminal_1x01 (at 0 -5) (layer F.Fab) hide
+      (effects (font (size 1 1) (thickness 0.15)))
+    )
+    (pad 1 thru_hole circle (at 0 0.57) (size 1.1 1.1) (drill 1.1) (layers *.Cu *.Mask)
+      (net 103 "Net-(J1-Pad1)"))
+  )
+
   (module newlightmeter:M1.4MOUNTHOLE (layer F.Cu) (tedit 589E6D4E) (tstamp 589E95C5)
     (at 89.45 29.58)
     (path /585BA25C)
@@ -353,19 +364,6 @@
     )
     (pad 1 thru_hole circle (at -0.1 0) (size 1.1 1.1) (drill 1.1) (layers *.Cu *.Mask)
       (net 76 "Net-(J2-Pad1)"))
-  )
-
-  (module newlightmeter:M1.4MOUNTHOLE (layer F.Cu) (tedit 5856E3C0) (tstamp 589E95B0)
-    (at 96.349881 38.41)
-    (path /58A0011C)
-    (fp_text reference J4 (at 0 -10) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Screw_Terminal_1x01 (at 0 -5) (layer F.Fab) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (pad 1 thru_hole circle (at 0 0) (size 1.1 1.1) (drill 1.1) (layers *.Cu *.Mask)
-      (net 115 "Net-(J4-Pad1)"))
   )
 
   (module Capacitors_SMD:C_0402 (layer F.Cu) (tedit 5415D599) (tstamp 589E1370)
@@ -950,19 +948,6 @@
       (net 19 "Net-(C10-Pad1)") (solder_mask_margin 0.1))
     (pad 2 smd rect (at 1.1 0.8) (size 1.4 1.2) (layers F.Cu F.Paste F.Mask)
       (net 1 GND) (solder_mask_margin 0.1))
-  )
-
-  (module newlightmeter:M1.4MOUNTHOLE (layer F.Cu) (tedit 5897BD5A) (tstamp 5897D5CA)
-    (at 101.2 25.93)
-    (path /5899522F)
-    (fp_text reference J1 (at 0 -10) (layer F.SilkS) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (fp_text value Screw_Terminal_1x01 (at 0 -5) (layer F.Fab) hide
-      (effects (font (size 1 1) (thickness 0.15)))
-    )
-    (pad 1 thru_hole circle (at 0 0.57) (size 1.1 1.1) (drill 1.1) (layers *.Cu *.Mask)
-      (net 103 "Net-(J1-Pad1)"))
   )
 
   (module newlightmeter:M1.4MOUNTHOLE (layer F.Cu) (tedit 5897BCED) (tstamp 5897D5B5)
