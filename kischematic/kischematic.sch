@@ -2958,4 +2958,15 @@ Wire Wire Line
 Wire Wire Line
 	5350 9400 5350 9100
 Connection ~ 5350 9100
+$Comp
+L Screw_Terminal_1x01 J?
+U 1 1 58A0011C
+P 10500 9750
+F 0 "J?" H 10580 9992 50  0000 C CNN
+F 1 "Screw_Terminal_1x01" H 10580 9901 50  0000 C CNN
+F 2 "newlightmeter:M1.4MOUNTHOLE" H 10500 9625 50  0001 C CNN
+F 3 "" H 10500 9650 50  0001 C CNN
+	1    10500 9750
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
