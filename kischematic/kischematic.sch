@@ -1809,21 +1809,8 @@ Text GLabel 14950 5050 2    60   Input ~ 0
 VBATSAFE
 Text GLabel 13600 5650 3    60   Input ~ 0
 VREG
-Text GLabel 4550 8500 0    60   Input ~ 0
-CHARGE_ENABLE
 Text GLabel 13150 1300 2    60   Input ~ 0
 VREG
-$Comp
-L R R21
-U 1 1 58A51931
-P 4550 8850
-F 0 "R21" V 4343 8850 50  0000 C CNN
-F 1 "27R" V 4434 8850 50  0000 C CNN
-F 2 "Resistors_SMD:R_0402" V 4480 8850 50  0001 C CNN
-F 3 "" H 4550 8850 50  0000 C CNN
-	1    4550 8850
-	1    0    0    -1  
-$EndComp
 Text GLabel 14950 5300 2    60   Input ~ 0
 BATD
 $Comp
@@ -2247,8 +2234,6 @@ Wire Wire Line
 	5100 9500 5400 9500
 Wire Wire Line
 	5100 9300 5100 9500
-Wire Wire Line
-	4550 9400 5400 9400
 Wire Wire Line
 	4250 9300 5400 9300
 Wire Wire Line
@@ -2745,10 +2730,6 @@ Wire Wire Line
 Wire Wire Line
 	13600 5500 13600 5650
 Wire Wire Line
-	4550 9400 4550 9000
-Wire Wire Line
-	4550 8700 4550 8500
-Wire Wire Line
 	14800 5550 14800 5650
 Wire Wire Line
 	14700 5300 14950 5300
@@ -2972,4 +2953,9 @@ Wire Wire Line
 Connection ~ 10850 5750
 Wire Wire Line
 	11900 5750 11950 5750
+Wire Wire Line
+	5400 9400 5350 9400
+Wire Wire Line
+	5350 9400 5350 9100
+Connection ~ 5350 9100
 $EndSCHEMATC
