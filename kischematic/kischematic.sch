@@ -2976,4 +2976,15 @@ Wire Wire Line
 Connection ~ 11100 5550
 Text GLabel 11900 5350 2    60   Input ~ 0
 USBD-BR
+$Comp
+L Screw_Terminal_1x01 J?
+U 1 1 58A00E55
+P 10500 9650
+F 0 "J?" H 10580 9892 50  0000 C CNN
+F 1 "Screw_Terminal_1x01" H 10580 9801 50  0000 C CNN
+F 2 "newlightmeter:M1.4MOUNTHOLE" H 10500 9525 50  0001 C CNN
+F 3 "" H 10500 9550 50  0001 C CNN
+	1    10500 9650
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC

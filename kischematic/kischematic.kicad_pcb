@@ -8,8 +8,8 @@
     (drawings 222)
     (tracks 2250)
     (zones 0)
-    (modules 104)
-    (nets 115)
+    (modules 105)
+    (nets 116)
   )
 
   (page A4)
@@ -215,6 +215,7 @@
   (net 112 "Net-(IC13-Pad4)")
   (net 113 "Net-(IC13-Pad3)")
   (net 114 USBD-BR)
+  (net 115 "Net-(J4-Pad1)")
 
   (net_class Default "This is the default net class."
     (clearance 0.1525)
@@ -300,6 +301,7 @@
     (add_net "Net-(J1-Pad1)")
     (add_net "Net-(J2-Pad1)")
     (add_net "Net-(J3-Pad1)")
+    (add_net "Net-(J4-Pad1)")
     (add_net "Net-(J5-Pad1)")
     (add_net "Net-(J6-Pad1)")
     (add_net "Net-(R13-Pad1)")
@@ -339,6 +341,19 @@
     (add_net VLOAD)
     (add_net VREG)
     (add_net VUSB)
+  )
+
+  (module newlightmeter:M1.4MOUNTHOLE (layer F.Cu) (tedit 5856E3C0) (tstamp 58A01607)
+    (at 79.5 71.71)
+    (path /58A00E55)
+    (fp_text reference J4 (at 0 -10) (layer F.SilkS) hide
+      (effects (font (size 1 1) (thickness 0.15)))
+    )
+    (fp_text value Screw_Terminal_1x01 (at 0 -5) (layer F.Fab) hide
+      (effects (font (size 1 1) (thickness 0.15)))
+    )
+    (pad 1 thru_hole circle (at 0 0) (size 1.1 1.1) (drill 1.1) (layers *.Cu *.Mask)
+      (net 115 "Net-(J4-Pad1)"))
   )
 
   (module newlightmeter:SWD_SPRING (layer F.Cu) (tedit 589FA992) (tstamp 5850591A)
