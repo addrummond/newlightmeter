@@ -2987,4 +2987,23 @@ F 3 "" H 10500 9550 50  0001 C CNN
 	1    10500 9650
 	1    0    0    -1  
 $EndComp
+$Comp
+L SW_DIP_x01 SW?
+U 1 1 58A0AD7A
+P 9300 3150
+F 0 "SW?" H 9300 3417 50  0000 C CNN
+F 1 "SW_DIP_x01" H 9300 3326 50  0000 C CNN
+F 2 "" H 9300 3150 50  0000 C CNN
+F 3 "" H 9300 3150 50  0000 C CNN
+	1    9300 3150
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9000 3150 8800 3150
+Wire Wire Line
+	9600 3150 9800 3150
+Text GLabel 9800 3150 2    60   Input ~ 0
+VREG
+Text GLabel 8800 3150 0    60   Input ~ 0
+VREG
 $EndSCHEMATC
