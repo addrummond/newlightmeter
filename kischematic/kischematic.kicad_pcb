@@ -37,7 +37,7 @@
   )
 
   (setup
-    (last_trace_width 0.2)
+    (last_trace_width 0.254)
     (user_trace_width 0.16)
     (user_trace_width 0.2)
     (user_trace_width 0.254)
@@ -4676,6 +4676,8 @@
   (segment (start 81.2 70.37) (end 81.2 70.4) (width 0.29) (layer B.Cu) (net 1))
   (via (at 80.98 70.15) (size 0.7) (drill 0.35) (layers F.Cu B.Cu) (net 1))
   (segment (start 80.98 70.15) (end 81.08 70.05) (width 0.29) (layer F.Cu) (net 1))
+  (segment (start 94.01 38.07) (end 94.01 40.7) (width 0.254) (layer F.Cu) (net 2))
+  (segment (start 94.01 40.7) (end 93.93 40.78) (width 0.254) (layer F.Cu) (net 2))
   (segment (start 86.5 57) (end 86.5 59.37) (width 0.29) (layer F.Cu) (net 2))
   (segment (start 86.5 59.37) (end 86.49 59.38) (width 0.29) (layer F.Cu) (net 2))
   (segment (start 91.248909 50.291091) (end 91.248909 49.49071) (width 0.29) (layer F.Cu) (net 2))
@@ -4760,7 +4762,6 @@
   (segment (start 92.71 40.57) (end 92.24 41.04) (width 0.29) (layer B.Cu) (net 2))
   (segment (start 92.24 41.04) (end 92.24 43.76) (width 0.29) (layer B.Cu) (net 2))
   (segment (start 92.24 43.76) (end 91.91 44.09) (width 0.29) (layer B.Cu) (net 2))
-  (segment (start 93.93 40.78) (end 94.01 40.7) (width 0.254) (layer F.Cu) (net 2))
   (segment (start 93.93 40.78) (end 93.55 40.4) (width 0.16) (layer F.Cu) (net 2))
   (segment (start 92.82 40.27) (end 92.82 38.52) (width 0.16) (layer F.Cu) (net 2))
   (segment (start 97.25 51.7) (end 97.65 51.3) (width 0.29) (layer F.Cu) (net 2))
@@ -4875,7 +4876,6 @@
   (segment (start 98.62 37.47) (end 98.62 36.29) (width 0.29) (layer F.Cu) (net 2))
   (segment (start 98.62 36.29) (end 98.62 35.73) (width 0.29) (layer F.Cu) (net 2))
   (segment (start 98 36.295) (end 98.62 36.29) (width 0.29) (layer F.Cu) (net 2))
-  (segment (start 94.01 40.35) (end 94.01 38.07) (width 0.254) (layer F.Cu) (net 2))
   (segment (start 95.631891 49.670749) (end 95.631891 49.741891) (width 0.29) (layer F.Cu) (net 2))
   (segment (start 91.248909 49.351472) (end 91.84887 48.751511) (width 0.29) (layer F.Cu) (net 2))
   (segment (start 90.378909 49.421091) (end 91.17929 49.421091) (width 0.29) (layer F.Cu) (net 2))
