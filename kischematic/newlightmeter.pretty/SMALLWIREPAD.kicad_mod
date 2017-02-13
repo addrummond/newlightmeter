@@ -1,9 +1,9 @@
-(module SMALLWIREPAD (layer F.Cu) (tedit 58618453)
-  (fp_text reference REF** (at 0 -1.5) (layer F.SilkS)
+(module SMALLWIREPAD (layer F.Cu) (tedit 58A10757)
+  (fp_text reference TP4 (at 0 -1.5) (layer F.SilkS) hide
     (effects (font (size 0.5 0.5) (thickness 0.125)))
   )
-  (fp_text value SMALLWIREPAD (at -0.5 1.75) (layer F.Fab)
+  (fp_text value TEST (at -0.5 1.75) (layer F.Fab)
     (effects (font (size 0.5 0.5) (thickness 0.125)))
   )
-  (pad 1 smd circle (at 0 0) (size 1.5 1.5) (layers F.Cu F.Paste F.Mask))
+  (pad 1 thru_hole circle (at 0 0) (size 1.5 1.5) (drill 0.7) (layers *.Cu *.Mask))
 )
