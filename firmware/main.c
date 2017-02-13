@@ -123,7 +123,7 @@ static void i2c_test1_setup()
 {
     SEGGER_RTT_printf(0, "Init accel...\n");
     accel_write_reg(0x2A, 0b10100001); // 50 HZ
-    accel_write_reg(0x2B, 0);
+    accel_write_reg(0x2B, 0b00010000); // High resolution.
     accel_write_reg(0x2C, 0);
     accel_write_reg(0x2D, 0);
     accel_write_reg(0x0E, 0b00010010); // Enable high pass filter, 8g scale
