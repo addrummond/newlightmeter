@@ -103,31 +103,45 @@ static void accel_write_reg(uint8_t reg, uint8_t val)
     print_stat(status);
 }
 
-/*static uint8_t accel_read_reg(uint8_t reg)
+static uint8_t accel_read_reg(uint8_t reg)
 {
     uint8_t wbuf[] = { reg };
+    uint8_t rbuf[2];
     I2C_TransferSeq_TypeDef i2c_transfer = {
         .addr = ACCEL_I2C_ADDR,
-        .flags = I2C_FLAG_WRITE,
+        .flags = I2C_FLAG_WRITE_READ,
         .buf[0].data = wbuf,
-        .buf[0].len = sizeof(wbuf)/sizeof(wbuf[0])
+        .buf[0].len = sizeof(wbuf)/sizeof(wbuf[0]),
+        .buf[1].data = rbuf,
+        .buf[1].len = sizeof(rbuf)/sizeof(rbuf[0])
     };
-    SEGGER_RTT_printf(0, "Starting transfer..\n");
+    SEGGER_RTT_printf(0, "Starting rr transfer..\n");
     int status = I2C_TransferInit(I2C0, &i2c_transfer);
     while (status == i2cTransferInProgress)
         status = I2C_Transfer(I2C0);
-    SEGGER_RTT_printf(0, "Ending transfer..\n");
-}*/
+    SEGGER_RTT_printf(0, "Ending rr transfer..\n");
+
+    return rbuf[0];
+}
 
 static void i2c_test1_setup()
 {
     SEGGER_RTT_printf(0, "Init accel...\n");
-    accel_write_reg(0x2A, 0b10100001); // 50 HZ
+    accel_write_reg(0x2A, 0); // Set standby mode.
     accel_write_reg(0x2B, 0b00010000); // High resolution.
     accel_write_reg(0x2C, 0);
     accel_write_reg(0x2D, 0);
-    accel_write_reg(0x0E, 0b00010010); // Enable high pass filter, 8g scale
-    SEGGER_RTT_printf(0, "Done init.\n");    
+    accel_write_reg(0x0E, 0b00000010); // 8g scale, HPF disabled.
+    accel_write_reg(0x2A, 0b10100001); // 50 HZ, enable active mode
+    SEGGER_RTT_printf(0, "Done init.\n");
+
+    uint8_t r1 = accel_read_reg(0x2A);
+    uint8_t r2 = accel_read_reg(0x2B);
+    uint8_t r3 = accel_read_reg(0x2C);
+    uint8_t r4 = accel_read_reg(0x2D);
+    uint8_t r5 = accel_read_reg(0x0E);
+    SEGGER_RTT_printf(0, "Done init [0].\n");
+    SEGGER_RTT_printf(0, "REGS: %u %u %u %u %u\n", r1, r2, r3, r4, r5);
 }
 
 static void i2c_test1_read()
