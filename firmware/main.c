@@ -122,10 +122,11 @@ static void accel_write_reg(uint8_t reg, uint8_t val)
 static void i2c_test1_setup()
 {
     SEGGER_RTT_printf(0, "Init accel...\n");
-    accel_write_reg(0x2A, 0b10000001);
+    accel_write_reg(0x2A, 0b10100001); // 50 HZ
     accel_write_reg(0x2B, 0);
     accel_write_reg(0x2C, 0);
     accel_write_reg(0x2D, 0);
+    accel_write_reg(0x0E, 0b00010010); // Enable high pass filter, 8g scale
     SEGGER_RTT_printf(0, "Done init.\n");    
 }
 
@@ -142,10 +143,13 @@ static void i2c_test1_read()
         .buf[1].data = rbuf,
         .buf[1].len = sizeof(rbuf)/sizeof(rbuf[0])
     };
-    SEGGER_RTT_printf(0, "Accel reg read %u %u\n", rbuf[0], rbuf[1]);
     int status = I2C_TransferInit(I2C0, &i2c_transfer);
     while (status == i2cTransferInProgress)
         status = I2C_Transfer(I2C0);
+    unsigned v = rbuf[0];
+    v <<= 4;
+    v |= rbuf[1];
+    SEGGER_RTT_printf(0, "Accel reg read %u\n", v);
 }
 
 static void i2c_test2()
