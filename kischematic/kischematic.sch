@@ -3034,4 +3034,26 @@ F 3 "" H 8750 2600 50  0000 C CNN
 	1    8750 2600
 	0    -1   -1   0   
 $EndComp
+$Comp
+L Screw_Terminal_1x01 J?
+U 1 1 58A250A5
+P 9900 9600
+F 0 "J?" H 9980 9842 50  0000 C CNN
+F 1 "Screw_Terminal_1x01" H 9980 9751 50  0000 C CNN
+F 2 "newlightmeter:M1.4MOUNTHOLE" H 9900 9475 50  0001 C CNN
+F 3 "" H 9900 9500 50  0001 C CNN
+	1    9900 9600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Screw_Terminal_1x01 J?
+U 1 1 58A25201
+P 11150 9600
+F 0 "J?" H 11230 9842 50  0000 C CNN
+F 1 "Screw_Terminal_1x01" H 11230 9751 50  0000 C CNN
+F 2 "newlightmeter:M1.4MOUNTHOLE" H 11150 9475 50  0001 C CNN
+F 3 "" H 11150 9500 50  0001 C CNN
+	1    11150 9600
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
