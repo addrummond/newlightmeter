@@ -68,8 +68,8 @@
     (mod_edge_width 0.15)
     (mod_text_size 1 1)
     (mod_text_width 0.15)
-    (pad_size 0.6 1.5)
-    (pad_drill 0)
+    (pad_size 1.1 1.1)
+    (pad_drill 1.1)
     (pad_to_mask_clearance 0)
     (aux_axis_origin 0 0)
     (grid_origin 95.68 43.97)
@@ -1832,8 +1832,8 @@
       (net 75 "Net-(J5-Pad1)"))
   )
 
-  (module newlightmeter:M1.4MOUNTHOLE (layer F.Cu) (tedit 589F555E) (tstamp 5857B2C0)
-    (at 101.7 72.108)
+  (module newlightmeter:M1.4MOUNTHOLE (layer F.Cu) (tedit 58A78ABF) (tstamp 5857B2C0)
+    (at 101.2 71.71)
     (path /585BBAC6)
     (fp_text reference J6 (at 0 -10) (layer F.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)))
@@ -1841,7 +1841,7 @@
     (fp_text value Screw_Terminal_1x01 (at 0 -5) (layer F.Fab) hide
       (effects (font (size 1 1) (thickness 0.15)))
     )
-    (pad 1 thru_hole circle (at -0.5 -0.398) (size 1.1 1.1) (drill 1.1) (layers *.Cu *.Mask)
+    (pad 1 thru_hole circle (at 0 0) (size 1.1 1.1) (drill 1.1) (layers *.Cu *.Mask)
       (net 74 "Net-(J6-Pad1)"))
   )
 
