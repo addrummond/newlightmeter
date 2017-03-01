@@ -44,17 +44,6 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L Screw_Terminal_1x01 J1
-U 1 1 589F18FF
-P 5800 2550
-F 0 "J1" H 5720 2504 50  0000 R CNN
-F 1 "Screw_Terminal_1x01" H 5720 2595 50  0000 R CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x01_Pitch2.54mm" H 5800 2425 50  0001 C CNN
-F 3 "" H 5800 2450 50  0001 C CNN
-	1    5800 2550
-	-1   0    0    1   
-$EndComp
-$Comp
 L Screw_Terminal_1x01 J2
 U 1 1 589F196F
 P 5800 2900
@@ -99,8 +88,6 @@ F 3 "" H 5800 3900 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 Wire Wire Line
-	4950 2550 5600 2550
-Wire Wire Line
 	4950 2900 5600 2900
 Wire Wire Line
 	4950 3250 5600 3250
@@ -108,13 +95,6 @@ Wire Wire Line
 	4950 3600 5600 3600
 Wire Wire Line
 	4950 4000 5600 4000
-Wire Wire Line
-	5400 2550 5400 2400
-Wire Wire Line
-	5400 2400 7200 2400
-Wire Wire Line
-	7200 2400 7200 2550
-Connection ~ 5400 2550
 Wire Wire Line
 	5400 2900 5400 2750
 Wire Wire Line
@@ -144,8 +124,6 @@ Wire Wire Line
 	7200 3850 7200 4000
 Connection ~ 5400 4000
 Wire Wire Line
-	7200 2550 7500 2550
-Wire Wire Line
 	7200 2900 7500 2900
 Wire Wire Line
 	7200 3250 7500 3250
@@ -153,17 +131,6 @@ Wire Wire Line
 	7200 3600 7500 3600
 Wire Wire Line
 	7200 4000 7500 4000
-$Comp
-L Screw_Terminal_1x01 J6
-U 1 1 589F1D64
-P 7700 2550
-F 0 "J6" H 7620 2504 50  0000 R CNN
-F 1 "Screw_Terminal_1x01" H 7620 2595 50  0000 R CNN
-F 2 "newlightmeter:POGOHOLDER" H 7700 2425 50  0001 C CNN
-F 3 "" H 7700 2450 50  0001 C CNN
-	1    7700 2550
-	-1   0    0    1   
-$EndComp
 $Comp
 L Screw_Terminal_1x01 J7
 U 1 1 589F1D9D
