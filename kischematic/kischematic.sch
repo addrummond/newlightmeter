@@ -1867,8 +1867,6 @@ Text GLabel 9550 4650 1    60   Input ~ 0
 PSTAT1
 Text GLabel 9350 4650 1    60   Input ~ 0
 BNRG_SPI_IRQ
-Text GLabel 9450 4650 1    60   Input ~ 0
-CHARGE_ENABLE
 Text GLabel 9850 4650 1    60   Input ~ 0
 ACCELINT1
 Text GLabel 8100 5550 0    60   Input ~ 0
@@ -2729,8 +2727,6 @@ Wire Wire Line
 	10050 6700 10050 7250
 Wire Wire Line
 	9350 4900 9350 4650
-Wire Wire Line
-	9450 4900 9450 4650
 Wire Wire Line
 	9850 4900 9850 4650
 Wire Wire Line
