@@ -1861,8 +1861,6 @@ Text GLabel 9650 7250 3    60   Input ~ 0
 PIEZO
 Text GLabel 10050 7250 3    60   Input ~ 0
 BATD
-Text GLabel 9650 4650 1    60   Input ~ 0
-MAINBUTTON
 Text GLabel 9550 4650 1    60   Input ~ 0
 PSTAT1
 Text GLabel 9350 4650 1    60   Input ~ 0
@@ -2738,8 +2736,6 @@ Wire Wire Line
 Wire Wire Line
 	9550 4900 9550 4650
 Wire Wire Line
-	9650 4900 9650 4650
-Wire Wire Line
 	8800 5850 8500 5850
 Wire Wire Line
 	8800 5950 8500 5950
@@ -3089,4 +3085,8 @@ F 3 "" H 11600 7850 50  0000 C CNN
 	1    11600 7850
 	0    -1   -1   0   
 $EndComp
+Wire Wire Line
+	9450 4900 9450 4650
+Text GLabel 9450 4650 1    60   Input ~ 0
+MAINBUTTON
 $EndSCHEMATC
