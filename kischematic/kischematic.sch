@@ -2026,7 +2026,7 @@ F 3 "" H 7500 7800 50  0000 C CNN
 	0    1    1    0   
 $EndComp
 Text GLabel 8800 7800 3    60   Input ~ 0
-VUSB
+VUSB_B4F
 Text GLabel 8650 7600 1    60   Input ~ 0
 USBD+
 NoConn ~ 7700 7900
@@ -2346,9 +2346,7 @@ Wire Wire Line
 Wire Wire Line
 	7000 7350 7050 7350
 Wire Wire Line
-	6100 8100 6100 8000
-Wire Wire Line
-	5600 8100 6100 8100
+	5600 8100 5850 8100
 Wire Wire Line
 	5300 8000 5300 8200
 Wire Wire Line
@@ -2811,7 +2809,7 @@ Wire Wire Line
 Wire Wire Line
 	15100 3600 15300 3600
 Wire Wire Line
-	15100 3700 15150 3700
+	15150 3700 15100 3700
 Wire Wire Line
 	14300 3700 14250 3700
 Wire Wire Line
@@ -3069,7 +3067,7 @@ Wire Wire Line
 Wire Wire Line
 	15250 2900 15250 3000
 Wire Wire Line
-	15150 3700 15150 2500
+	15150 2500 15150 3700
 Connection ~ 15150 2500
 Connection ~ 5150 9100
 Text GLabel 4700 9100 0    60   Input ~ 0
@@ -3081,4 +3079,48 @@ Text GLabel 15300 3200 2    60   Input ~ 0
 PSTAT1X
 Text GLabel 7600 7600 1    60   Input ~ 0
 USBD-
+$Comp
+L C C26
+U 1 1 58BF7395
+P 5800 8300
+F 0 "C26" H 5915 8346 50  0000 L CNN
+F 1 "10n" H 5915 8255 50  0000 L CNN
+F 2 "Capacitors_SMD:C_0402" H 5838 8150 50  0001 C CNN
+F 3 "" H 5800 8300 50  0000 C CNN
+	1    5800 8300
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5800 8100 5800 8150
+Connection ~ 5800 8100
+$Comp
+L GND #PWR069
+U 1 1 58BF7825
+P 5800 8500
+F 0 "#PWR069" H 5800 8250 50  0001 C CNN
+F 1 "GND" H 5805 8327 50  0000 C CNN
+F 2 "" H 5800 8500 50  0000 C CNN
+F 3 "" H 5800 8500 50  0000 C CNN
+	1    5800 8500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5800 8500 5800 8450
+$Comp
+L L_Core_Ferrite_Small L4
+U 1 1 58BF8B5D
+P 5950 8100
+F 0 "L4" V 6155 8100 50  0000 C CNN
+F 1 "33" V 6064 8100 50  0000 C CNN
+F 2 "Resistors_SMD:R_0402" H 5950 8100 50  0001 C CNN
+F 3 "" H 5950 8100 50  0000 C CNN
+	1    5950 8100
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	6100 8000 6100 8100
+Wire Wire Line
+	6100 8100 6050 8100
+Text GLabel 6100 8100 3    60   Input ~ 0
+VUSB_B4F
 $EndSCHEMATC
