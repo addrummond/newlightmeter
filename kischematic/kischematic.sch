@@ -2360,7 +2360,7 @@ Wire Wire Line
 Wire Wire Line
 	5400 9200 5150 9200
 Wire Wire Line
-	5150 9100 5400 9100
+	4700 9100 5400 9100
 Connection ~ 5300 10500
 Wire Wire Line
 	5300 10500 5300 10650
@@ -3018,7 +3018,7 @@ Wire Wire Line
 Wire Wire Line
 	10650 5650 10850 5650
 Wire Wire Line
-	10850 5950 10850 5650
+	10850 5650 10850 5950
 Connection ~ 10850 5950
 Wire Wire Line
 	10650 5750 10750 5750
@@ -3073,4 +3073,12 @@ Wire Wire Line
 Wire Wire Line
 	15150 3700 15150 2500
 Connection ~ 15150 2500
+Connection ~ 5150 9100
+Text GLabel 4700 9100 0    60   Input ~ 0
+PSTAT1X
+Wire Wire Line
+	15150 3200 15300 3200
+Connection ~ 15150 3200
+Text GLabel 15300 3200 2    60   Input ~ 0
+PSTAT1X
 $EndSCHEMATC
