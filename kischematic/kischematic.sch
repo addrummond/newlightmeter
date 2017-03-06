@@ -597,7 +597,7 @@ L C C30
 U 1 1 584DA6F7
 P 11200 5850
 F 0 "C30" H 11315 5896 50  0000 L CNN
-F 1 "X5R 1u" H 11315 5805 50  0000 L CNN
+F 1 "1u" H 11315 5805 50  0000 L CNN
 F 2 "Capacitors_SMD:C_0402" H 11238 5700 50  0001 C CNN
 F 3 "" H 11200 5850 50  0000 C CNN
 	1    11200 5850
@@ -2027,8 +2027,6 @@ F 3 "" H 7500 7800 50  0000 C CNN
 $EndComp
 Text GLabel 8800 7800 3    60   Input ~ 0
 VUSB
-Text GLabel 7600 7600 1    60   Input ~ 0
-USBD-BR
 Text GLabel 8650 7600 1    60   Input ~ 0
 USBD+
 NoConn ~ 7700 7900
@@ -3081,4 +3079,6 @@ Wire Wire Line
 Connection ~ 15150 3200
 Text GLabel 15300 3200 2    60   Input ~ 0
 PSTAT1X
+Text GLabel 7600 7600 1    60   Input ~ 0
+USBD-
 $EndSCHEMATC
