@@ -1128,13 +1128,13 @@
     )
   )
 
-  (module newlightmeter:2129691-1 (layer B.Cu) (tedit 58965386) (tstamp 584E37E5)
+  (module newlightmeter:2129691-1 (layer B.Cu) (tedit 58BED17E) (tstamp 584E37E5)
     (at 86.02 48.85 90)
     (path /5852419C)
     (fp_text reference U1 (at 0.5 -13.3 90) (layer B.SilkS) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
     )
-    (fp_text value USB-C (at 0.5 -11.8 90) (layer B.Fab)
+    (fp_text value USB-C (at 0.5 -11.8 90) (layer B.Fab) hide
       (effects (font (size 1 1) (thickness 0.15)) (justify mirror))
     )
     (fp_line (start -4.75 -3.15) (end -4.75 -10) (layer Dwgs.User) (width 0.05))
