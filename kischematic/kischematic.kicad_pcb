@@ -6,7 +6,7 @@
     (area 75.974999 24.974999 102.725001 73.235001)
     (thickness 1.6)
     (drawings 222)
-    (tracks 2297)
+    (tracks 2300)
     (zones 0)
     (modules 111)
     (nets 119)
@@ -37,7 +37,7 @@
   )
 
   (setup
-    (last_trace_width 0.29)
+    (last_trace_width 0.16)
     (user_trace_width 0.16)
     (user_trace_width 0.2)
     (user_trace_width 0.254)
@@ -4007,6 +4007,9 @@
   (gr_line (start 102.7 25) (end 102.7 73.21) (layer Edge.Cuts) (width 0.05))
   (gr_line (start 76 25) (end 102.7 25) (layer Edge.Cuts) (width 0.05))
 
+  (segment (start 98.9 41.4) (end 99.71 41.4) (width 0.16) (layer F.Cu) (net 1))
+  (segment (start 99.71 41.4) (end 99.87 41.24) (width 0.16) (layer F.Cu) (net 1))
+  (via (at 99.87 41.24) (size 0.7) (drill 0.35) (layers F.Cu B.Cu) (net 1))
   (segment (start 94.67 63.04) (end 93.67 63.04) (width 0.29) (layer F.Cu) (net 1))
   (segment (start 93.67 63.04) (end 93.47 63.24) (width 0.29) (layer F.Cu) (net 1))
   (via (at 93.47 63.24) (size 0.7) (drill 0.35) (layers F.Cu B.Cu) (net 1))
@@ -7696,7 +7699,7 @@
     (connect_pads (clearance 0.18))
     (min_thickness 0.18)
     (keepout (tracks allowed) (vias allowed) (copperpour not_allowed))
-    (fill (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
+    (fill yes (arc_segments 16) (thermal_gap 0.508) (thermal_bridge_width 0.508))
     (polygon
       (pts
         (xy 93.6 32.57) (xy 95.85 32.57) (xy 95.85 34.07) (xy 93.6 34.07)
