@@ -16,7 +16,7 @@ struct Segment {
 
 impl fmt::Debug for Segment {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{Segment ({}, {}) -> ({}, {}) [{}]}",
+        write!(f, "(Segment ({}, {}) -> ({}, {}) [{}])",
                self.p1.coords[0], self.p1.coords[1],
                self.p2.coords[0], self.p2.coords[1],
                self.opacity)
