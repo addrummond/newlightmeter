@@ -60,7 +60,9 @@ struct QTreeNode<'a> {
 }
 
 struct QTree<'a> {
-    root: Box<QTreeNode<'a>>
+    root: Box<QTreeNode<'a>>,
+    n_nodes: usize,
+    n_nonempty_nodes: usize
 }
 
 fn get_point_quad(p: Point2, c: Point2) -> i32 {
@@ -127,7 +129,11 @@ impl<'a> QTree<'a> {
             segments: vec! [],
             child_info: None
         };
-        return QTree { root: Box::new(root) };
+        return QTree {
+            root: Box::new(root),
+            n_nodes: 0,
+            n_nonempty_nodes: 0
+        };
     }
 
     fn insert_segment(&mut self, s: &'a Segment)
@@ -135,61 +141,58 @@ impl<'a> QTree<'a> {
         let mut stack : Vec<&mut Box<QTreeNode<'a>>> = Vec::new();
         stack.push(&mut self.root);
 
-        loop {
-            match stack.pop() {
-                None => {
-                    break;
+        while let Some(r) = stack.pop() {
+            if r.segments.len() < QTREE_BIN_SIZE {
+                if (r.segments.len() == 0) {
+                    self.n_nonempty_nodes += 1;
                 }
-                Some(r) => {
-                    if r.segments.len() < QTREE_BIN_SIZE {
-                        r.segments.push(s);
-                    }
-                    else if r.child_info.is_some() {
-                        if let Some(child_info) = r.child_info.as_mut() {
-                            let mask = get_segment_quad_mask(s, child_info.center);
+                r.segments.push(s);
+            }
+            else if r.child_info.is_some() {
+                if let Some(child_info) = r.child_info.as_mut() {
+                    let mask = get_segment_quad_mask(s, child_info.center);
 
-                            let mut i = 1;
-                            for child in child_info.children.as_mut() {
-                                if mask & i != 0 {
-                                    stack.push(child);
-                                }
-
-                                i <<= 1;
-                            }
+                    let mut i = 1;
+                    for child in child_info.children.as_mut() {
+                        if mask & i != 0 {
+                            stack.push(child);
                         }
-                    }
-                    else {
-                        // Given the sorting order for the points of a segment,
-                        // if we choose p2 as our new center point, the segment
-                        // will either be in NW or in SW.
-                        let in_nw = s.p1.coords[0] == s.p2.coords[0] ||
-                                    s.p1.coords[1] <= s.p2.coords[0];
 
-                        let new_children = [
-                            Box::new(QTreeNode {
-                                child_info: None,
-                                segments: if in_nw { vec![s] } else { vec![] }
-                            }),
-                            Box::new(QTreeNode {
-                                child_info: None,
-                                segments: vec![]
-                            }),
-                            Box::new(QTreeNode {
-                                child_info: None,
-                                segments: vec![]
-                            }),
-                            Box::new(QTreeNode {
-                                child_info: None,
-                                segments: if !in_nw { vec![s] } else { vec![] }
-                            }),
-                        ];
-                        let new_child_info = QTreeChildInfo {
-                            children: new_children,
-                            center: s.p2
-                        };
-                        r.child_info = Some(new_child_info);
+                        i <<= 1;
                     }
                 }
+            }
+            else {
+                // Given the sorting order for the points of a segment,
+                // if we choose p2 as our new center point, the segment
+                // will either be in NW or in SW.
+                let in_nw = s.p1.coords[0] == s.p2.coords[0] ||
+                            s.p1.coords[1] <= s.p2.coords[0];
+
+                let new_children = [
+                    Box::new(QTreeNode {
+                        child_info: None,
+                        segments: if in_nw { vec![s] } else { vec![] }
+                    }),
+                    Box::new(QTreeNode {
+                        child_info: None,
+                        segments: vec![]
+                    }),
+                    Box::new(QTreeNode {
+                        child_info: None,
+                        segments: vec![]
+                    }),
+                    Box::new(QTreeNode {
+                        child_info: None,
+                        segments: if !in_nw { vec![s] } else { vec![] }
+                    }),
+                ];
+                let new_child_info = QTreeChildInfo {
+                    children: new_children,
+                    center: s.p2
+                };
+                r.child_info = Some(new_child_info);
+                self.n_nodes += 4;
             }
         }
     }
@@ -251,17 +254,21 @@ impl<'a> QTree<'a> {
 }
 
 fn main() {
-    let test_segments = vec![
-        seg(-2.0, 1.0, -1.0, 2.0, 0.5),
-        seg(1.0, -2.0, 2.0, -1.0, 0.5)
-    ];
+    let mut test_segments: Vec<Segment> = Vec::new();
+    for i in 1..100 {
+        let v = i as f64;
+        test_segments.push(seg(-2.0*v, v, -v, 2.0*v, 0.5));
+        test_segments.push(seg(2.0*v, -v, v, -2.0*v, 0.5));
+    }
 
     let mut qtree = QTree::make_empty_qtree();
     for seg in &test_segments {        
         qtree.insert_segment(seg);
     }
 
-    let segs = qtree.get_segments_possibly_touched_by_ray(seg(-1.0, -1.0, 1.0, -1.0, 0.0));
+    println!("N NODES: {} {}", qtree.n_nodes, qtree.n_nonempty_nodes);
 
-    println!("{:?}", segs);
+    //let segs = qtree.get_segments_possibly_touched_by_ray(seg(-1.0, -1.0, 1.0, -1.0, 0.0));
+
+    //println!("{:?}", segs);
 }
