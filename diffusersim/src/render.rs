@@ -203,6 +203,9 @@ where E: piston_window::generic_event::GenericEvent {
 
 pub fn render_qtree<E>(qtree: &g::QTree, window: &mut PistonWindow, e: &E, t: &DisplayTransform)
 where E: piston_window::generic_event::GenericEvent {
+    let diam = t.height*0.01;
+
+    let mut first = true;
     for n in qtree.in_order_iter() {
         if let Some(ref ci) = n.child_info {
             let lines = [
@@ -219,8 +222,19 @@ where E: piston_window::generic_event::GenericEvent {
                         c.transform,
                         g
                     );
+                    if first {
+                        let cp = tp(ci.center, t);
+                        piston_window::ellipse(
+                            [0.0, 0.0, 1.0, 1.0],
+                            [cp[0]-diam/2.0, cp[1]-diam/2.0, diam, diam],
+                            c.transform,
+                            g
+                        )
+                    }
                 }
             });
         }
+
+        first = false;
     }
 }

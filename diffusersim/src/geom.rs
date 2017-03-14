@@ -63,7 +63,7 @@ pub fn ray(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Ray {
     }
 }
 
-const QTREE_BIN_SIZE : usize = 8;
+const QTREE_BIN_SIZE : usize = 16;
 
 pub struct QTreeChildInfo<'a> {
     pub center: Point2,
