@@ -1,5 +1,7 @@
 use std::fmt;
 use std::rc::Rc;
+use std::collections::HashSet;
+use std::iter;
 
 pub type Scalar = f64;
 use nalgebra::Vector2 as Vector2_;
@@ -209,9 +211,10 @@ impl<'a> QTree<'a> {
                 // Given the sorting order for the points of a segment,
                 // if we choose p2 as our new center point, the segment
                 // will either be in NW or in SW.
-                let in_nw = s.p1.coords[1] >= s.p2.coords[0];
+                let new_center = s.p2;
+                let in_nw = s.p1.coords[1] >= new_center.coords[0];
 
-                let new_children = [
+                let mut new_children = [
                     Box::new(QTreeNode {
                         child_info: None,
                         segments: if in_nw { vec![s] } else { vec![] }
@@ -229,6 +232,21 @@ impl<'a> QTree<'a> {
                         segments: if !in_nw { vec![s] } else { vec![] }
                     }),
                 ];
+
+                // Move existing segments downstairs.
+                for seg in &r.segments {
+                    let mask = get_segment_quad_mask(seg, new_center);
+                    if (mask != 0b1111) {
+                        for i in 0..4 {
+                            if (mask & (1 << i) != 0) {
+                                new_children[i].segments.push(seg);
+                            }
+                        }
+                    }
+                }
+
+                r.segments.clear();
+
                 let new_child_info = QTreeChildInfo {
                     children: new_children,
                     center: s.p2
