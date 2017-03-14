@@ -109,7 +109,7 @@ fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
     let ey: g::Scalar;
 
     if (m == 0.0) {
-        if (v1[0] < v2[0]) {
+        if v1[0] < v2[0] {
             // Right edge.
             ex = t.min_x + t.width;
             ey = yatxmax;

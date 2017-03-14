@@ -69,14 +69,18 @@ pub struct QTreeChildInfo<'a> {
 }
 
 pub struct QTreeNode<'a> {
-    segments: Vec<&'a Segment>,
-    child_info: Option<QTreeChildInfo<'a>>
+    pub segments: Vec<&'a Segment>,
+    pub child_info: Option<QTreeChildInfo<'a>>
 }
 
 pub struct QTree<'a> {
     root: Box<QTreeNode<'a>>,
     n_nodes: usize,
     n_nonempty_nodes: usize
+}
+
+pub struct QTreeInOrderIterator<'a, 'b: 'a> {
+    stack: Vec<&'a QTreeNode<'b>>
 }
 
 fn get_point_quad(p: Point2, c: Point2) -> i32 {
@@ -136,6 +140,22 @@ fn get_segment_quad_mask(segment: &Segment, c: Point2) -> i32
     }
 }
 
+impl<'a, 'b: 'a> Iterator for QTreeInOrderIterator<'a, 'b> {
+    type Item = &'a QTreeNode<'b>;
+
+    fn next(&mut self) -> Option<&'a QTreeNode<'b>> {
+        match self.stack.pop() {
+            None => { None }
+            Some(t) => {
+                if let Some(ref x) = t.child_info {
+                    self.stack.extend(x.children.iter().map(|x| &**x));
+                }
+                Some(t)
+            }
+        }
+    }
+}
+
 impl<'a> QTree<'a> {
     pub fn make_empty_qtree() -> QTree<'a>
     {
@@ -153,10 +173,12 @@ impl<'a> QTree<'a> {
     pub fn get_n_nodes(&self) -> usize { self.n_nodes }
     pub fn get_n_nonempty_nodes(&self) -> usize { self.n_nonempty_nodes }
 
+    pub fn in_order_iter(&self) -> QTreeInOrderIterator { QTreeInOrderIterator { stack: vec![&*self.root] } }
+
     pub fn insert_segment(&mut self, s: &'a Segment)
     {
-        let mut stack : Vec<&mut Box<QTreeNode<'a>>> = Vec::new();
-        stack.push(&mut self.root);
+        let mut stack : Vec<&mut QTreeNode<'a>> = Vec::new();
+        stack.push(&mut*self.root);
 
         while let Some(r) = stack.pop() {
             if r.segments.len() < QTREE_BIN_SIZE {
