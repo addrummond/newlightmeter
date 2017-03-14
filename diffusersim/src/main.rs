@@ -38,7 +38,8 @@ fn main() {
 
     let rays = vec![
         g::ray(-1.0, -1.0, 1.0, -1.0),
-       // g::ray(-5.0, -5.0, 5.0, 5.0)
+        g::ray(10.0, -40.0, 20.0, 50.0),
+        g::ray(-100.0, 100.0, -120.0, 200.0)
     ];
 
     let mut qtree = g::QTree::make_empty_qtree();
@@ -48,8 +49,13 @@ fn main() {
 
     println!("N NODES: {} {}", qtree.get_n_nodes(), qtree.get_n_nonempty_nodes());
 
-    let segs = qtree.get_segments_possibly_touched_by_ray(&rays[0]);
+    let mut segs: Vec<&g::Segment> = Vec::new();
+    for r in &rays {
+        segs.extend(qtree.get_segments_possibly_touched_by_ray(r).iter());
+    }
     let touched: Vec<g::Segment> = segs.iter().map(|x| (*x).clone()).collect();
+
+    println!("COMPUTED TOUCHES");
 
     do_graphics(&qtree, &test_segments, &rays, &touched);
 }

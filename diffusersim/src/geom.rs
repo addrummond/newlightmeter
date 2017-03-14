@@ -63,13 +63,15 @@ pub fn ray(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Ray {
     }
 }
 
-const QTREE_BIN_SIZE : usize = 16;
+const QTREE_BIN_SIZE : usize = 8;
 
+#[derive(Debug)]
 pub struct QTreeChildInfo<'a> {
     pub center: Point2,
     pub children: [Box<QTreeNode<'a>>; 4] // Clockwise from NW
 }
 
+#[derive(Debug)]
 pub struct QTreeNode<'a> {
     pub segments: Vec<&'a Segment>,
     pub child_info: Option<QTreeChildInfo<'a>>
@@ -88,18 +90,18 @@ pub struct QTreeInOrderIterator<'a, 'b: 'a> {
 fn get_point_quad(p: Point2, c: Point2) -> i32 {
     if p.coords[0] <= c.coords[0] {
         if p.coords[1] <= c.coords[1] {
-            return 0;
+            return 3;
         }
         else {
-            return 3;
+            return 0;
         }
     }
     else {
         if p.coords[1] <= c.coords[1] {
-            return 1;
+            return 2;
         }
         else {
-            return 2;
+            return 1;
         }
     }
 }
@@ -207,8 +209,7 @@ impl<'a> QTree<'a> {
                 // Given the sorting order for the points of a segment,
                 // if we choose p2 as our new center point, the segment
                 // will either be in NW or in SW.
-                let in_nw = s.p1.coords[0] == s.p2.coords[0] ||
-                            s.p1.coords[1] <= s.p2.coords[0];
+                let in_nw = s.p1.coords[1] >= s.p2.coords[0];
 
                 let new_children = [
                     Box::new(QTreeNode {
@@ -243,9 +244,9 @@ impl<'a> QTree<'a> {
         let mut segments : Vec<&'a Segment> = Vec::new();
         let mut stack : Vec<&Box<QTreeNode<'a>>> = Vec::new();
 
-        let slope = (ray.p2.coords[1] - ray.p2.coords[1]) /
-                    (ray.p2.coords[0] - ray.p2.coords[0]);
-        let k = ray.p2.coords[1] - (slope * ray.p1.coords[0]);
+        let m = (ray.p2.coords[1] - ray.p2.coords[1]) /
+                (ray.p2.coords[0] - ray.p2.coords[0]);
+        let k = ray.p2.coords[1] - (m * ray.p1.coords[0]);
 
         stack.push(&self.root);
 
@@ -259,30 +260,44 @@ impl<'a> QTree<'a> {
                         // The ray starts from p1, so at least the quad
                         // that q1 is in should be added to the mask.
                         let ref center = child_info.center;
-                        let mut quad_mask = get_point_quad(ray.p1, *center);
+                        let mut quad_mask = 1 << get_point_quad(ray.p1, *center);
 
-                        let y_intercept = (slope * center.coords[0]) + k;
-                        let x_intercept = (center.coords[1] - k) / slope;
+                        //println!("QUAD c{} pt{} {}", child_info.center, ray.p1, quad_mask);
 
-                        let ray_x_direction = (ray.p2.coords[0] - ray.p1.coords[0]) >= 0.0;
-                        let ray_y_direction = (ray.p2.coords[1] - ray.p1.coords[1]) >= 0.0;
-
-                        let x_direction_to_y_intercept = -ray.p1.coords[0] >= 0.0;
-                        let y_direction_to_x_intercept = -ray.p2.coords[1] >= 0.0;
-
-                        let crosses_x_axis = y_direction_to_x_intercept == ray_y_direction;
-                        let crosses_y_axis = x_direction_to_y_intercept == ray_x_direction;
-
-                        if crosses_y_axis {
-                            quad_mask |= if y_intercept > 0.0 { 0b0011 } else { 0b1100 };
+                        if ray.p1.coords[1] != ray.p2.coords[1] {
+                            //println!("FIRST TEST");
+                            let x_intercept = (child_info.center.coords[1] - k) / m;
+                            let s1 = ray.p2.coords[0] - ray.p1.coords[0] >= 0.0;
+                            let s2 = x_intercept - ray.p1.coords[0] >= 0.0;
+                            if s1 == s2 {
+                                if x_intercept > child_info.center.coords[0] {
+                                    quad_mask |= 0b0110;
+                                }
+                                else {
+                                    quad_mask |= 0b1001;
+                                }
+                            }
                         }
-                        if crosses_x_axis {
-                            quad_mask |= if x_intercept > 0.0 { 0b0110 } else { 0b1001 };
+
+                        if ray.p1.coords[0] != ray.p2.coords[0] {
+                            //println!("SECOND TEST");
+                            let y_intercept = (m * child_info.center.coords[0]) + k;
+                            let s1 = ray.p2.coords[1] - ray.p1.coords[1] >= 0.0;
+                            let s2 = y_intercept - ray.p1.coords[1] >= 0.0;
+                            if s1 == s2 {
+                                if y_intercept > child_info.center.coords[1] {
+                                    quad_mask |= 0b0011;
+                                }
+                                else {
+                                    quad_mask |= 0b1100;
+                                }
+                            }
                         }
                         
                         for i in 0..4 {
                             if quad_mask & (1 << i) != 0 {
-                                stack.push(&(child_info.children[0]));
+                                //println!("PUSHING [{}] {}", quad_mask, i);
+                                stack.push(&(child_info.children[i]));
                             }
                         }
                     }

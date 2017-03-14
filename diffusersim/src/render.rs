@@ -108,10 +108,13 @@ fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
     let d = v2 - v1;
 
     let m = (v2[1] - v1[1]) / (v2[0] - v1[0]);
-    let k = (v1[1] - m*v1[0]);
+    let k = v1[1] - m*v1[0];
         
     let yatxmin = m * t.min_x + k;
     let yatxmax = m * (t.min_x + t.width) + k;
+    
+    let xup = v2[0] - v1[0] >= 0.0;
+    let yup = v2[1] - v1[1] >= 0.0;
 
     let ex: g::Scalar;
     let ey: g::Scalar;
@@ -132,25 +135,25 @@ fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
         let xatymin = (t.min_y - k) / m;
         let xatymax = (t.min_y + t.height - k) / m;
 
-        if yatxmin < t.min_y {
-            // Bottom edge.
-            ex = xatymin;
-            ey = t.min_y;
-        }
-        else if yatxmin > t.min_y + t.width {
-            // Top edge.
-            ex = xatymax;
-            ey = t.min_y + t.height;
-        }
-        else if xatymin < t.min_x {
+        if !xup && yatxmin >= t.min_y && yatxmin <= t.min_y + t.height {
             // Left edge.
             ex = t.min_x;
             ey = yatxmin;
         }
-        else {
+        else if xup && yatxmax >= t.min_y && yatxmax <= t.min_y + t.height {
             // Right edge.
-            ex = t.min_x + t.width;
+            ex = t.min_x + t.height;
             ey = yatxmax;
+        }
+        else if !yup && xatymin >= t.min_x && xatymin <= t.min_x + t.width {
+            // Bottom edge.
+            ex = xatymin;
+            ey = t.min_y;
+        }
+        else {
+            // Top edge.
+            ex = xatymax;
+            ey = t.min_y + t.height;
         }
     }
 
