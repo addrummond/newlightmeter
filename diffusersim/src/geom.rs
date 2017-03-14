@@ -64,8 +64,8 @@ pub fn ray(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Ray {
 const QTREE_BIN_SIZE : usize = 8;
 
 pub struct QTreeChildInfo<'a> {
-    center: Point2,
-    children: [Box<QTreeNode<'a>>; 4] // Clockwise from NW
+    pub center: Point2,
+    pub children: [Box<QTreeNode<'a>>; 4] // Clockwise from NW
 }
 
 pub struct QTreeNode<'a> {

@@ -94,6 +94,14 @@ fn tp(p: g::Point2, t: &DisplayTransform) -> [GScalar; 2] {
     return [r[0] as GScalar, r[1] as GScalar];
 }
 
+fn tl(ln: [g::Scalar; 4], t: &DisplayTransform) -> [GScalar; 4] {
+    let p1v: n::Vector3<g::Scalar> = n::Vector3::new(ln[0], ln[1], 1.0);
+    let p2v: n::Vector3<g::Scalar> = n::Vector3::new(ln[2], ln[3], 1.0);
+    let r1 = t.matrix * p1v;
+    let r2 = t.matrix * p2v;
+    return [r1[0], r1[1], r2[0], r2[1]];
+}
+
 fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
     let v1 = r.p1.coords;
     let v2 = r.p2.coords;
@@ -182,5 +190,29 @@ where E: piston_window::generic_event::GenericEvent {
                 g
             );
         });
+    }
+}
+
+pub fn render_qtree<E>(qtree: &g::QTree, window: &mut PistonWindow, e: &E, t: &DisplayTransform)
+where E: piston_window::generic_event::GenericEvent {
+    for n in qtree.in_order_iter() {
+        if let Some(ref ci) = n.child_info {
+            let lines = [
+                [ ci.center.coords[0], t.min_y, ci.center.coords[0], t.min_y + t.height],
+                [ t.min_x, ci.center.coords[1], t.min_x + t.width, ci.center.coords[1] ]
+            ];
+
+            window.draw_2d(e, |c, g| {
+                for l in &lines {
+                    piston_window::line(
+                        [0.0, 0.0, 1.0, 1.0], // Color
+                        0.5, // Radius
+                        tl(*l, t),
+                        c.transform,
+                        g
+                    );
+                }
+            });
+        }
     }
 }

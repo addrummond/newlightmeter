@@ -11,7 +11,7 @@ use render as r;
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 
-fn do_graphics(segments: &Vec<g::Segment>, rays: &Vec<g::Ray>) {
+fn do_graphics(qtree: &g::QTree, segments: &Vec<g::Segment>, rays: &Vec<g::Ray>) {
     let t = render::get_display_transform(segments, WIDTH, HEIGHT);
 
     let mut window: PistonWindow =
@@ -23,6 +23,7 @@ fn do_graphics(segments: &Vec<g::Segment>, rays: &Vec<g::Ray>) {
         window.draw_2d(&e, |c, g| { clear([1.0; 4], g); });
         render::render_segments(segments, &mut window, &e, &t);
         render::render_rays(rays, &mut window, &e, &t);
+        render::render_qtree(qtree, &mut window, &e, &t);
     }
 }
 
@@ -50,5 +51,5 @@ fn main() {
 
     println!("{:?}", segs);
 
-    do_graphics(&test_segments, &rays);
+    do_graphics(&qtree, &test_segments, &rays);
 }
