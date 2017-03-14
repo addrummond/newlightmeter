@@ -113,9 +113,6 @@ fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
     let yatxmin = m * t.min_x + k;
     let yatxmax = m * (t.min_x + t.width) + k;
     
-    let xup = v2[0] - v1[0] >= 0.0;
-    let yup = v2[1] - v1[1] >= 0.0;
-
     let ex: g::Scalar;
     let ey: g::Scalar;
 
@@ -132,6 +129,9 @@ fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
         }
     }
     else {
+        let xup = v2[0] - v1[0] >= 0.0;
+        let yup = v2[1] - v1[1] >= 0.0;
+
         let xatymin = (t.min_y - k) / m;
         let xatymax = (t.min_y + t.height - k) / m;
 
