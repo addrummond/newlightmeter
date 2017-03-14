@@ -214,7 +214,7 @@ impl<'a> QTree<'a> {
         }
     }
 
-    pub fn get_segments_possibly_touched_by_ray(&'a self, ray: Ray) -> Vec<&'a Segment>
+    pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<&'a Segment>
     {
         let mut segments : Vec<&'a Segment> = Vec::new();
         let mut stack : Vec<&Box<QTreeNode<'a>>> = Vec::new();

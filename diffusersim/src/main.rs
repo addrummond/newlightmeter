@@ -11,7 +11,7 @@ use render as r;
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 
-fn do_graphics(segments: &Vec<g::Segment>) {
+fn do_graphics(segments: &Vec<g::Segment>, rays: &Vec<g::Ray>) {
     let t = render::get_display_transform(segments, WIDTH, HEIGHT);
 
     let mut window: PistonWindow =
@@ -22,6 +22,7 @@ fn do_graphics(segments: &Vec<g::Segment>) {
 
         window.draw_2d(&e, |c, g| { clear([1.0; 4], g); });
         render::render_segments(segments, &mut window, &e, &t);
+        render::render_rays(rays, &mut window, &e, &t);
     }
 }
 
@@ -33,6 +34,8 @@ fn main() {
         test_segments.push(g::seg(2.0*v, -v, v, -2.0*v));
     }
 
+    let rays = vec![g::ray(-1.0, -1.0, 1.0, -1.0)];
+
     let mut qtree = g::QTree::make_empty_qtree();
     for seg in &test_segments {        
         qtree.insert_segment(seg);
@@ -40,9 +43,9 @@ fn main() {
 
     println!("N NODES: {} {}", qtree.get_n_nodes(), qtree.get_n_nonempty_nodes());
 
-    let segs = qtree.get_segments_possibly_touched_by_ray(g::ray(-1.0, -1.0, 1.0, -1.0));
+    let segs = qtree.get_segments_possibly_touched_by_ray(&rays[0]);
 
     println!("{:?}", segs);
 
-    do_graphics(&test_segments);
+    do_graphics(&test_segments, &rays);
 }
