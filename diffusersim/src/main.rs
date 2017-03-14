@@ -21,7 +21,7 @@ fn do_graphics(qtree: &g::QTree, segments: &Vec<g::Segment>, rays: &Vec<g::Ray>,
         //let lines = r::render_segments(segments, WIDTH, HEIGHT);
 
         window.draw_2d(&e, |c, g| { clear([1.0; 4], g); });
-        render::render_segments(segments, &mut window, &e, &t, [0.0,0.0,1.0,1.0]);
+        render::render_segments(segments, &mut window, &e, &t, [0.0,1.0,0.0,1.0]);
         render::render_rays(rays, &mut window, &e, &t);
         render::render_qtree(qtree, &mut window, &e, &t);
         render::render_segments(touched, &mut window, &e, &t, [1.0,0.0,0.0,1.0])
@@ -38,7 +38,7 @@ fn main() {
 
     let rays = vec![
         g::ray(-1.0, -1.0, 1.0, -1.0),
-        g::ray(-5.0, -5.0, 5.0, 5.0)
+       // g::ray(-5.0, -5.0, 5.0, 5.0)
     ];
 
     let mut qtree = g::QTree::make_empty_qtree();

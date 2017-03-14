@@ -116,7 +116,7 @@ fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
     let ex: g::Scalar;
     let ey: g::Scalar;
 
-    if (m == 0.0) {
+    if m == 0.0 {
         if v1[0] < v2[0] {
             // Right edge.
             ex = t.min_x + t.width;
@@ -181,6 +181,8 @@ where E: piston_window::generic_event::GenericEvent {
         let tp1 = tp(r.p1, t);
         let tp2 = tp(edge_clip_ray_dest(r, t), t);
 
+        let diam = 0.01 * t.height;
+
         window.draw_2d(e, |c, g| {
             piston_window::line(
                 [1.0, 0.0, 0.0, 1.0], // Color
@@ -189,6 +191,12 @@ where E: piston_window::generic_event::GenericEvent {
                 c.transform,
                 g
             );
+            piston_window::ellipse(
+                [1.0, 0.0, 0.0, 1.0],
+                [tp1[0] - diam/2.0, tp1[1] - diam/2.0, diam, diam],
+                c.transform,
+                g
+            )
         });
     }
 }
