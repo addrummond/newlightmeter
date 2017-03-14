@@ -1,10 +1,10 @@
 use std::fmt;
 
-type Scalar = f64;
+pub type Scalar = f64;
 use nalgebra::Vector2 as Vector2_;
 use nalgebra::Point2 as Point2_;
-type Vector2 = Vector2_<Scalar>;
-type Point2 = Point2_<Scalar>;
+pub type Vector2 = Vector2_<Scalar>;
+pub type Point2 = Point2_<Scalar>;
 
 pub enum SegmentInfo {
     NoInfo,

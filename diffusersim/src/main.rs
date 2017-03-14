@@ -1,36 +1,33 @@
 extern crate nalgebra;
-
-#[macro_use]
-extern crate gfx;
-extern crate gfx_window_glutin;
-extern crate glutin;
+extern crate piston_window;
 
 mod geom;
+mod render;
 
-use std::fmt;
+use piston_window::*;
 use geom as g;
-use gfx::Device;
+use render as r;
 
-type ColorFormat = gfx::format::Rgba8;
-type DepthFormat = gfx::format::DepthStencil;
+const WIDTH: u32 = 640;
+const HEIGHT: u32 = 480;
 
-fn do_graphics() {
-    let builder = glutin::WindowBuilder::new()
-        .with_title("Triangle example".to_string())
-        .with_dimensions(1024, 768)
-        .with_vsync();
-    let (window, mut device, mut factory, main_color, mut main_depth) =
-        gfx_window_glutin::init::<ColorFormat, DepthFormat>(builder);
-    'main: loop {
-        for event in window.poll_events() {
-            match event {
-                glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) |
-                glutin::Event::Closed => break 'main,
-                _ => {}
-            }
+fn do_graphics(segments: &Vec<g::Segment>) {
+    let mut window: PistonWindow =
+        WindowSettings::new("Hello Piston!", [WIDTH, HEIGHT])
+        .exit_on_esc(true).build().unwrap();
+    while let Some(e) = window.next() {
+        let lines = r::render_segments(segments, WIDTH, HEIGHT);
+
+        window.draw_2d(&e, |c, g| { clear([1.0; 4], g); });
+        for l in lines {
+            window.draw_2d(&e, |c, g| {
+                line([1.0, 0.0, 0.0, 1.0],
+                     1.0,
+                     l,
+                     c.transform,
+                     g);
+            });
         }
-        window.swap_buffers().unwrap();
-        device.cleanup();
     }
 }
 
@@ -53,5 +50,5 @@ fn main() {
 
     println!("{:?}", segs);
 
-    do_graphics();
+    do_graphics(&test_segments);
 }
