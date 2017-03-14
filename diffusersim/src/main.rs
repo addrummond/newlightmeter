@@ -12,22 +12,16 @@ const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 
 fn do_graphics(segments: &Vec<g::Segment>) {
+    let t = render::get_display_transform(segments, WIDTH, HEIGHT);
+
     let mut window: PistonWindow =
         WindowSettings::new("Hello Piston!", [WIDTH, HEIGHT])
         .exit_on_esc(true).build().unwrap();
     while let Some(e) = window.next() {
-        let lines = r::render_segments(segments, WIDTH, HEIGHT);
+        //let lines = r::render_segments(segments, WIDTH, HEIGHT);
 
         window.draw_2d(&e, |c, g| { clear([1.0; 4], g); });
-        for l in lines {
-            window.draw_2d(&e, |c, g| {
-                line([1.0, 0.0, 0.0, 1.0],
-                     1.0,
-                     l,
-                     c.transform,
-                     g);
-            });
-        }
+        render::render_segments(segments, &mut window, &e, &t);
     }
 }
 
