@@ -7,31 +7,33 @@ use nalgebra::Point2 as Point2_;
 type Vector2 = Vector2_<Scalar>;
 type Point2 = Point2_<Scalar>;
 
+enum SegmentInfo {
+    NoInfo,
+    Info {
+        opacity: Scalar
+    }
+}
+
 struct Segment {
     // p1.x < p2.x || (p1.x == p2.x && p1.y < p2.y)
     p1: Point2,
     p2: Point2,
-    opacity: Scalar
+    info: Box<SegmentInfo>
 }
 
 impl fmt::Debug for Segment {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "(Segment ({}, {}) -> ({}, {}) [{}])",
+        write!(f, "(Segment ({}, {}) -> ({}, {}))",
                self.p1.coords[0], self.p1.coords[1],
-               self.p2.coords[0], self.p2.coords[1],
-               self.opacity)
+               self.p2.coords[0], self.p2.coords[1])
     }
 }
 
-fn pt(x: Scalar, y: Scalar) -> Point2 {
-    return Point2::new(x, y);
-}
+fn seg(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Segment {
+    let p1: Point2;
+    let p2: Point2;
 
-fn seg(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar, opacity: Scalar) -> Segment {
-    let mut p1: Point2;
-    let mut p2: Point2;
-
-    if (x1 < x2 || (x1 == x2 && y1 < y2)) {
+    if x1 < x2 || (x1 == x2 && y1 < y2) {
         p1 = Point2::new(x1, y1);
         p2 = Point2::new(x2, y2);
     }
@@ -43,7 +45,7 @@ fn seg(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar, opacity: Scalar) -> Segme
     return Segment {
         p1: p1,
         p2: p2,
-        opacity: opacity
+        info: Box::new(SegmentInfo::NoInfo)
     };
 }
 
@@ -143,7 +145,7 @@ impl<'a> QTree<'a> {
 
         while let Some(r) = stack.pop() {
             if r.segments.len() < QTREE_BIN_SIZE {
-                if (r.segments.len() == 0) {
+                if r.segments.len() == 0 {
                     self.n_nonempty_nodes += 1;
                 }
                 r.segments.push(s);
@@ -223,20 +225,20 @@ impl<'a> QTree<'a> {
                         let y_intercept = (slope * center.coords[0]) + k;
                         let x_intercept = (center.coords[1] - k) / slope;
 
-                        let ray_x_direction = ((ray.p2.coords[0] - ray.p1.coords[0]) >= 0.0);
-                        let ray_y_direction = ((ray.p2.coords[1] - ray.p1.coords[1]) >= 0.0);
+                        let ray_x_direction = (ray.p2.coords[0] - ray.p1.coords[0]) >= 0.0;
+                        let ray_y_direction = (ray.p2.coords[1] - ray.p1.coords[1]) >= 0.0;
 
-                        let x_direction_to_y_intercept = (-ray.p1.coords[0] >= 0.0);
-                        let y_direction_to_x_intercept = (-ray.p2.coords[1] >= 0.0);
+                        let x_direction_to_y_intercept = -ray.p1.coords[0] >= 0.0;
+                        let y_direction_to_x_intercept = -ray.p2.coords[1] >= 0.0;
 
-                        let crosses_x_axis = (y_direction_to_x_intercept == ray_y_direction);
-                        let crosses_y_axis = (x_direction_to_y_intercept == ray_x_direction);
+                        let crosses_x_axis = y_direction_to_x_intercept == ray_y_direction;
+                        let crosses_y_axis = x_direction_to_y_intercept == ray_x_direction;
 
                         if crosses_y_axis {
-                            quad_mask |= (if y_intercept > 0.0 { 0b0011 } else { 0b1100 });
+                            quad_mask |= if y_intercept > 0.0 { 0b0011 } else { 0b1100 };
                         }
                         if crosses_x_axis {
-                            quad_mask |= (if x_intercept > 0.0 { 0b0110 } else { 0b1001 });
+                            quad_mask |= if x_intercept > 0.0 { 0b0110 } else { 0b1001 };
                         }
                         
                         for i in 0..4 {
@@ -257,8 +259,8 @@ fn main() {
     let mut test_segments: Vec<Segment> = Vec::new();
     for i in 1..100 {
         let v = i as f64;
-        test_segments.push(seg(-2.0*v, v, -v, 2.0*v, 0.5));
-        test_segments.push(seg(2.0*v, -v, v, -2.0*v, 0.5));
+        test_segments.push(seg(-2.0*v, v, -v, 2.0*v));
+        test_segments.push(seg(2.0*v, -v, v, -2.0*v));
     }
 
     let mut qtree = QTree::make_empty_qtree();
@@ -268,7 +270,7 @@ fn main() {
 
     println!("N NODES: {} {}", qtree.n_nodes, qtree.n_nonempty_nodes);
 
-    //let segs = qtree.get_segments_possibly_touched_by_ray(seg(-1.0, -1.0, 1.0, -1.0, 0.0));
+    let segs = qtree.get_segments_possibly_touched_by_ray(seg(-1.0, -1.0, 1.0, -1.0));
 
-    //println!("{:?}", segs);
+    println!("{:?}", segs);
 }
