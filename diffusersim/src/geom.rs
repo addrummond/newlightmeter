@@ -1,4 +1,5 @@
 use std::fmt;
+use std::rc::Rc;
 
 pub type Scalar = f64;
 use nalgebra::Vector2 as Vector2_;
@@ -13,11 +14,12 @@ pub enum SegmentInfo {
     }
 }
 
+#[derive(Clone)]
 pub struct Segment {
     // p1.x < p2.x || (p1.x == p2.x && p1.y < p2.y)
     pub p1: Point2,
     pub p2: Point2,
-    pub info: Box<SegmentInfo>
+    pub info: Rc<SegmentInfo>
 }
 
 pub struct Ray {
@@ -50,7 +52,7 @@ pub fn seg(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Segment {
     Segment {
         p1: p1,
         p2: p2,
-        info: Box::new(SegmentInfo::NoInfo)
+        info: Rc::new(SegmentInfo::NoInfo)
     }
 }
 

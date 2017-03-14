@@ -157,7 +157,7 @@ fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
     g::Point2::new(ex, ey)
 }
 
-pub fn render_segments<E>(segments: &Vec<g::Segment>, window: &mut PistonWindow, e: &E, t: &DisplayTransform)
+pub fn render_segments<E>(segments: &Vec<g::Segment>, window: &mut PistonWindow, e: &E, t: &DisplayTransform, color: [f32; 4])
 where E: piston_window::generic_event::GenericEvent {
     for s in segments {
         let tp1 = tp(s.p1, t);
@@ -165,7 +165,7 @@ where E: piston_window::generic_event::GenericEvent {
         
         window.draw_2d(e, |c, g| {
             piston_window::line(
-                [0.0, 1.0, 0.0, 1.0], // Color
+                color,
                 0.5, // Radius
                 [tp1[0], tp1[1], tp2[0], tp2[1]],
                 c.transform,
