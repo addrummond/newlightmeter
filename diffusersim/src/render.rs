@@ -209,17 +209,20 @@ where E: piston_window::generic_event::GenericEvent {
     let diam = t.height*0.01;
 
     let mut first = true;
-    for n in qtree.in_order_iter() {
+    for (depth, n) in qtree.in_order_iter() {
         if let Some(ref ci) = n.child_info {
             let lines = [
                 [ ci.center.coords[0], t.min_y, ci.center.coords[0], t.min_y + t.height],
                 [ t.min_x, ci.center.coords[1], t.min_x + t.width, ci.center.coords[1] ]
             ];
 
+            let bcol = 1.0 - ((depth as f32)*0.1);
+            let gcol = ((depth as f32)*0.15);
+
             window.draw_2d(e, |c, g| {
                 for l in &lines {
                     piston_window::line(
-                        [0.0, 0.0, 1.0, 1.0], // Color
+                        [0.0, gcol, bcol, 1.0], // Color
                         0.5, // Radius
                         tl(*l, t),
                         c.transform,

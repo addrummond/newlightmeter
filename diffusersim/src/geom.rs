@@ -65,7 +65,7 @@ pub fn ray(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Ray {
     }
 }
 
-const QTREE_BIN_SIZE : usize = 8;
+const QTREE_BIN_SIZE : usize = 16;
 
 #[derive(Debug)]
 pub struct QTreeChildInfo<'a> {
@@ -86,7 +86,7 @@ pub struct QTree<'a> {
 }
 
 pub struct QTreeInOrderIterator<'a, 'b: 'a> {
-    stack: Vec<&'a QTreeNode<'b>>
+    stack: Vec<(usize, &'a QTreeNode<'b>)>,
 }
 
 fn get_point_quad(p: Point2, c: Point2) -> i32 {
@@ -147,16 +147,16 @@ fn get_segment_quad_mask(segment: &Segment, c: Point2) -> i32
 }
 
 impl<'a, 'b: 'a> Iterator for QTreeInOrderIterator<'a, 'b> {
-    type Item = &'a QTreeNode<'b>;
+    type Item = (usize, &'a QTreeNode<'b>);
 
-    fn next(&mut self) -> Option<&'a QTreeNode<'b>> {
+    fn next(&mut self) -> Option<(usize, &'a QTreeNode<'b>)> {
         match self.stack.pop() {
-            None => { None }
-            Some(t) => {
+            None => { None },
+            Some((depth, t)) => {
                 if let Some(ref x) = t.child_info {
-                    self.stack.extend(x.children.iter().map(|x| &**x));
+                    self.stack.extend(x.children.iter().map(|x| (depth+1, &**x)));
                 }
-                Some(t)
+                Some((depth, t))
             }
         }
     }
@@ -179,7 +179,7 @@ impl<'a> QTree<'a> {
     pub fn get_n_nodes(&self) -> usize { self.n_nodes }
     pub fn get_n_nonempty_nodes(&self) -> usize { self.n_nonempty_nodes }
 
-    pub fn in_order_iter(&self) -> QTreeInOrderIterator { QTreeInOrderIterator { stack: vec![&*self.root] } }
+    pub fn in_order_iter(&self) -> QTreeInOrderIterator { QTreeInOrderIterator { stack: vec![(0, &*self.root)] } }
 
     pub fn insert_segment(&mut self, s: &'a Segment)
     {
@@ -187,24 +187,23 @@ impl<'a> QTree<'a> {
         stack.push(&mut*self.root);
 
         while let Some(r) = stack.pop() {
-            if r.segments.len() < QTREE_BIN_SIZE {
-                if r.segments.len() == 0 {
-                    self.n_nonempty_nodes += 1;
-                }
-                r.segments.push(s);
-            }
-            else if r.child_info.is_some() {
-                if let Some(child_info) = r.child_info.as_mut() {
-                    let mask = get_segment_quad_mask(s, child_info.center);
+            if r.child_info.is_some() {
+                let child_info = r.child_info.as_mut().unwrap();
+                let mask = get_segment_quad_mask(s, child_info.center);
 
-                    let mut i = 1;
-                    for child in child_info.children.as_mut() {
-                        if mask & i != 0 {
-                            stack.push(child);
-                        }
-
-                        i <<= 1;
+                let mut i = 1;
+                for child in child_info.children.as_mut() {
+                    if mask & i != 0 {
+                        stack.push(child);
                     }
+
+                    i <<= 1;
+                }
+            }
+            else if r.segments.len() < QTREE_BIN_SIZE {
+                r.segments.push(s);
+                if (r.segments.len() == 1) {
+                    self.n_nonempty_nodes += 1;
                 }
             }
             else {
@@ -233,17 +232,33 @@ impl<'a> QTree<'a> {
                     }),
                 ];
 
-                // Move existing segments downstairs.
+                // Move segments downstairs if they're contained in only
+                // one quad.
+                let mut to_delete: HashSet<usize> = HashSet::new();
+                let mut segi = 0;
                 for seg in &r.segments {
                     let mask = get_segment_quad_mask(seg, new_center);
-                    for i in 0..4 {
-                        if (mask & (1 << i) != 0) {
+                    for i in 1..4 {
+                        if mask == (1 << i) {
                             new_children[i].segments.push(seg);
+                            to_delete.insert(segi);
+                            if (new_children[i].segments.len() == 1) {
+                                self.n_nonempty_nodes += 1;
+                            }
                         }
                     }
+                    segi += 1;
                 }
 
-                r.segments.clear();
+                if to_delete.len() > 0 {
+                    r.segments =
+                        r.segments
+                        .iter()
+                        .enumerate()
+                        .filter(|&(i,x)| !to_delete.contains(&i))
+                        .map(|(i,x)| *x)
+                        .collect();
+                }
 
                 let new_child_info = QTreeChildInfo {
                     children: new_children,
@@ -260,8 +275,8 @@ impl<'a> QTree<'a> {
         let mut segments : Vec<&'a Segment> = Vec::new();
         let mut stack : Vec<&Box<QTreeNode<'a>>> = Vec::new();
 
-        let m = (ray.p2.coords[1] - ray.p2.coords[1]) /
-                (ray.p2.coords[0] - ray.p2.coords[0]);
+        let m = (ray.p2.coords[1] - ray.p1.coords[1]) /
+                (ray.p2.coords[0] - ray.p1.coords[0]);
         let k = ray.p2.coords[1] - (m * ray.p1.coords[0]);
 
         stack.push(&self.root);
@@ -278,28 +293,30 @@ impl<'a> QTree<'a> {
                         let ref center = child_info.center;
                         let mut quad_mask = 1 << get_point_quad(ray.p1, *center);
 
-                        //println!("QUAD c{} pt{} {}", child_info.center, ray.p1, quad_mask);
+                        println!("QUAD c{} pt{} {}", child_info.center, ray.p1, quad_mask);
 
                         if ray.p1.coords[1] != ray.p2.coords[1] {
-                            //println!("FIRST TEST");
+                            println!("FIRST TEST {} {} {}", child_info.center.coords[1], k, m);
                             let x_intercept = (child_info.center.coords[1] - k) / m;
-                            let s1 = ray.p2.coords[0] - ray.p1.coords[0] >= 0.0;
-                            let s2 = x_intercept - ray.p1.coords[0] >= 0.0;
+                            let s1 = ray.p2.coords[1] - ray.p1.coords[1] >= 0.0;
+                            let s2 = child_info.center.coords[1] - ray.p1.coords[1] >= 0.0;
+                            println!("CRUCIAL {} {} {}", s1, s2, x_intercept);
                             if s1 == s2 {
                                 if x_intercept > child_info.center.coords[0] {
                                     quad_mask |= 0b0110;
                                 }
                                 else {
+                                    println!("OH!");
                                     quad_mask |= 0b1001;
                                 }
                             }
                         }
 
                         if ray.p1.coords[0] != ray.p2.coords[0] {
-                            //println!("SECOND TEST");
                             let y_intercept = (m * child_info.center.coords[0]) + k;
-                            let s1 = ray.p2.coords[1] - ray.p1.coords[1] >= 0.0;
-                            let s2 = y_intercept - ray.p1.coords[1] >= 0.0;
+                            let s1 = ray.p2.coords[0] - ray.p1.coords[0] >= 0.0;
+                            let s2 = child_info.center.coords[0] - ray.p1.coords[0] >= 0.0;
+                            println!("SECOND TEST {} {} {}", y_intercept, s1, s2);
                             if s1 == s2 {
                                 if y_intercept > child_info.center.coords[1] {
                                     quad_mask |= 0b0011;
@@ -312,7 +329,7 @@ impl<'a> QTree<'a> {
                         
                         for i in 0..4 {
                             if quad_mask & (1 << i) != 0 {
-                                //println!("PUSHING [{}] {}", quad_mask, i);
+                                println!("PUSHING [{}] {}", quad_mask, i);
                                 stack.push(&(child_info.children[i]));
                             }
                         }
