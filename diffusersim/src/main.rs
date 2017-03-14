@@ -40,7 +40,7 @@ fn main() {
 
     println!("N NODES: {} {}", qtree.get_n_nodes(), qtree.get_n_nonempty_nodes());
 
-    let segs = qtree.get_segments_possibly_touched_by_ray(g::seg(-1.0, -1.0, 1.0, -1.0));
+    let segs = qtree.get_segments_possibly_touched_by_ray(g::ray(-1.0, -1.0, 1.0, -1.0));
 
     println!("{:?}", segs);
 

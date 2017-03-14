@@ -20,6 +20,12 @@ pub struct Segment {
     pub info: Box<SegmentInfo>
 }
 
+pub struct Ray {
+    // Origin at p1, pointing in direction of p2.
+    pub p1: Point2,
+    pub p2: Point2
+}
+
 impl fmt::Debug for Segment {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "(Segment ({}, {}) -> ({}, {}))",
@@ -41,11 +47,18 @@ pub fn seg(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Segment {
         p1 = Point2::new(x2, y2);
     }
 
-    return Segment {
+    Segment {
         p1: p1,
         p2: p2,
         info: Box::new(SegmentInfo::NoInfo)
-    };
+    }
+}
+
+pub fn ray(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Ray {
+    Ray {
+        p1: Point2::new(x1, y1),
+        p2: Point2::new(x2, y2)
+    }
 }
 
 const QTREE_BIN_SIZE : usize = 8;
@@ -201,7 +214,7 @@ impl<'a> QTree<'a> {
         }
     }
 
-    pub fn get_segments_possibly_touched_by_ray(&'a self, ray: Segment) -> Vec<&'a Segment>
+    pub fn get_segments_possibly_touched_by_ray(&'a self, ray: Ray) -> Vec<&'a Segment>
     {
         let mut segments : Vec<&'a Segment> = Vec::new();
         let mut stack : Vec<&Box<QTreeNode<'a>>> = Vec::new();
