@@ -99,7 +99,7 @@ fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
     let v2 = r.p2.coords;
     let d = v2 - v1;
 
-    let m = (v2[1] - v1[1]) / (v1[0] / v2[0]);
+    let m = (v2[1] - v1[1]) / (v2[0] - v1[0]);
     let k = (v1[1] - m*v1[0]);
         
     let yatxmin = m * t.min_x + k;

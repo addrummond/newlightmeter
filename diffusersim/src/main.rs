@@ -34,7 +34,10 @@ fn main() {
         test_segments.push(g::seg(2.0*v, -v, v, -2.0*v));
     }
 
-    let rays = vec![g::ray(-1.0, -1.0, 1.0, -1.0)];
+    let rays = vec![
+        g::ray(-1.0, -1.0, 1.0, -1.0),
+        g::ray(-5.0, -5.0, 5.0, 5.0)
+    ];
 
     let mut qtree = g::QTree::make_empty_qtree();
     for seg in &test_segments {        
