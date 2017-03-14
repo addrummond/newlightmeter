@@ -236,11 +236,9 @@ impl<'a> QTree<'a> {
                 // Move existing segments downstairs.
                 for seg in &r.segments {
                     let mask = get_segment_quad_mask(seg, new_center);
-                    if (mask != 0b1111) {
-                        for i in 0..4 {
-                            if (mask & (1 << i) != 0) {
-                                new_children[i].segments.push(seg);
-                            }
+                    for i in 0..4 {
+                        if (mask & (1 << i) != 0) {
+                            new_children[i].segments.push(seg);
                         }
                     }
                 }
