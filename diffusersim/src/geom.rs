@@ -65,7 +65,7 @@ pub fn ray(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Ray {
     }
 }
 
-const QTREE_BIN_SIZE : usize = 16;
+const QTREE_BIN_SIZE : usize = 8;
 
 #[derive(Debug)]
 pub struct QTreeChildInfo<'a> {
@@ -272,8 +272,8 @@ impl<'a> QTree<'a> {
 
     pub fn insert_segments(&mut self, segments: &'a Vec<Segment>) {
         // Our aim here is to find a good order for segment insertion.
-        // Generally, going from the outside in works well.
-        // So we find the center point, and then inversely order segments
+        // Generally, alternately going from the outside in and the inside out
+        // works well. So we find the center point and then inversely order segments
         // by |p1|^2 + |p2|^2, where |p| is the distance of a point
         // p from the center.
 
@@ -301,8 +301,16 @@ impl<'a> QTree<'a> {
 
         sls.sort_by(|&(d1,_), &(d2,_)| d2.partial_cmp(&d1).unwrap());
 
-        for (_, s) in sls {
-            self.insert_segment(s);
+        let mut si = 0;
+        let mut ei = sls.len()-1;
+        while (si < ei) {
+            self.insert_segment(sls[si].1);
+            self.insert_segment(sls[ei].1);
+            si += 1;
+            ei -= 1;
+        }
+        if (si == ei) {
+            self.insert_segment(sls[si].1);
         }
     }
 
@@ -330,20 +338,20 @@ impl<'a> QTree<'a> {
                         let ref center = child_info.center;
                         let mut quad_mask = 1 << get_point_quad(ray.p1, *center);
 
-                        println!("QUAD c{} pt{} {}", child_info.center, ray.p1, quad_mask);
+                        //println!("QUAD c{} pt{} {}", child_info.center, ray.p1, quad_mask);
 
                         if ray.p1.coords[1] != ray.p2.coords[1] {
-                            println!("FIRST TEST {} {} {}", child_info.center.coords[1], k, m);
+                            //println!("FIRST TEST {} {} {}", child_info.center.coords[1], k, m);
                             let x_intercept = (child_info.center.coords[1] - k) / m;
                             let s1 = ray.p2.coords[1] - ray.p1.coords[1] >= 0.0;
                             let s2 = child_info.center.coords[1] - ray.p1.coords[1] >= 0.0;
-                            println!("CRUCIAL {} {} {}", s1, s2, x_intercept);
+                            //println!("CRUCIAL {} {} {}", s1, s2, x_intercept);
                             if s1 == s2 {
                                 if x_intercept > child_info.center.coords[0] {
                                     quad_mask |= 0b0110;
                                 }
                                 else {
-                                    println!("OH!");
+                                    //println!("OH!");
                                     quad_mask |= 0b1001;
                                 }
                             }
@@ -353,7 +361,7 @@ impl<'a> QTree<'a> {
                             let y_intercept = (m * child_info.center.coords[0]) + k;
                             let s1 = ray.p2.coords[0] - ray.p1.coords[0] >= 0.0;
                             let s2 = child_info.center.coords[0] - ray.p1.coords[0] >= 0.0;
-                            println!("SECOND TEST {} {} {}", y_intercept, s1, s2);
+                            //println!("SECOND TEST {} {} {}", y_intercept, s1, s2);
                             if s1 == s2 {
                                 if y_intercept > child_info.center.coords[1] {
                                     quad_mask |= 0b0011;
@@ -366,7 +374,7 @@ impl<'a> QTree<'a> {
                         
                         for i in 0..4 {
                             if quad_mask & (1 << i) != 0 {
-                                println!("PUSHING [{}] {}", quad_mask, i);
+                                //println!("PUSHING [{}] {}", quad_mask, i);
                                 stack.push(&(child_info.children[i]));
                             }
                         }
