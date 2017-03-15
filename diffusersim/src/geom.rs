@@ -270,6 +270,43 @@ impl<'a> QTree<'a> {
         }
     }
 
+    pub fn insert_segments(&mut self, segments: &'a Vec<Segment>) {
+        // Our aim here is to find a good order for segment insertion.
+        // Generally, going from the outside in works well.
+        // So we find the center point, and then inversely order segments
+        // by |p1|^2 + |p2|^2, where |p| is the distance of a point
+        // p from the center.
+
+        let mut avg_x: Scalar = 0.0;
+        let mut avg_y: Scalar = 0.0;
+        for s in segments {
+            avg_x += s.p1.coords[0] + s.p2.coords[0];
+            avg_y += s.p1.coords[1] + s.p2.coords[1];
+        }
+        avg_x /= segments.len() as Scalar;
+        avg_y /= segments.len() as Scalar;
+        
+        let mut sls: Vec<(Scalar, &'a Segment)> = Vec::new();
+        for s in segments {
+            let x1d = s.p1.coords[0] - avg_x;
+            let x2d = s.p2.coords[0] - avg_x;
+            let y1d = s.p1.coords[1] - avg_y;
+            let y2d = s.p2.coords[1] - avg_y;
+
+            sls.push((
+                (x1d*x1d + x2d*x2d + y1d*y1d + y2d*y2d),
+                &s
+            ));
+        }
+
+        sls.sort_by(|&(d1,_), &(d2,_)| d2.partial_cmp(&d1).unwrap());
+
+        for (_, s) in sls {
+            self.insert_segment(s);
+        }
+    }
+
+
     pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<&'a Segment>
     {
         let mut segments : Vec<&'a Segment> = Vec::new();
