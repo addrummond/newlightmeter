@@ -1,6 +1,7 @@
 use std::fmt;
 use std::rc::Rc;
 use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::iter;
 
 //
@@ -144,13 +145,13 @@ fn get_segment_quad_mask(segment: &Segment, c: Point2) -> i32
     }
 }
 
-pub struct QTreeInOrderIterator<'a, 'b: 'a, SegmentInfo>
-where SegmentInfo: 'b {
-    stack: Vec<(usize, &'a QTreeNode<'b,SegmentInfo>)>,
+pub struct QTreeInOrderIterator<'a, SegmentInfo>
+where SegmentInfo: 'a {
+    stack: Vec<(usize, &'a QTreeNode<'a,SegmentInfo>)>,
 }
 
-impl<'a, 'b: 'a, SegmentInfo> Iterator for QTreeInOrderIterator<'a, 'b, SegmentInfo> {
-    type Item = (usize, &'a QTreeNode<'b,SegmentInfo>);
+impl<'a, SegmentInfo> Iterator for QTreeInOrderIterator<'a, SegmentInfo> {
+    type Item = (usize, &'a QTreeNode<'a,SegmentInfo>);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.stack.pop() {
@@ -215,28 +216,87 @@ fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
     }
 }
 
-pub struct QTreeRayTraceIterator<'a, 'b: 'a, SegmentInfo>
-where SegmentInfo: 'b {
+pub struct QTreeRayTraceIterator<'a, 'b, SegmentInfo>
+where SegmentInfo: 'a {
     ray: &'b Ray,
-    stack: Vec<&'a QTreeNode<'b,SegmentInfo>>
+    ray_m: Scalar,
+    ray_k: Scalar,
+    stack: Vec<(bool, &'a QTreeNode<'a,SegmentInfo>)>,
+    backlog: VecDeque<(&'a Segment, &'a SegmentInfo)>,
 }
 
-impl<'a, 'b: 'a, SegmentInfo> Iterator for QTreeRayTraceIterator<'a, 'b, SegmentInfo> {
-    type Item = (&'b Vec<&'b Segment>, &'b SegmentInfo);
+impl<'a,'b, SegmentInfo> Iterator for QTreeRayTraceIterator<'a, 'b, SegmentInfo> {
+    type Item = (&'a Segment, &'a SegmentInfo);
 
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.stack.pop() {
-            None => { None },
-            Some(node) => {
-                let mut intersects: Vec<(&'a Segment,Point2)> = Vec::new();
-                for &(s,_) in &node.segments {
-                    if let Some(pt) = ray_intersects_segment(self.ray, s) {
-                        intersects.push((s, pt));
+    fn next(&mut self) -> Option<(&'a Segment, &'a SegmentInfo)> {
+        loop {
+            if self.backlog.len() > 0
+                { return self.backlog.pop_front(); }
+            
+            if (self.stack.len() == 0)
+                { return None; }
+
+            let &(already, r) = self.stack.last().unwrap();
+
+            if !already {
+                self.backlog.extend(r.segments.iter().skip(1));
+                let l = self.stack.len();
+                self.stack[l-1].0 = true;
+                if (r.segments.len() > 0) {
+                    return Some(r.segments[0]);
+                }
+            }
+
+            self.stack.pop();
+
+            if let Some(ref child_info) = r.child_info {
+                // The ray starts from p1, so at least the quad
+                // that q1 is in should be added to the mask.
+                let ref center = child_info.center;
+                let mut quad_mask = 1 << get_point_quad(self.ray.p1, *center);
+
+                if self.ray.p1.coords[1] != self.ray.p2.coords[1] {
+                    //println!("FIRST TEST {} {} {}", child_info.center.coords[1], k, m);
+                    let x_intercept = (child_info.center.coords[1] - self.ray_k) / self.ray_m;
+                    let s1 = self.ray.p2.coords[1] - self.ray.p1.coords[1] >= 0.0;
+                    let s2 = child_info.center.coords[1] - self.ray.p1.coords[1] >= 0.0;
+                    //println!("CRUCIAL {} {} {}", s1, s2, x_intercept);
+                    if s1 == s2 {
+                        if x_intercept > child_info.center.coords[0] {
+                            quad_mask |= 0b0110;
+                        }
+                        else {
+                            //println!("OH!");
+                            quad_mask |= 0b1001;
+                        }
                     }
                 }
-                None
+
+                if self.ray.p1.coords[0] != self.ray.p2.coords[0] {
+                    let y_intercept = (self.ray_m * child_info.center.coords[0]) + self.ray_k;
+                    let s1 = self.ray.p2.coords[0] - self.ray.p1.coords[0] >= 0.0;
+                    let s2 = child_info.center.coords[0] - self.ray.p1.coords[0] >= 0.0;
+                    //println!("SECOND TEST {} {} {}", y_intercept, s1, s2);
+                    if s1 == s2 {
+                        if y_intercept > child_info.center.coords[1] {
+                            quad_mask |= 0b0011;
+                        }
+                        else {
+                            quad_mask |= 0b1100;
+                        }
+                    }
+                }
+
+                for i in 0..4 {
+                    if quad_mask & (1 << i) != 0 {
+                        //println!("PUSHING [{}] {}", quad_mask, i);
+                        self.stack.push((false,&(child_info.children[i])));
+                    }
+                }
             }
         }
+
+        None
     }
 }
 
@@ -257,7 +317,23 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
     pub fn get_n_nodes(&self) -> usize { self.n_nodes }
     pub fn get_n_nonempty_nodes(&self) -> usize { self.n_nonempty_nodes }
 
-    pub fn in_order_iter(&self) -> QTreeInOrderIterator<SegmentInfo> { QTreeInOrderIterator { stack: vec![(0, &*self.root)] } }
+    pub fn in_order_iter(&self) -> QTreeInOrderIterator<SegmentInfo> {
+        QTreeInOrderIterator { stack: vec![(0, &*self.root)] }
+    }
+
+    pub fn ray_trace_iter<'b>(&'a self, ray: &'b Ray) -> QTreeRayTraceIterator<'a,'b,SegmentInfo> {
+        let m = (ray.p2.coords[1] - ray.p1.coords[1]) /
+                (ray.p2.coords[0] - ray.p1.coords[0]);
+        let k = ray.p2.coords[1] - (m * ray.p1.coords[0]);
+
+        QTreeRayTraceIterator {
+            ray: ray,
+            ray_m: m,
+            ray_k: k,
+            stack: vec![(false, &*self.root)],
+            backlog: VecDeque::new()
+        }
+    }
 
     pub fn insert_segment(&mut self, s: &'a Segment, info: &'a SegmentInfo)
     {
@@ -395,73 +471,7 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
     }
 
     pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<(&'a Segment, &'a SegmentInfo)> {
-        let mut segments: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
-        let mut stack: Vec<&Box<QTreeNode<'a,SegmentInfo>>> = Vec::new();
-
-        let m = (ray.p2.coords[1] - ray.p1.coords[1]) /
-                (ray.p2.coords[0] - ray.p1.coords[0]);
-        let k = ray.p2.coords[1] - (m * ray.p1.coords[0]);
-
-        stack.push(&self.root);
-
-        loop {
-            match stack.pop() {
-                None => { break; }
-                Some(r) => {
-                    segments.extend(r.segments.iter());
-
-                    if let Some(ref child_info) = r.child_info {
-                        // The ray starts from p1, so at least the quad
-                        // that q1 is in should be added to the mask.
-                        let ref center = child_info.center;
-                        let mut quad_mask = 1 << get_point_quad(ray.p1, *center);
-
-                        //println!("QUAD c{} pt{} {}", child_info.center, ray.p1, quad_mask);
-
-                        if ray.p1.coords[1] != ray.p2.coords[1] {
-                            //println!("FIRST TEST {} {} {}", child_info.center.coords[1], k, m);
-                            let x_intercept = (child_info.center.coords[1] - k) / m;
-                            let s1 = ray.p2.coords[1] - ray.p1.coords[1] >= 0.0;
-                            let s2 = child_info.center.coords[1] - ray.p1.coords[1] >= 0.0;
-                            //println!("CRUCIAL {} {} {}", s1, s2, x_intercept);
-                            if s1 == s2 {
-                                if x_intercept > child_info.center.coords[0] {
-                                    quad_mask |= 0b0110;
-                                }
-                                else {
-                                    //println!("OH!");
-                                    quad_mask |= 0b1001;
-                                }
-                            }
-                        }
-
-                        if ray.p1.coords[0] != ray.p2.coords[0] {
-                            let y_intercept = (m * child_info.center.coords[0]) + k;
-                            let s1 = ray.p2.coords[0] - ray.p1.coords[0] >= 0.0;
-                            let s2 = child_info.center.coords[0] - ray.p1.coords[0] >= 0.0;
-                            //println!("SECOND TEST {} {} {}", y_intercept, s1, s2);
-                            if s1 == s2 {
-                                if y_intercept > child_info.center.coords[1] {
-                                    quad_mask |= 0b0011;
-                                }
-                                else {
-                                    quad_mask |= 0b1100;
-                                }
-                            }
-                        }
-                        
-                        for i in 0..4 {
-                            if quad_mask & (1 << i) != 0 {
-                                //println!("PUSHING [{}] {}", quad_mask, i);
-                                stack.push(&(child_info.children[i]));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return segments;
+        return self.ray_trace_iter(ray).collect();
     }
 }
 
