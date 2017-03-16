@@ -1,7 +1,6 @@
 use std::fmt;
 use std::rc::Rc;
 use std::collections::HashSet;
-use std::collections::VecDeque;
 use std::iter;
 
 //
@@ -221,30 +220,18 @@ where SegmentInfo: 'a {
     ray: &'b Ray,
     ray_m: Scalar,
     ray_k: Scalar,
-    stack: Vec<(bool, &'a QTreeNode<'a,SegmentInfo>)>,
-    backlog: VecDeque<(&'a Segment, &'a SegmentInfo)>,
+    stack: Vec<(bool, &'a QTreeNode<'a,SegmentInfo>)>
 }
 
 impl<'a,'b, SegmentInfo> Iterator for QTreeRayTraceIterator<'a, 'b, SegmentInfo> {
-    type Item = (&'a Segment, &'a SegmentInfo);
+    type Item = &'a Vec<(&'a Segment, &'a SegmentInfo)>;
 
-    fn next(&mut self) -> Option<(&'a Segment, &'a SegmentInfo)> {
-        loop {
-            if self.backlog.len() > 0
-                { return self.backlog.pop_front(); }
-            
-            if (self.stack.len() == 0)
-                { return None; }
-
-            let &(already, r) = self.stack.last().unwrap();
-
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some(&(already, r)) = self.stack.last() {
             if !already {
-                self.backlog.extend(r.segments.iter().skip(1));
-                let l = self.stack.len();
-                self.stack[l-1].0 = true;
-                if (r.segments.len() > 0) {
-                    return Some(r.segments[0]);
-                }
+                let i = self.stack.len() - 1;
+                self.stack[i].0 = true;
+                return Some(&r.segments);
             }
 
             self.stack.pop();
@@ -330,8 +317,7 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
             ray: ray,
             ray_m: m,
             ray_k: k,
-            stack: vec![(false, &*self.root)],
-            backlog: VecDeque::new()
+            stack: vec![(false, &*self.root)]
         }
     }
 
@@ -471,7 +457,7 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
     }
 
     pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<(&'a Segment, &'a SegmentInfo)> {
-        return self.ray_trace_iter(ray).collect();
+        return self.ray_trace_iter(ray).flat_map(|x| x.iter()).map(|x| *x).collect();
     }
 }
 
