@@ -3,11 +3,19 @@ use std::rc::Rc;
 use std::collections::HashSet;
 use std::iter;
 
+//
+// Basic types.
+//
+
 pub type Scalar = f64;
 use nalgebra::Vector2 as Vector2_;
 use nalgebra::Point2 as Point2_;
 pub type Vector2 = Vector2_<Scalar>;
 pub type Point2 = Point2_<Scalar>;
+
+//
+// QTrees
+//
 
 #[derive(Clone)]
 pub struct Segment {
@@ -79,11 +87,6 @@ where SegmentInfo: 'a {
     n_nonempty_nodes: usize
 }
 
-pub struct QTreeInOrderIterator<'a, 'b: 'a, SegmentInfo>
-where SegmentInfo: 'b {
-    stack: Vec<(usize, &'a QTreeNode<'b,SegmentInfo>)>,
-}
-
 fn get_point_quad(p: Point2, c: Point2) -> i32 {
     if p.coords[0] <= c.coords[0] {
         if p.coords[1] <= c.coords[1] {
@@ -141,10 +144,15 @@ fn get_segment_quad_mask(segment: &Segment, c: Point2) -> i32
     }
 }
 
+pub struct QTreeInOrderIterator<'a, 'b: 'a, SegmentInfo>
+where SegmentInfo: 'b {
+    stack: Vec<(usize, &'a QTreeNode<'b,SegmentInfo>)>,
+}
+
 impl<'a, 'b: 'a, SegmentInfo> Iterator for QTreeInOrderIterator<'a, 'b, SegmentInfo> {
     type Item = (usize, &'a QTreeNode<'b,SegmentInfo>);
 
-    fn next(&mut self) -> Option<(usize, &'a QTreeNode<'b,SegmentInfo>)> {
+    fn next(&mut self) -> Option<Self::Item> {
         match self.stack.pop() {
             None => { None },
             Some((depth, t)) => {
@@ -152,6 +160,81 @@ impl<'a, 'b: 'a, SegmentInfo> Iterator for QTreeInOrderIterator<'a, 'b, SegmentI
                     self.stack.extend(x.children.iter().map(|x| (depth+1, &**x)));
                 }
                 Some((depth, t))
+            }
+        }
+    }
+}
+
+fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
+    let ray_slope_num = ray.p2.coords[1] - ray.p1.coords[1];
+    let seg_slope_num = segment.p2.coords[1] - segment.p2.coords[1];
+
+    if (ray_slope_num == 0.0 && seg_slope_num == 0.0) {
+        // Parallel horizontal lines.
+        // Does not count as an intersection for purposes of ray tracing,
+        // even if the lines overlap.
+        return None;
+    }
+
+    let ray_slope_denom = ray.p2.coords[0] - ray.p1.coords[0];
+    let seg_slope_denom = segment.p2.coords[0] - segment.p1.coords[0];
+    let ray_slope = ray_slope_num / ray_slope_denom;
+    let seg_slope = seg_slope_num / seg_slope_denom;
+
+    if (ray_slope == seg_slope) {
+        // Parallel lines.
+        // Does not count as an intersection for purposes of ray tracing,
+        // even if the lines overlap.
+        return None;
+    }
+
+    let ray_k = ray.p1.coords[1] - (ray_slope * ray.p1.coords[0]);
+    let seg_k = segment.p1.coords[1] - (seg_slope * segment.p1.coords[0]);
+
+    // Calculate intersection point.
+    let x = (seg_k - ray_k) / (ray_slope - seg_slope);
+    let y = (seg_k*ray_slope - ray_k-seg_slope) / (ray_slope - seg_slope);
+
+    // Is the intersection point on the ray?
+    if ray_slope_num > 0.0 && y < ray.p1.coords[1]
+        { return None }
+    else if ray_slope_num < 0.0 && y > ray.p1.coords[1]
+        { return None }
+    if ray_slope_denom > 0.0 && x < ray.p1.coords[0]
+        { return None }
+    else if ray_slope_denom < 0.0 && x > ray.p1.coords[0]
+        { return None }
+        
+    // It's on the ray. Is it on the segment?
+    if x >= segment.p1.coords[0] && x <= segment.p2.coords[0] &&
+       y >= segment.p1.coords[1] && y <= segment.p2.coords[1] {
+        return Some(Point2::new(x, y));
+    }
+    else {
+        return None;
+    }
+}
+
+pub struct QTreeRayTraceIterator<'a, 'b: 'a, SegmentInfo>
+where SegmentInfo: 'b {
+    ray: &'b Ray,
+    stack: Vec<&'a QTreeNode<'b,SegmentInfo>>
+}
+
+impl<'a, 'b: 'a, SegmentInfo> Iterator for QTreeRayTraceIterator<'a, 'b, SegmentInfo> {
+    type Item = (&'b Vec<&'b Segment>, &'b SegmentInfo);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.stack.pop() {
+            None => { None },
+            Some(node) => {
+                let mut intersects: Vec<(&'a Segment,Point2)> = Vec::new();
+                for &(s,_) in &node.segments {
+                    if let Some(pt) = ray_intersects_segment(self.ray, s) {
+                        intersects.push((s, pt));
+                    }
+                }
+                None
             }
         }
     }
@@ -311,11 +394,9 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
         }
     }
 
-
-    pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<(&'a Segment, &'a SegmentInfo)>
-    {
-        let mut segments : Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
-        let mut stack : Vec<&Box<QTreeNode<'a,SegmentInfo>>> = Vec::new();
+    pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<(&'a Segment, &'a SegmentInfo)> {
+        let mut segments: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
+        let mut stack: Vec<&Box<QTreeNode<'a,SegmentInfo>>> = Vec::new();
 
         let m = (ray.p2.coords[1] - ray.p1.coords[1]) /
                 (ray.p2.coords[0] - ray.p1.coords[0]);
@@ -382,4 +463,30 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
 
         return segments;
     }
+}
+
+//
+// Surfaces, rays, etc.
+//
+
+struct RayProperties {
+    wavelength: Scalar, // um
+    intensity: Scalar
+}
+
+// A surface that does something to rays that land on it,
+// rather than just recording their intensity/wavelength/etc.
+struct ActiveSurfaceProperties {
+    refractive_index: Scalar,
+    extinction: Scalar,
+    cauchy_coeffs: Vec<Scalar>
+}
+
+enum SurfaceType {
+    Active(ActiveSurfaceProperties),
+    Passive
+}
+
+fn trace_ray(ray: Ray, ray_props: RayProperties, qtree: QTree<SurfaceType>) {
+    
 }
