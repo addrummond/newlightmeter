@@ -459,6 +459,43 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
     pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<(&'a Segment, &'a SegmentInfo)> {
         return self.ray_trace_iter(ray).flat_map(|x| x.iter()).map(|x| *x).collect();
     }
+
+    pub fn get_segments_touched_by_ray(&'a self, ray: &Ray) 
+    -> Option <(Vec<(&'a Segment, &'a SegmentInfo)>, Point2, Scalar)> {
+        for segs in self.ray_trace_iter(ray) {
+            let mut intersects: Vec<(&'a Segment, &'a SegmentInfo, Point2, Scalar)> = Vec::new();
+            for &(s,si) in segs {
+                if let Some(pt) = ray_intersects_segment(ray, s) {
+                    let xd = pt.coords[0] - ray.p1.coords[0];
+                    let yd = pt.coords[1] - ray.p1.coords[1];
+                    let d = xd*xd + yd*yd;
+                    intersects.push((s, si, pt, d));
+                }
+            }
+
+            if (intersects.len() == 0) {
+                continue;
+            }
+
+            // Find the intersects closest to the start of the ray.
+            intersects.sort_by(|&(_,_,_,d1),&(_,_,_,d2)| {
+                d1.partial_cmp(&d2).unwrap()
+            });
+
+            let pt = intersects[0].2;
+            let d = intersects[0].3;
+            let mut r: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
+            for &(s,si,_,dd) in intersects.iter().skip(1) {
+                if (d != dd)
+                    { break; }
+                r.push((s, si));
+            }
+
+            return Some((r, pt, d));
+        }
+
+        return None
+    }
 }
 
 //
