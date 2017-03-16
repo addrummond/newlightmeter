@@ -204,7 +204,7 @@ where E: piston_window::generic_event::GenericEvent {
     }
 }
 
-pub fn render_qtree<E>(qtree: &g::QTree, window: &mut PistonWindow, e: &E, t: &DisplayTransform)
+pub fn render_qtree<E,SegmentInfo>(qtree: &g::QTree<SegmentInfo>, window: &mut PistonWindow, e: &E, t: &DisplayTransform)
 where E: piston_window::generic_event::GenericEvent {
     let diam = t.height*0.01;
 

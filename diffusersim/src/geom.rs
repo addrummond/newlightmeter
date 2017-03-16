@@ -9,19 +9,11 @@ use nalgebra::Point2 as Point2_;
 pub type Vector2 = Vector2_<Scalar>;
 pub type Point2 = Point2_<Scalar>;
 
-pub enum SegmentInfo {
-    NoInfo,
-    Info {
-        opacity: Scalar
-    }
-}
-
 #[derive(Clone)]
 pub struct Segment {
     // p1.x < p2.x || (p1.x == p2.x && p1.y < p2.y)
     pub p1: Point2,
-    pub p2: Point2,
-    pub info: Rc<SegmentInfo>
+    pub p2: Point2
 }
 
 pub struct Ray {
@@ -53,8 +45,7 @@ pub fn seg(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Segment {
 
     Segment {
         p1: p1,
-        p2: p2,
-        info: Rc::new(SegmentInfo::NoInfo)
+        p2: p2
     }
 }
 
@@ -68,25 +59,29 @@ pub fn ray(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Ray {
 const QTREE_BIN_SIZE : usize = 8;
 
 #[derive(Debug)]
-pub struct QTreeChildInfo<'a> {
+pub struct QTreeChildInfo<'a,SegmentInfo>
+where SegmentInfo: 'a {
     pub center: Point2,
-    pub children: [Box<QTreeNode<'a>>; 4] // Clockwise from NW
+    pub children: [Box<QTreeNode<'a,SegmentInfo>>; 4] // Clockwise from NW
 }
 
 #[derive(Debug)]
-pub struct QTreeNode<'a> {
-    pub segments: Vec<&'a Segment>,
-    pub child_info: Option<QTreeChildInfo<'a>>
+pub struct QTreeNode<'a, SegmentInfo>
+where SegmentInfo: 'a {
+    pub segments: Vec<(&'a Segment, &'a SegmentInfo)>,
+    pub child_info: Option<QTreeChildInfo<'a,SegmentInfo>>
 }
 
-pub struct QTree<'a> {
-    root: Box<QTreeNode<'a>>,
+pub struct QTree<'a, SegmentInfo>
+where SegmentInfo: 'a {
+    root: Box<QTreeNode<'a, SegmentInfo>>,
     n_nodes: usize,
     n_nonempty_nodes: usize
 }
 
-pub struct QTreeInOrderIterator<'a, 'b: 'a> {
-    stack: Vec<(usize, &'a QTreeNode<'b>)>,
+pub struct QTreeInOrderIterator<'a, 'b: 'a, SegmentInfo>
+where SegmentInfo: 'b {
+    stack: Vec<(usize, &'a QTreeNode<'b,SegmentInfo>)>,
 }
 
 fn get_point_quad(p: Point2, c: Point2) -> i32 {
@@ -146,10 +141,10 @@ fn get_segment_quad_mask(segment: &Segment, c: Point2) -> i32
     }
 }
 
-impl<'a, 'b: 'a> Iterator for QTreeInOrderIterator<'a, 'b> {
-    type Item = (usize, &'a QTreeNode<'b>);
+impl<'a, 'b: 'a, SegmentInfo> Iterator for QTreeInOrderIterator<'a, 'b, SegmentInfo> {
+    type Item = (usize, &'a QTreeNode<'b,SegmentInfo>);
 
-    fn next(&mut self) -> Option<(usize, &'a QTreeNode<'b>)> {
+    fn next(&mut self) -> Option<(usize, &'a QTreeNode<'b,SegmentInfo>)> {
         match self.stack.pop() {
             None => { None },
             Some((depth, t)) => {
@@ -162,8 +157,8 @@ impl<'a, 'b: 'a> Iterator for QTreeInOrderIterator<'a, 'b> {
     }
 }
 
-impl<'a> QTree<'a> {
-    pub fn make_empty_qtree() -> QTree<'a>
+impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
+    pub fn make_empty_qtree() -> QTree<'a,SegmentInfo>
     {
         let root = QTreeNode {
             segments: vec! [],
@@ -179,11 +174,11 @@ impl<'a> QTree<'a> {
     pub fn get_n_nodes(&self) -> usize { self.n_nodes }
     pub fn get_n_nonempty_nodes(&self) -> usize { self.n_nonempty_nodes }
 
-    pub fn in_order_iter(&self) -> QTreeInOrderIterator { QTreeInOrderIterator { stack: vec![(0, &*self.root)] } }
+    pub fn in_order_iter(&self) -> QTreeInOrderIterator<SegmentInfo> { QTreeInOrderIterator { stack: vec![(0, &*self.root)] } }
 
-    pub fn insert_segment(&mut self, s: &'a Segment)
+    pub fn insert_segment(&mut self, s: &'a Segment, info: &'a SegmentInfo)
     {
-        let mut stack : Vec<&mut QTreeNode<'a>> = Vec::new();
+        let mut stack : Vec<&mut QTreeNode<'a,SegmentInfo>> = Vec::new();
         stack.push(&mut*self.root);
 
         while let Some(r) = stack.pop() {
@@ -201,7 +196,7 @@ impl<'a> QTree<'a> {
                 }
             }
             else if r.segments.len() < QTREE_BIN_SIZE {
-                r.segments.push(s);
+                r.segments.push((s, info));
                 if (r.segments.len() == 1) {
                     self.n_nonempty_nodes += 1;
                 }
@@ -216,7 +211,7 @@ impl<'a> QTree<'a> {
                 let mut new_children = [
                     Box::new(QTreeNode {
                         child_info: None,
-                        segments: if in_nw { vec![s] } else { vec![] }
+                        segments: if in_nw { vec![(s, info)] } else { vec![] }
                     }),
                     Box::new(QTreeNode {
                         child_info: None,
@@ -228,7 +223,7 @@ impl<'a> QTree<'a> {
                     }),
                     Box::new(QTreeNode {
                         child_info: None,
-                        segments: if !in_nw { vec![s] } else { vec![] }
+                        segments: if !in_nw { vec![(s, info)] } else { vec![] }
                     }),
                 ];
 
@@ -236,11 +231,11 @@ impl<'a> QTree<'a> {
                 // one quad.
                 let mut to_delete: HashSet<usize> = HashSet::new();
                 let mut segi = 0;
-                for seg in &r.segments {
+                for &(seg, info) in &r.segments {
                     let mask = get_segment_quad_mask(seg, new_center);
                     for i in 1..4 {
                         if mask == (1 << i) {
-                            new_children[i].segments.push(seg);
+                            new_children[i].segments.push((seg, info));
                             to_delete.insert(segi);
                             if (new_children[i].segments.len() == 1) {
                                 self.n_nonempty_nodes += 1;
@@ -270,7 +265,9 @@ impl<'a> QTree<'a> {
         }
     }
 
-    pub fn insert_segments(&mut self, segments: &'a Vec<Segment>) {
+    pub fn insert_segments<F>(&mut self, segments: &'a Vec<Segment>, get_info: F) 
+    where F: Fn(usize) -> &'a SegmentInfo
+    {
         // Our aim here is to find a good order for segment insertion.
         // Generally, alternately going from the outside in and the inside out
         // works well. So we find the center point and then inversely order segments
@@ -304,21 +301,21 @@ impl<'a> QTree<'a> {
         let mut si = 0;
         let mut ei = sls.len()-1;
         while (si < ei) {
-            self.insert_segment(sls[si].1);
-            self.insert_segment(sls[ei].1);
+            self.insert_segment(sls[si].1, get_info(si));
+            self.insert_segment(sls[ei].1, get_info(ei));
             si += 1;
             ei -= 1;
         }
         if (si == ei) {
-            self.insert_segment(sls[si].1);
+            self.insert_segment(sls[si].1, get_info(si));
         }
     }
 
 
-    pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<&'a Segment>
+    pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<(&'a Segment, &'a SegmentInfo)>
     {
-        let mut segments : Vec<&'a Segment> = Vec::new();
-        let mut stack : Vec<&Box<QTreeNode<'a>>> = Vec::new();
+        let mut segments : Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
+        let mut stack : Vec<&Box<QTreeNode<'a,SegmentInfo>>> = Vec::new();
 
         let m = (ray.p2.coords[1] - ray.p1.coords[1]) /
                 (ray.p2.coords[0] - ray.p1.coords[0]);

@@ -11,7 +11,11 @@ use render as r;
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 
-fn do_graphics(qtree: &g::QTree, segments: &Vec<g::Segment>, rays: &Vec<g::Ray>, touched: &Vec<g::Segment>) {
+struct MyInfo {
+
+}
+
+fn do_graphics(qtree: &g::QTree<MyInfo>, segments: &Vec<g::Segment>, rays: &Vec<g::Ray>, touched: &Vec<g::Segment>) {
     let t = render::get_display_transform(segments, WIDTH, HEIGHT);
 
     let mut window: PistonWindow =
@@ -43,17 +47,21 @@ fn main() {
         g::ray(100.0, -100.0, 120.0, -200.0)
     ];
 
-    let mut qtree = g::QTree::make_empty_qtree();
-    qtree.insert_segments(&test_segments);
-    //for seg in &test_segments {        
-    //    qtree.insert_segment(seg);
-    //}   
+    let inf = MyInfo { };
+
+    let mut qtree: g::QTree<MyInfo> = g::QTree::make_empty_qtree();
+    qtree.insert_segments(&test_segments, |_| &inf);
 
     println!("N NODES: {} {}", qtree.get_n_nodes(), qtree.get_n_nonempty_nodes());
 
     let mut segs: Vec<&g::Segment> = Vec::new();
     for r in &rays {
-        segs.extend(qtree.get_segments_possibly_touched_by_ray(r).iter());
+        segs.extend(
+            qtree
+                .get_segments_possibly_touched_by_ray(r)
+                .iter()
+                .map(|&(s,_)| s)
+        );
     }
     let touched: Vec<g::Segment> = segs.iter().map(|x| (*x).clone()).collect();
 
