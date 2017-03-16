@@ -197,7 +197,7 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
             }
             else if r.segments.len() < QTREE_BIN_SIZE {
                 r.segments.push((s, info));
-                if (r.segments.len() == 1) {
+                if r.segments.len() == 1 {
                     self.n_nonempty_nodes += 1;
                 }
             }
