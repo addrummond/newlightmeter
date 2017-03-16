@@ -41,8 +41,8 @@ fn main() {
     }
 
     let rays = vec![
-        //g::ray(-1.0, -1.0, 1.0, -1.0),
-        //g::ray(10.0, -40.0, 20.0, 50.0),
+        g::ray(-1.0, -1.0, 1.0, -1.0),
+        g::ray(10.0, -40.0, 20.0, 50.0),
         g::ray(-100.0, 100.0, -120.0, 200.0),
         g::ray(100.0, -100.0, 120.0, -200.0)
     ];
@@ -56,16 +56,17 @@ fn main() {
 
     let mut segs: Vec<&g::Segment> = Vec::new();
     for r in &rays {
-        segs.extend(
-            qtree
-                .get_segments_possibly_touched_by_ray(r)
-                .iter()
-                .map(|&(s,_)| s)
-        );
+        if let Some((sts, pt, d)) = qtree.get_segments_touched_by_ray(r) {
+            segs.extend(sts.iter().map(|&(s,_)| s));
+//            segs.extend(
+//                qtree
+//                    .get_segments_possibly_touched_by_ray(r)
+//                    .iter()
+//                    .map(|&(s,_)| s)
+        }
     }
+
     let touched: Vec<g::Segment> = segs.iter().map(|x| (*x).clone()).collect();
-
     println!("COMPUTED TOUCHES");
-
     do_graphics(&qtree, &test_segments, &rays, &touched);
 }

@@ -1,7 +1,6 @@
 use std::fmt;
 use std::rc::Rc;
 use std::collections::HashSet;
-use std::iter;
 
 //
 // Basic types.
@@ -167,9 +166,9 @@ impl<'a, SegmentInfo> Iterator for QTreeInOrderIterator<'a, SegmentInfo> {
 
 fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
     let ray_slope_num = ray.p2.coords[1] - ray.p1.coords[1];
-    let seg_slope_num = segment.p2.coords[1] - segment.p2.coords[1];
+    let seg_slope_num = segment.p2.coords[1] - segment.p1.coords[1];
 
-    if (ray_slope_num == 0.0 && seg_slope_num == 0.0) {
+    if ray_slope_num == 0.0 && seg_slope_num == 0.0 {
         // Parallel horizontal lines.
         // Does not count as an intersection for purposes of ray tracing,
         // even if the lines overlap.
@@ -181,7 +180,7 @@ fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
     let ray_slope = ray_slope_num / ray_slope_denom;
     let seg_slope = seg_slope_num / seg_slope_denom;
 
-    if (ray_slope == seg_slope) {
+    if ray_slope == seg_slope {
         // Parallel lines.
         // Does not count as an intersection for purposes of ray tracing,
         // even if the lines overlap.
@@ -204,10 +203,13 @@ fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
         { return None }
     else if ray_slope_denom < 0.0 && x > ray.p1.coords[0]
         { return None }
-        
+    
     // It's on the ray. Is it on the segment?
+    // Because of the ordering of segment points, we know that
+    // the x value of the first point <= the x value of the second point.
     if x >= segment.p1.coords[0] && x <= segment.p2.coords[0] &&
-       y >= segment.p1.coords[1] && y <= segment.p2.coords[1] {
+       ((y >= segment.p1.coords[1] && y <= segment.p2.coords[1]) ||
+        (y <= segment.p1.coords[1] && y >= segment.p2.coords[1])) {
         return Some(Point2::new(x, y));
     }
     else {
@@ -382,7 +384,7 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
                         if mask == (1 << i) {
                             new_children[i].segments.push((seg, info));
                             to_delete.insert(segi);
-                            if (new_children[i].segments.len() == 1) {
+                            if new_children[i].segments.len() == 1 {
                                 self.n_nonempty_nodes += 1;
                             }
                         }
@@ -395,8 +397,8 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
                         r.segments
                         .iter()
                         .enumerate()
-                        .filter(|&(i,x)| !to_delete.contains(&i))
-                        .map(|(i,x)| *x)
+                        .filter(|&(i,_)| !to_delete.contains(&i))
+                        .map(|(_,x)| *x)
                         .collect();
                 }
 
@@ -445,13 +447,13 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
 
         let mut si = 0;
         let mut ei = sls.len()-1;
-        while (si < ei) {
+        while si < ei {
             self.insert_segment(sls[si].1, get_info(si));
             self.insert_segment(sls[ei].1, get_info(ei));
             si += 1;
             ei -= 1;
         }
-        if (si == ei) {
+        if si == ei {
             self.insert_segment(sls[si].1, get_info(si));
         }
     }
@@ -460,41 +462,37 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
         return self.ray_trace_iter(ray).flat_map(|x| x.iter()).map(|x| *x).collect();
     }
 
-    pub fn get_segments_touched_by_ray(&'a self, ray: &Ray) 
+    pub fn get_segments_touched_by_ray(&'a self, ray: &Ray)
     -> Option <(Vec<(&'a Segment, &'a SegmentInfo)>, Point2, Scalar)> {
-        for segs in self.ray_trace_iter(ray) {
-            let mut intersects: Vec<(&'a Segment, &'a SegmentInfo, Point2, Scalar)> = Vec::new();
-            for &(s,si) in segs {
-                if let Some(pt) = ray_intersects_segment(ray, s) {
-                    let xd = pt.coords[0] - ray.p1.coords[0];
-                    let yd = pt.coords[1] - ray.p1.coords[1];
-                    let d = xd*xd + yd*yd;
-                    intersects.push((s, si, pt, d));
-                }
+        let segs = self.get_segments_possibly_touched_by_ray(ray);
+
+        let mut intersects: Vec<(&'a Segment, &'a SegmentInfo, Point2, Scalar)> = Vec::new();
+        for (s,si) in segs {
+            if let Some(pt) = ray_intersects_segment(ray, s) {
+                let xd = pt.coords[0] - ray.p1.coords[0];
+                let yd = pt.coords[1] - ray.p1.coords[1];
+                let d = xd*xd + yd*yd;
+                intersects.push((s, si, pt, d));
             }
-
-            if (intersects.len() == 0) {
-                continue;
-            }
-
-            // Find the intersects closest to the start of the ray.
-            intersects.sort_by(|&(_,_,_,d1),&(_,_,_,d2)| {
-                d1.partial_cmp(&d2).unwrap()
-            });
-
-            let pt = intersects[0].2;
-            let d = intersects[0].3;
-            let mut r: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
-            for &(s,si,_,dd) in intersects.iter().skip(1) {
-                if (d != dd)
-                    { break; }
-                r.push((s, si));
-            }
-
-            return Some((r, pt, d));
         }
 
-        return None
+        if intersects.len() == 0
+            { return None; }
+        
+        // Find the intersects closest to the start of the ray.
+        intersects.sort_by(|&(_,_,_,d1),&(_,_,_,d2)| {
+            d1.partial_cmp(&d2).unwrap()
+        });
+
+        let (s0, si0, pt0, d0) = intersects[0];
+        let mut r: Vec<(&'a Segment, &'a SegmentInfo)> = vec![(s0, si0)];
+        for &(s,si,_,d) in intersects.iter().skip(1) {
+            if d != d0
+                { break; }
+            r.push((s, si));
+        }
+
+        return Some((r, pt0, d0));
     }
 }
 

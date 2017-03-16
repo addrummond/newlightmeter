@@ -217,12 +217,12 @@ where E: piston_window::generic_event::GenericEvent {
             ];
 
             let bcol = 1.0 - ((depth as f32)*0.1);
-            let gcol = ((depth as f32)*0.15);
+            let gcol = (depth as f32)*0.15;
 
             window.draw_2d(e, |c, g| {
                 for l in &lines {
                     piston_window::line(
-                        [0.0, gcol, bcol, 1.0], // Color
+                        [0.3, gcol, bcol, 1.0], // Color
                         0.5, // Radius
                         tl(*l, t),
                         c.transform,
