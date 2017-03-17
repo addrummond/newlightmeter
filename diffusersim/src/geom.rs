@@ -500,21 +500,28 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
 // Surfaces, rays, etc.
 //
 
-struct RayProperties {
-    wavelength: Scalar, // um
-    intensity: Scalar
+pub struct RayProperties {
+    pub wavelength: Scalar, // um
+    pub intensity: Scalar
 }
 
-// A surface that does something to rays that land on it,
-// rather than just recording their intensity/wavelength/etc.
-struct ActiveSurfaceProperties {
-    refractive_index: Scalar,
-    extinction: Scalar,
-    cauchy_coeffs: Vec<Scalar>
+#[derive(Debug)]
+pub struct MaterialProperties {
+    pub refractive_index: Scalar,
+    pub extinction: Scalar,
+    pub cauchy_coeffs: Vec<Scalar>
 }
 
-enum SurfaceType {
-    Active(ActiveSurfaceProperties),
+pub fn make_dummy_material_properties() -> MaterialProperties {
+    MaterialProperties {
+        refractive_index: 0.0,
+        extinction: 0.0,
+        cauchy_coeffs: vec![ ]
+    }
+}
+
+pub enum SurfaceType {
+    Active(MaterialProperties),
     Passive
 }
 
