@@ -2,6 +2,7 @@ extern crate nalgebra;
 extern crate piston_window;
 
 mod geom;
+mod geom_import;
 mod render;
 
 use piston_window::*;
