@@ -505,7 +505,7 @@ pub struct RayProperties {
     pub intensity: Scalar
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MaterialProperties {
     pub refractive_index: Scalar,
     pub extinction: Scalar,

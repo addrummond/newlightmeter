@@ -1,7 +1,6 @@
 extern crate nalgebra;
 extern crate piston_window;
 #[macro_use]
-extern crate nom;
 
 mod geom;
 mod geom_import;
