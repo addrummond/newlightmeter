@@ -29,7 +29,7 @@ enum SegmentType {
 }
 
 #[derive(Debug)]
-pub enum Entry {
+enum Entry {
     Segment(String, String, g::Segment),
     Material(String, g::MaterialProperties)
 }
@@ -276,7 +276,7 @@ fn numeric_constant(st: &mut ParseState) -> ParseResult<g::Scalar> {
     }
 }
 
-pub fn entry(st: &mut ParseState) -> ParseResult<Entry> {
+fn entry(st: &mut ParseState) -> ParseResult<Entry> {
     match identifier(st) {
         Err(e) => { return Err(e) },
         Ok(ident) => {
