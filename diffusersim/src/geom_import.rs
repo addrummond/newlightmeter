@@ -530,8 +530,9 @@ mod tests {
 
     #[test]
     fn parse_to_segments_test1() {
-        let input = "material foo ri=7 ex=9 c1=3 c4=7\nline foo/foo 1 2 3 4";
-        let result = geom_import::parse_geometry_str(input);
+        //let input = "material foo ri=7 ex=9 c1=3 c4=7\nline foo/foo 1 2 3 4";
+        //let result = geom_import::parse_geometry_str(input);
+        let result = geom_import::parse_geometry_file("/Users/alex/progs/newlightmeter/diffusersim/src/test.geom");
         print!("{:#?}", result);
         assert!(result.is_ok());
     }
