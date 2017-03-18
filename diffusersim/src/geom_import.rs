@@ -2,6 +2,10 @@ use geom as g;
 use std::str;
 use std::collections::HashMap;
 use std::iter;
+use std::fs::File;
+use std::io;
+use std::io::BufReader;
+use std::io::prelude::*;
 
 #[derive(Debug)]
 pub struct ImportedGeometry {
@@ -248,7 +252,7 @@ where F1: Parser<R1>,
     }
 }
 
-fn space_separated<R,F>(st: &mut ParseState, mut parser: F) -> ParseResult<Vec<R>>
+fn space_separated<R,F>(st: &mut ParseState, parser: F) -> ParseResult<Vec<R>>
 where F: Parser<R> {
     sep_by(st, skip_at_least_one_space, parser)
 }
@@ -362,9 +366,11 @@ fn assignment(st: &mut ParseState) -> ParseResult<(String,g::Scalar)> {
     }
 }
 
-fn material_properties_from_assignments(assignments: &Vec<(String, g::Scalar)>) -> g::MaterialProperties {
+fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(String, g::Scalar)>) -> ParseResult<g::MaterialProperties> {
     let mut m = g::make_dummy_material_properties();
-
+    let mut coeffs: HashMap<usize, g::Scalar> = HashMap::new();
+    let mut max_coeff_n = 0;
+    
     for &(ref n, ref v) in assignments {
         if n == "ri" {
             m.refractive_index = *v;
@@ -372,9 +378,51 @@ fn material_properties_from_assignments(assignments: &Vec<(String, g::Scalar)>) 
         else if n == "ex" {
             m.extinction = *v;
         }
+        else {
+            let mut it = n.chars();
+            if let Some(c) = it.next() {
+                if c != 'c' {
+                    return parse_error_string(st, "Unrecognized attribute assigned in material: ".to_string() + n);
+                }
+
+                let mut ncs: Vec<char> = Vec::new();
+                let mut i = 0;
+                for cc in it {
+                    if !(cc == '0' || cc == '1' || cc == '2' || cc == '3' || cc == '4' ||
+                         cc == '5' || cc == '6' || cc == '7' || cc == '8' || cc == '9' ||
+                         cc == '0') {
+                        return parse_error(st, "Not digit following 'c' in attribute name");
+                    }
+                    if i > 3
+                        { return parse_error(st, "Coefficient number has too many digits"); }
+                    ncs.push(cc);
+                    i += 1;
+                }
+
+                let ns: String = ncs.into_iter().collect();
+                let coeffn = ns.parse::<usize>().unwrap();
+                if coeffn == 0
+                    { return parse_error(st, "Coefficients numbered from 1"); }
+
+                coeffs.insert(coeffn, *v);
+                if coeffn > max_coeff_n
+                    { max_coeff_n = coeffn }
+            }
+            else {
+                return parse_error(st, "Weird: empty attribute name?");
+            }
+        }
     }
 
-    m
+    let mut coeffs_vec: Vec<g::Scalar> = iter::repeat(0.0).take(max_coeff_n).collect();
+    for i in 1..max_coeff_n+1 {
+        if let Some(v) = coeffs.get(&i) {
+            coeffs_vec[i-1] = *v;
+        }
+    }
+
+    m.cauchy_coeffs = coeffs_vec;
+    Ok(m)
 }
 
 fn material_entry(st: &mut ParseState) -> ParseResult<Entry> {
@@ -387,7 +435,10 @@ fn material_entry(st: &mut ParseState) -> ParseResult<Entry> {
             match space_separated(st, assignment) {
                 Err(e) => { Err(e) },
                 Ok(assignments) => {
-                    Ok(Entry::Material(name, material_properties_from_assignments(&assignments)))
+                    match material_properties_from_assignments(st, &assignments) {
+                        Err(e) => { Err(e) },
+                        Ok(props) => { Ok(Entry::Material(name, props)) }
+                    }
                 }
             }
         }
@@ -402,7 +453,7 @@ fn entry_sep(st: &mut ParseState) -> ParseResult<()> {
     Ok(())
 }
 
-pub fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
+fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
     skip_space(st);
     match sep_by(st, entry_sep, entry) {
         Err(e) => { Err(e) },
@@ -460,20 +511,28 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Entry>) -> Pa
     })
 }
 
+pub fn parse_geometry_str(input: &str) -> ParseResult<ImportedGeometry> {
+    let mut st = ParseState::new(input);
+    document(&mut st)
+}
+
+pub fn parse_geometry_file(filename: &str) -> io::Result<ParseResult<ImportedGeometry>> {
+    let file = File::open(filename)?;
+    let mut buf_reader = BufReader::new(file);
+    let mut contents = String::new();
+    buf_reader.read_to_string(&mut contents)?;
+
+    Ok(parse_geometry_str(contents.as_str()))
+}
+
 mod tests {
     use geom_import;
 
     #[test]
     fn parse_to_segments_test1() {
-        //let input = "line abcd/ef 5 5 5 5";
-        let input = "material foo yy=5.3 ex=5 zz=54 zz=5\nline foo/foo 1 2 3 4";
-        let mut st = geom_import::ParseState::new(input);
-        println!("===> {:?}", geom_import::document(&mut st));
-
-        //println!("===> {:?}", geom_import::run_parser(geom_import::entry, "line oooo/oo 5 5 5 5\nline oooo/oo 5 5 5 5\n"))
-        //let input = "lineseg 0.0 1.0 2.0 3.0";
-        //println!("STARTING");
-        //let r = geom_import::parse_to_segments(input);
-        //println!("{:?}", r);
+        let input = "material foo ri=7 ex=9 c1=3 c4=7\nline foo/foo 1 2 3 4";
+        let result = geom_import::parse_geometry_str(input);
+        print!("{:#?}", result);
+        assert!(result.is_ok());
     }
 }

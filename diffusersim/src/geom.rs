@@ -16,7 +16,7 @@ pub type Point2 = Point2_<Scalar>;
 // QTrees
 //
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Segment {
     // p1.x < p2.x || (p1.x == p2.x && p1.y < p2.y)
     pub p1: Point2,
@@ -27,14 +27,6 @@ pub struct Ray {
     // Origin at p1, pointing in direction of p2.
     pub p1: Point2,
     pub p2: Point2
-}
-
-impl fmt::Debug for Segment {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "(Segment ({}, {}) -> ({}, {}))",
-               self.p1.coords[0], self.p1.coords[1],
-               self.p2.coords[0], self.p2.coords[1])
-    }
 }
 
 pub fn seg(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Segment {
