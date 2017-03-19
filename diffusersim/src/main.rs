@@ -102,7 +102,7 @@ fn test2() {
         }
     }
 
-    let touched: Vec<g::Segment> = segs.iter().map(|x| (*x).clone()).collect();
+    let touched: Vec<g::Segment> = segs.into_iter().map(|x| x.clone()).collect();
     println!("COMPUTED TOUCHES");
     do_graphics(&qtree, &test_segments, &rays, &touched);
 }
