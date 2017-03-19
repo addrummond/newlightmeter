@@ -4,9 +4,11 @@ use std::collections::HashSet;
 // Basic types.
 //
 
-pub type Scalar = f64;
+use nalgebra as n;
 use nalgebra::Vector2 as Vector2_;
 use nalgebra::Point2 as Point2_;
+
+pub type Scalar = f64;
 pub type Vector2 = Vector2_<Scalar>;
 pub type Point2 = Point2_<Scalar>;
 
@@ -303,6 +305,25 @@ impl<'a,'b, SegmentInfo> Iterator for QTreeRayTraceIterator<'a, 'b, SegmentInfo>
     }
 }
 
+// -1 left, 0 on line, 1 right (looking from first point to second point).
+pub fn point_side_of_line_segment(lp1: Point2, lp2: Point2, p: Point2) -> i32 {
+    let ax = lp1.coords[0];
+    let ay = lp1.coords[1];
+    let bx = lp2.coords[0];
+    let by = lp2.coords[1];
+    let cx = p.coords[0];
+    let cy = p.coords[1];
+
+    let determinant = (bx - ax)*(cy - ay) - (by - ay)*(cx - ax);
+
+    if determinant > 0.0
+        { return -1 }
+    else if determinant < 0.0
+        { return 1 }
+    else
+        { return 0 }
+}
+
 impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
     pub fn make_empty_qtree() -> QTree<'a,SegmentInfo>
     {
@@ -519,8 +540,15 @@ pub struct RayProperties {
     pub intensity: Scalar
 }
 
+pub struct TracingProperties {
+    pub new_rays: usize
+}
+
 #[derive(Debug, Clone)]
 pub struct MaterialProperties {
+    pub diffuse_reflect_fraction: Scalar,
+    pub specular_reflect_fraction: Scalar,
+    pub refraction_fraction: Scalar,
     pub refractive_index: Scalar,
     pub extinction: Scalar,
     pub cauchy_coeffs: Vec<Scalar>
@@ -528,17 +556,53 @@ pub struct MaterialProperties {
 
 pub fn make_dummy_material_properties() -> MaterialProperties {
     MaterialProperties {
+        diffuse_reflect_fraction:  0.0,
+        specular_reflect_fraction: 0.0,
+        refraction_fraction: 0.0,
         refractive_index: 0.0,
         extinction: 0.0,
         cauchy_coeffs: vec![ ]
     }
 }
 
-pub enum SurfaceType {
-    Active(MaterialProperties),
-    Passive
-}
+fn trace_ray(ray: &Ray,
+             ray_props: &RayProperties,
+             tp: &TracingProperties,
+             qtree: &QTree<MaterialProperties>,
+             new_rays: &mut Vec<Ray>) {
+    if let Some((segs_with_info, intersect, _)) = qtree.get_segments_touched_by_ray(ray) {
+        for (seg, info) in segs_with_info {
+            // Is the ray hitting the left surface or the right surface of
+            // the segment?
+            let side = point_side_of_line_segment(seg.p1, seg.p2, ray.p1);
 
-//fn trace_ray(ray: Ray, ray_props: RayProperties, qtree: QTree<SurfaceType>) {
-//    
-//}
+            // If the ray actually originates on this segment, ignore it.
+            if side == 0
+                { continue; }
+            
+            let segline = seg.p2 - seg.p1;
+
+            // The left normal (looking "along" the line from the origin.)
+            let mut surface_normal = Vector2::new(-segline.data[1], segline.data[0]);
+
+            // Ensure that surface normal is pointing in opposite direction to ray.
+            if side == 1 {
+                surface_normal = -surface_normal;
+            }
+            
+            //
+            // Add rays for diffuse reflections.
+            //
+
+            /*if (rayline.x > 0 && surface_normal.x < 0)
+
+            let n = (tp.new_rays - 1) as Scalar;
+            for i in 0..tp.new_rays {
+                let an = (((i as Scalar)/n) * consts::FRAC_PI_2) - consts::FRAC_PI_4;
+                let along_seg = an.cos();
+                let normal_to_seg = an.sin();
+
+            }*/
+        }
+    }
+}
