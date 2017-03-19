@@ -108,22 +108,10 @@ fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
 
     // Handle the vertical case.
     if v1[0] == v2[0] {
-        let mut maxy = v1[1];
-        if v2[1] > maxy
-            { maxy = v2[1]; }
-        let mut miny = v1[1];
-        if v2[1] > miny
-            { miny = v2[1]; }
-
-        if maxy > t.min_y + t.height {
-            return g::Point2::new(v1[0], t.min_y + t.height);
-        }
-        else if miny < t.min_y {
-            return g::Point2::new(v1[0], t.min_y);
-        }
-        else {
-            return r.p2;
-        }
+        if v1[1] <= v2[1]
+            { return g::Point2::new(v1[0], t.min_y + t.height); }
+        else
+            { return g::Point2::new(v1[0], t.min_y); }
     }
 
     let m = (v2[1] - v1[1]) / (v2[0] - v1[0]);

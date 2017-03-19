@@ -330,10 +330,7 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Entry> {
                     Ok(Entry::Segment(
                         i1,
                         i2,
-                        g::Segment { 
-                            p1: g::Point2::new(coords[0], coords[1]),
-                            p2: g::Point2::new(coords[2], coords[3])
-                        }
+                        g::seg(coords[0], coords[1], coords[2], coords[3])
                     ))
                 }
             }

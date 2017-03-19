@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use nalgebra as n;
 use nalgebra::Vector2 as Vector2_;
 use nalgebra::Point2 as Point2_;
+use std::f64::consts;
 
 pub type Scalar = f64;
 pub type Vector2 = Vector2_<Scalar>;
@@ -519,13 +520,21 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
             d1.partial_cmp(&d2).unwrap()
         });
 
-        let (s0, si0, pt0, d0) = intersects[0];
-        let mut r: Vec<(&'a Segment, &'a SegmentInfo)> = vec![(s0, si0)];
-        for &(s,si,_,d) in intersects.iter().skip(1) {
-            if d != d0
+        const EPSILON: Scalar = 0.0000001;
+        let mut r: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
+        let mut prev_d: Scalar = 0.0;
+        let mut past_zero = false;
+        for &(s,si,_,d) in &intersects {
+            if d - EPSILON <= 0.0 // The ray actually started on the segment, so this intersect doesn't count.
+                { continue; }
+            if past_zero && d != prev_d
                 { break; }
+            past_zero = true;
+            prev_d = d;
             r.push((s, si));
         }
+
+        let (_,_,pt0,d0) = intersects[0];
 
         return Some((r, pt0, d0));
     }
@@ -565,10 +574,10 @@ pub fn make_dummy_material_properties() -> MaterialProperties {
     }
 }
 
-fn trace_ray(ray: &Ray,
+pub fn trace_ray<T>(ray: &Ray,
              ray_props: &RayProperties,
              tp: &TracingProperties,
-             qtree: &QTree<MaterialProperties>,
+             qtree: &QTree<T>,
              new_rays: &mut Vec<Ray>) {
     if let Some((segs_with_info, intersect, _)) = qtree.get_segments_touched_by_ray(ray) {
         for (seg, info) in segs_with_info {
@@ -594,15 +603,20 @@ fn trace_ray(ray: &Ray,
             // Add rays for diffuse reflections.
             //
 
-            /*if (rayline.x > 0 && surface_normal.x < 0)
-
             let n = (tp.new_rays - 1) as Scalar;
             for i in 0..tp.new_rays {
                 let an = (((i as Scalar)/n) * consts::FRAC_PI_2) - consts::FRAC_PI_4;
-                let along_seg = an.cos();
-                let normal_to_seg = an.sin();
+                let along_seg = an.sin();
+                let normal_to_seg = an.cos();
+                let new_ray_p2 = intersect + (along_seg * segline) + (normal_to_seg * surface_normal);
 
-            }*/
+                let new_ray = Ray {
+                    p1: intersect,
+                    p2: new_ray_p2
+                };
+
+                new_rays.push(new_ray);
+            }
         }
     }
 }

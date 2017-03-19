@@ -48,9 +48,13 @@ fn test1() {
                 Ok(geom) => {
                     println!("{:#?}", geom);
 
-                    let rays = vec![
-                        g::ray(-30.0, -3.0, 30.0, -7.0),
-                        g::ray(-10.0, 30.0, -10.0, -30.0)
+                    let mut rays = vec![
+                        //g::ray(-30.0, -3.0, 30.0, -7.0),
+                        //g::ray(-10.0, 30.0, -10.0, -30.0)
+                        g::ray(0.5, 0.0, 3.0, 2.0),
+                        //g::ray(0.0, 0.0, -1.0, 0.0),
+                        //g::ray(0.0, 0.0, 0.0, 1.0)
+                        //g::ray(18.0, 10.0, 16.0, -5.0)
                     ];
 
                     let inf = MyInfo { };
@@ -58,6 +62,24 @@ fn test1() {
                     let mut qtree: g::QTree<MyInfo> = g::QTree::make_empty_qtree();
                     qtree.insert_segments(&geom.segments, |_| &inf);
                     println!("QTREE: {:#?}", qtree);
+
+                    let mut new_rays: Vec<g::Ray> = Vec::new();
+                    for r in &rays {
+                        g::trace_ray(
+                            r,
+                            &g::RayProperties {
+                                wavelength: 0.0,
+                                intensity: 0.0
+                            },
+                            &g::TracingProperties {
+                                new_rays: 16
+                            },
+                            &qtree,
+                            &mut new_rays
+                        );
+                    }
+
+                    rays.extend(new_rays.into_iter());
 
                     let mut segs: Vec<&g::Segment> = Vec::new();
                     for r in &rays {
