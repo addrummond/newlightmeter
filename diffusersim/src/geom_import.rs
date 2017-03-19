@@ -327,10 +327,24 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Entry> {
                         return parse_error(st, "Junk at end of 'line' def");
                     }
 
+                    let newseg = g::seg(coords[0], coords[1], coords[2], coords[3]);
+                    // If the points were reordered by the 'seg' constructor, then
+                    // we also want to swap i1 and i2.
+                    let ii1;
+                    let ii2;
+                    if newseg.p1.coords[0] == coords[0] && newseg.p1.coords[1] == coords[1] {
+                        ii1 = i1;
+                        ii2 = i2;
+                    }
+                    else {
+                        ii1 = i2;
+                        ii2 = i1;
+                    }
+
                     Ok(Entry::Segment(
-                        i1,
-                        i2,
-                        g::seg(coords[0], coords[1], coords[2], coords[3])
+                        ii1,
+                        ii2,
+                        newseg
                     ))
                 }
             }

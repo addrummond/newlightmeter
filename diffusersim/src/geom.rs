@@ -605,7 +605,7 @@ pub fn trace_ray<T>(ray: &Ray,
 
             let n = (tp.new_rays - 1) as Scalar;
             for i in 0..tp.new_rays {
-                let an = (((i as Scalar)/n) * consts::FRAC_PI_2) - consts::FRAC_PI_4;
+                let an = (((i as Scalar)/n) * consts::PI) - consts::FRAC_PI_2;
                 let along_seg = an.sin();
                 let normal_to_seg = an.cos();
                 let new_ray_p2 = intersect + (along_seg * segline) + (normal_to_seg * surface_normal);
@@ -619,4 +619,14 @@ pub fn trace_ray<T>(ray: &Ray,
             }
         }
     }
+}
+
+pub fn resursive_trace_ray<T>(
+    ray: &Ray,
+    ray_props: &RayProperties,
+    tp: &TracingProperties,
+    qtree: &QTree<T>,
+    new_rays: &mut Vec<Ray>,
+    limit: usize) {
+
 }
