@@ -105,7 +105,26 @@ fn tl(ln: [g::Scalar; 4], t: &DisplayTransform) -> [GScalar; 4] {
 fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
     let v1 = r.p1.coords;
     let v2 = r.p2.coords;
-    let d = v2 - v1;
+
+    // Handle the vertical case.
+    if v1[0] == v2[0] {
+        let mut maxy = v1[1];
+        if v2[1] > maxy
+            { maxy = v2[1]; }
+        let mut miny = v1[1];
+        if v2[1] > miny
+            { miny = v2[1]; }
+
+        if maxy > t.min_y + t.height {
+            return g::Point2::new(v1[0], t.min_y + t.height);
+        }
+        else if miny < t.min_y {
+            return g::Point2::new(v1[0], t.min_y);
+        }
+        else {
+            return r.p2;
+        }
+    }
 
     let m = (v2[1] - v1[1]) / (v2[0] - v1[0]);
     let k = v1[1] - m*v1[0];
@@ -184,7 +203,7 @@ where E: piston_window::generic_event::GenericEvent {
         let tp1 = tp(r.p1, t);
         let tp2 = tp(edge_clip_ray_dest(r, t), t);
 
-        let diam = 0.01 * t.height;
+        let diam = 0.05 * t.height;
 
         window.draw_2d(e, |c, g| {
             piston_window::line(

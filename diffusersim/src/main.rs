@@ -2,17 +2,18 @@ extern crate nalgebra;
 extern crate piston_window;
 #[macro_use]
 
-mod geom;
-mod geom_import;
-mod render;
+pub mod geom;
+pub mod geom_import;
+pub mod render;
 
 use piston_window::*;
 use geom as g;
-use render as r;
+use geom_import as gi;
 
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 
+#[derive(Debug)]
 struct MyInfo {
 
 }
@@ -26,15 +27,53 @@ fn do_graphics(qtree: &g::QTree<MyInfo>, segments: &Vec<g::Segment>, rays: &Vec<
     while let Some(e) = window.next() {
         //let lines = r::render_segments(segments, WIDTH, HEIGHT);
 
-        window.draw_2d(&e, |c, g| { clear([1.0; 4], g); });
+        window.draw_2d(&e, |_, g| { clear([1.0; 4], g); });
         render::render_segments(segments, &mut window, &e, &t, [0.0,1.0,0.0,1.0]);
         render::render_rays(rays, &mut window, &e, &t);
         render::render_qtree(qtree, &mut window, &e, &t);
-        render::render_segments(touched, &mut window, &e, &t, [1.0,0.0,0.0,1.0])
+        render::render_segments(touched, &mut window, &e, &t, [1.0,0.25,0.0,1.0])
     }
 }
 
-fn main() {
+fn test1() {
+    match gi::parse_geometry_file("src/test.geom") {
+        Err(e) => {
+            println!("Error: {:?}", e);
+        },
+        Ok(p) => {
+            match p {
+                Err(e) => {
+                    println!("Error: {:?}", e);
+                }
+                Ok(geom) => {
+                    println!("{:#?}", geom);
+
+                    let rays = vec![
+                        g::ray(-30.0, -3.0, 30.0, -7.0),
+                        g::ray(-10.0, 30.0, -10.0, -30.0)
+                    ];
+
+                    let inf = MyInfo { };
+
+                    let mut qtree: g::QTree<MyInfo> = g::QTree::make_empty_qtree();
+                    qtree.insert_segments(&geom.segments, |_| &inf);
+                    println!("QTREE: {:#?}", qtree);
+
+                    let mut segs: Vec<&g::Segment> = Vec::new();
+                    for r in &rays {
+                        if let Some((sts, _, _)) = qtree.get_segments_touched_by_ray(r) {
+                           segs.extend(sts.iter().map(|&(s,_)| s));
+                        }
+                    }
+                    let touched: Vec<g::Segment> = segs.iter().map(|x| (*x).clone()).collect();
+                    do_graphics(&qtree, &geom.segments, &rays, &touched);   
+                }
+            }
+        }
+    }
+}
+
+fn test2() {
     let mut test_segments: Vec<g::Segment> = Vec::new();
     for i in 1..100 {
         let v = i as f64;
@@ -58,17 +97,16 @@ fn main() {
 
     let mut segs: Vec<&g::Segment> = Vec::new();
     for r in &rays {
-        if let Some((sts, pt, d)) = qtree.get_segments_touched_by_ray(r) {
+        if let Some((sts, _, _)) = qtree.get_segments_touched_by_ray(r) {
             segs.extend(sts.iter().map(|&(s,_)| s));
-//            segs.extend(
-//                qtree
-//                    .get_segments_possibly_touched_by_ray(r)
-//                    .iter()
-//                    .map(|&(s,_)| s)
         }
     }
 
     let touched: Vec<g::Segment> = segs.iter().map(|x| (*x).clone()).collect();
     println!("COMPUTED TOUCHES");
     do_graphics(&qtree, &test_segments, &rays, &touched);
+}
+
+fn main() {
+    test1();
 }

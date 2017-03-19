@@ -1,5 +1,3 @@
-use std::fmt;
-use std::rc::Rc;
 use std::collections::HashSet;
 
 //
@@ -23,6 +21,7 @@ pub struct Segment {
     pub p2: Point2
 }
 
+#[derive(Debug)]
 pub struct Ray {
     // Origin at p1, pointing in direction of p2.
     pub p1: Point2,
@@ -71,6 +70,7 @@ where SegmentInfo: 'a {
     pub child_info: Option<QTreeChildInfo<'a,SegmentInfo>>
 }
 
+#[derive(Debug)]
 pub struct QTree<'a, SegmentInfo>
 where SegmentInfo: 'a {
     root: Box<QTreeNode<'a, SegmentInfo>>,
@@ -159,6 +159,8 @@ impl<'a, SegmentInfo> Iterator for QTreeInOrderIterator<'a, SegmentInfo> {
 fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
     let ray_slope_num = ray.p2.coords[1] - ray.p1.coords[1];
     let seg_slope_num = segment.p2.coords[1] - segment.p1.coords[1];
+    let ray_slope_denom = ray.p2.coords[0] - ray.p1.coords[0];
+    let seg_slope_denom = segment.p2.coords[0] - segment.p1.coords[0];
 
     if ray_slope_num == 0.0 && seg_slope_num == 0.0 {
         // Parallel horizontal lines.
@@ -166,25 +168,45 @@ fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
         // even if the lines overlap.
         return None;
     }
+    else if ray_slope_denom == 0.0 && seg_slope_denom == 0.0 {
+        // Parallel vertical lines.
+        return None;
+    }
 
-    let ray_slope_denom = ray.p2.coords[0] - ray.p1.coords[0];
-    let seg_slope_denom = segment.p2.coords[0] - segment.p1.coords[0];
     let ray_slope = ray_slope_num / ray_slope_denom;
     let seg_slope = seg_slope_num / seg_slope_denom;
 
     if ray_slope == seg_slope {
         // Parallel lines.
-        // Does not count as an intersection for purposes of ray tracing,
-        // even if the lines overlap.
         return None;
     }
 
-    let ray_k = ray.p1.coords[1] - (ray_slope * ray.p1.coords[0]);
-    let seg_k = segment.p1.coords[1] - (seg_slope * segment.p1.coords[0]);
+    // Calculate intersection point;
+    let x;
+    let y;
+    if ray_slope_denom == 0.0 {
+        // We can quickly determine that there's no intersection if the ray is vertical
+        // and the segment doesn't overlap the relevant y coordinate.
+        if ! (ray.p1.coords[0] >= segment.p1.coords[0] && ray.p1.coords[0] <= segment.p2.coords[0]) ||
+             (ray.p1.coords[0] <= segment.p1.coords[0] && ray.p1.coords[0] >= segment.p2.coords[0]) {
+            return None;
+        }
+        x = ray.p1.coords[0];
+        let seg_k = segment.p1.coords[1] - (seg_slope * segment.p1.coords[0]);
+        y = (seg_slope * x) + seg_k;
+    }
+    else if seg_slope_denom == 0.0 {
+        x = segment.p1.coords[0];
+        let ray_k = ray.p1.coords[1] - (ray_slope * ray.p1.coords[0]);
+        y = (ray_slope * x) + ray_k;
+    }
+    else {
+        let ray_k = ray.p1.coords[1] - (ray_slope * ray.p1.coords[0]);
+        let seg_k = segment.p1.coords[1] - (seg_slope * segment.p1.coords[0]);
 
-    // Calculate intersection point.
-    let x = (seg_k - ray_k) / (ray_slope - seg_slope);
-    let y = (seg_k*ray_slope - ray_k-seg_slope) / (ray_slope - seg_slope);
+        x = (seg_k - ray_k) / (ray_slope - seg_slope);
+        y = (seg_k*ray_slope - ray_k*seg_slope) / (ray_slope - seg_slope);
+    }
 
     // Is the intersection point on the ray?
     if ray_slope_num > 0.0 && y < ray.p1.coords[1]
@@ -517,6 +539,6 @@ pub enum SurfaceType {
     Passive
 }
 
-fn trace_ray(ray: Ray, ray_props: RayProperties, qtree: QTree<SurfaceType>) {
-    
-}
+//fn trace_ray(ray: Ray, ray_props: RayProperties, qtree: QTree<SurfaceType>) {
+//    
+//}

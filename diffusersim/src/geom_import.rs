@@ -9,10 +9,10 @@ use std::io::prelude::*;
 
 #[derive(Debug)]
 pub struct ImportedGeometry {
-    segments: Vec<g::Segment>,
-    materials: Vec<g::MaterialProperties>,
-    left_material_properties: Vec<usize>,
-    right_material_properties: Vec<usize>,
+    pub segments: Vec<g::Segment>,
+    pub materials: Vec<g::MaterialProperties>,
+    pub left_material_properties: Vec<usize>,
+    pub right_material_properties: Vec<usize>,
 }
 
 #[derive(Debug)]
@@ -25,12 +25,6 @@ pub struct ParseError {
 type ParseResult<T> = Result<T, ParseError>;
 trait Parser<T> : FnMut (&mut ParseState) -> ParseResult<T> { }
 impl <T,U> Parser<T> for U where U: FnMut (&mut ParseState) -> ParseResult<T> { }
-
-#[derive(Debug)]
-enum SegmentType {
-    Line,
-    Arc
-}
 
 #[derive(Debug)]
 enum Entry {
@@ -338,7 +332,7 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Entry> {
                         i2,
                         g::Segment { 
                             p1: g::Point2::new(coords[0], coords[1]),
-                            p2: g::Point2::new(coords[1], coords[2])
+                            p2: g::Point2::new(coords[2], coords[3])
                         }
                     ))
                 }
@@ -447,7 +441,7 @@ fn material_entry(st: &mut ParseState) -> ParseResult<Entry> {
 
 fn entry_sep(st: &mut ParseState) -> ParseResult<()> {
     skip_space(st);
-    if let Err(e) = expect_str(st, "\n")
+    if let Err(_) = expect_str(st, "\n")
         { return parse_error(st, "Expecting newline separator"); }
     drop_while(st, |c| char::is_whitespace(c));
     Ok(())
@@ -523,17 +517,4 @@ pub fn parse_geometry_file(filename: &str) -> io::Result<ParseResult<ImportedGeo
     buf_reader.read_to_string(&mut contents)?;
 
     Ok(parse_geometry_str(contents.as_str()))
-}
-
-mod tests {
-    use geom_import;
-
-    #[test]
-    fn parse_to_segments_test1() {
-        //let input = "material foo ri=7 ex=9 c1=3 c4=7\nline foo/foo 1 2 3 4";
-        //let result = geom_import::parse_geometry_str(input);
-        let result = geom_import::parse_geometry_file("/Users/alex/progs/newlightmeter/diffusersim/src/test.geom");
-        print!("{:#?}", result);
-        assert!(result.is_ok());
-    }
 }
