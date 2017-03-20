@@ -586,7 +586,7 @@ pub fn trace_ray(
     tp: &TracingProperties,
     qtree: &QTree<MaterialProperties>,
     new_rays: &mut Vec<(Ray, RayProperties)>) 
-    -> usize { // Returns number of new rays traced.
+-> usize { // Returns number of new rays traced.
 
     let mut num_new_rays = 0;
     if let Some((segs_with_info, intersect, _)) = qtree.get_segments_touched_by_ray(ray) {
