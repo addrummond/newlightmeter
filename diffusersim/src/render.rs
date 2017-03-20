@@ -215,33 +215,37 @@ pub fn render_rays(rays: &Vec<(g::Ray, g::RayProperties)>, t: &DisplayTransform,
         let tp1 = tp(r.p1, t);
         let tp2 = tp(edge_clip_ray_dest(r, t), t);
 
-        let diam = 0.05 * t.height;
+        let diam = 3.0;
 
-        let mut attr = simplesvg::Attr::default();
-        attr.fill = None;
-        attr.stroke = Some(to_svg_color(color));
-        attr.stroke_width = Some(2.0);
-        attr.opacity = Some(1.0);
-        attr.font_family = None;
+        let mut line_attr = simplesvg::Attr::default();
+        line_attr.fill = None;
+        line_attr.stroke = Some(to_svg_color(color));
+        line_attr.stroke_width = Some(1.0);
+        line_attr.opacity = Some(1.0);
+        line_attr.font_family = None;
+
+        let mut circle_attr = simplesvg::Attr::default();
+        circle_attr.fill = Some(to_svg_color(color));
+        circle_attr.stroke = Some(to_svg_color(color));
+        circle_attr.stroke_width = Some(2.0);
+        circle_attr.opacity = Some(1.0);
+        circle_attr.font_family = None;
 
         figs.push(
-            simplesvg::Fig::Styled(
-                attr,
-                Box::new(simplesvg::Fig::Multiple(
-                    vec![
-                        simplesvg::Fig::Line(
-                            tp1[0] as f32,
-                            tp1[1] as f32,
-                            tp2[0] as f32,
-                            tp2[1] as f32
-                        ),
-                        simplesvg::Fig::Circle(
-                            tp1[0] as f32,
-                            tp1[1] as f32,
-                            diam as f32
-                        )
-                    ]
-                ))
+            simplesvg::Fig::Multiple(
+                vec![                        
+                    simplesvg::Fig::Styled(line_attr, Box::new(simplesvg::Fig::Line(
+                        tp1[0] as f32,
+                        tp1[1] as f32,
+                        tp2[0] as f32,
+                        tp2[1] as f32
+                    ))),
+                    simplesvg::Fig::Styled(circle_attr, Box::new(simplesvg::Fig::Circle(
+                        tp1[0] as f32,
+                        tp1[1] as f32,
+                        diam as f32
+                    )))
+                ]
             )
         );
     }
