@@ -65,8 +65,8 @@ pub fn get_display_transform(
         let xscale = (1.0-border_factor)*(w/ww);
         let yscale = (1.0-border_factor)*(h/hh);
 
-        let ox = offset_x + ((1.0-border_factor)*ww)/2.0;
-        let oy = offset_y + ((1.0-border_factor)*hh)/2.0;
+        let ox = offset_x + ((border_factor)*ww)/2.0;
+        let oy = offset_y + ((border_factor)*hh)/2.0;
 
         DisplayTransform {
             matrix: n::Matrix3::new(
