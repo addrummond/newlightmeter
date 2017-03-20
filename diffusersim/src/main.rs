@@ -13,13 +13,8 @@ use geom_import as gi;
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 
-#[derive(Debug)]
-struct MyInfo {
-
-}
-
-fn do_graphics(
-    qtree: &g::QTree<MyInfo>,
+fn do_graphics<T>(
+    qtree: &g::QTree<T>,
     segments: &Vec<g::Segment>,
     rays: &Vec<(g::Ray,g::RayProperties)>,
     touched: &Vec<g::Segment>) {
@@ -63,19 +58,20 @@ fn test1() {
                         //g::ray(18.0, 10.0, 16.0, -5.0)
                     ];
                     let mut rays: Vec<(g::Ray, g::RayProperties)> = bare_rays.into_iter().map(|r| {
-                        (r, g::RayProperties { wavelength: 0.0, intensity: 0.0 })
+                        (r, g::RayProperties { wavelength: 0.0, intensity: 1.0 })
                     }).collect();
 
-                    let inf = MyInfo { };
+                    let inf = g::MaterialProperties::default();
 
-                    let mut qtree: g::QTree<MyInfo> = g::QTree::make_empty_qtree();
+                    let mut qtree: g::QTree<g::MaterialProperties> = g::QTree::make_empty_qtree();
                     qtree.insert_segments(&geom.segments, |_| &inf);
                     println!("QTREE: {:#?}", qtree);
 
                     let mut new_rays: Vec<(g::Ray, g::RayProperties)> = Vec::new();
                     g::recursive_trace_ray(
                         &g::TracingProperties {
-                            new_rays: 16
+                            new_rays: 16,
+                            intensity_threshold: 0.01
                         },
                         &qtree,
                         &mut rays,
@@ -116,9 +112,8 @@ fn test2() {
         (r, g::RayProperties { wavelength: 0.0, intensity: 0.0 })
     }).collect();
 
-    let inf = MyInfo { };
-
-    let mut qtree: g::QTree<MyInfo> = g::QTree::make_empty_qtree();
+    let inf = g::MaterialProperties::default();
+    let mut qtree: g::QTree<g::MaterialProperties> = g::QTree::make_empty_qtree();
     qtree.insert_segments(&test_segments, |_| &inf);
 
     println!("N NODES: {} {}", qtree.get_n_nodes(), qtree.get_n_nonempty_nodes());

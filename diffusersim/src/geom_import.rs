@@ -372,7 +372,7 @@ fn assignment(st: &mut ParseState) -> ParseResult<(String,g::Scalar)> {
 }
 
 fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(String, g::Scalar)>) -> ParseResult<g::MaterialProperties> {
-    let mut m = g::make_dummy_material_properties();
+    let mut m = g::MaterialProperties::default();
     let mut coeffs: HashMap<usize, g::Scalar> = HashMap::new();
     let mut max_coeff_n = 0;
     

@@ -551,7 +551,10 @@ pub struct RayProperties {
 }
 
 pub struct TracingProperties {
-    pub new_rays: usize
+    pub new_rays: usize,
+    // If a new ray is generated with intensity below
+    // this threshold, it will be discarded.
+    pub intensity_threshold: Scalar
 }
 
 #[derive(Debug, Clone)]
@@ -564,28 +567,30 @@ pub struct MaterialProperties {
     pub cauchy_coeffs: Vec<Scalar>
 }
 
-pub fn make_dummy_material_properties() -> MaterialProperties {
-    MaterialProperties {
-        diffuse_reflect_fraction:  0.0,
-        specular_reflect_fraction: 0.0,
-        refraction_fraction: 0.0,
-        refractive_index: 0.0,
-        extinction: 0.0,
-        cauchy_coeffs: vec![ ]
+impl MaterialProperties {
+    pub fn default() -> MaterialProperties {
+        MaterialProperties {
+            diffuse_reflect_fraction:  0.5,
+            specular_reflect_fraction: 0.0,
+            refraction_fraction: 0.0,
+            refractive_index: 0.0,
+            extinction: 0.0,
+            cauchy_coeffs: vec![ ]
+        }
     }
 }
 
-pub fn trace_ray<T>(
+pub fn trace_ray(
     ray: &Ray,
     ray_props: &RayProperties,
     tp: &TracingProperties,
-    qtree: &QTree<T>,
+    qtree: &QTree<MaterialProperties>,
     new_rays: &mut Vec<(Ray, RayProperties)>) 
     -> usize { // Returns number of new rays traced.
 
     let mut num_new_rays = 0;
     if let Some((segs_with_info, intersect, _)) = qtree.get_segments_touched_by_ray(ray) {
-        for (seg, _) in segs_with_info {
+        for (seg, matprops) in segs_with_info {
             // Is the ray hitting the left surface or the right surface of
             // the segment?
             let side = point_side_of_line_segment(seg.p1, seg.p2, ray.p1);
@@ -608,21 +613,35 @@ pub fn trace_ray<T>(
             // Add rays for diffuse reflections.
             //
 
-            let n = (tp.new_rays - 1) as Scalar;
-            for i in 0..tp.new_rays {
-                let an = (((i as Scalar)/n) * consts::PI) - consts::FRAC_PI_2;
-                let along_seg = an.sin();
-                let normal_to_seg = an.cos();
-                let new_ray_p2 = intersect + (along_seg * segline) + (normal_to_seg * surface_normal);
+            let total_diffuse_reflect_intensity = ray_props.intensity * matprops.diffuse_reflect_fraction;
+            let mut new_diffuse_ray_props = *ray_props;
+            new_diffuse_ray_props.intensity =
+                ray_props.intensity * matprops.diffuse_reflect_fraction;
+            
+            // If the sum of the intensity of the new rays is above the threshold,
+            // add them.
+            if total_diffuse_reflect_intensity >= tp.intensity_threshold {
+                let mut new_diffuse_ray_props = *ray_props;
+                new_diffuse_ray_props.intensity =
+                    (ray_props.intensity * matprops.diffuse_reflect_fraction) /
+                    (tp.new_rays as Scalar);
+            
+                let n = (tp.new_rays - 1) as Scalar;
+                for i in 0..tp.new_rays {
+                    let an = (((i as Scalar)/n) * consts::PI) - consts::FRAC_PI_2;
+                    let along_seg = an.sin();
+                    let normal_to_seg = an.cos();
+                    let new_ray_p2 = intersect + (along_seg * segline) + (normal_to_seg * surface_normal);
 
-                let new_ray = Ray {
-                    p1: intersect,
-                    p2: new_ray_p2
-                };
+                    let new_ray = Ray {
+                        p1: intersect,
+                        p2: new_ray_p2
+                    };
 
-                num_new_rays += 1;
+                    num_new_rays += 1;
 
-                new_rays.push((new_ray, *ray_props));
+                    new_rays.push((new_ray, new_diffuse_ray_props));
+                }
             }
         }
     }
@@ -630,9 +649,9 @@ pub fn trace_ray<T>(
     num_new_rays
 }
 
-pub fn recursive_trace_ray<'a,T>(
+pub fn recursive_trace_ray<'a>(
     tp: &TracingProperties,
-    qtree: &QTree<T>,
+    qtree: &QTree<MaterialProperties>,
     mut rays: &'a mut Vec<(Ray, RayProperties)>,
     mut new_rays: &'a mut Vec<(Ray, RayProperties)>,
     limit: usize) {
