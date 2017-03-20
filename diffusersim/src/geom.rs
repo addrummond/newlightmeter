@@ -4,10 +4,10 @@ use std::collections::HashSet;
 // Basic types.
 //
 
-use nalgebra as n;
 use nalgebra::Vector2 as Vector2_;
 use nalgebra::Point2 as Point2_;
 use std::f64::consts;
+use std::mem;
 
 pub type Scalar = f64;
 pub type Vector2 = Vector2_<Scalar>;
@@ -17,14 +17,14 @@ pub type Point2 = Point2_<Scalar>;
 // QTrees
 //
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Segment {
     // p1.x < p2.x || (p1.x == p2.x && p1.y < p2.y)
     pub p1: Point2,
     pub p2: Point2
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Ray {
     // Origin at p1, pointing in direction of p2.
     pub p1: Point2,
@@ -544,6 +544,7 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
 // Surfaces, rays, etc.
 //
 
+#[derive(Copy, Clone)]
 pub struct RayProperties {
     pub wavelength: Scalar, // um
     pub intensity: Scalar
@@ -574,13 +575,17 @@ pub fn make_dummy_material_properties() -> MaterialProperties {
     }
 }
 
-pub fn trace_ray<T>(ray: &Ray,
-             ray_props: &RayProperties,
-             tp: &TracingProperties,
-             qtree: &QTree<T>,
-             new_rays: &mut Vec<Ray>) {
+pub fn trace_ray<T>(
+    ray: &Ray,
+    ray_props: &RayProperties,
+    tp: &TracingProperties,
+    qtree: &QTree<T>,
+    new_rays: &mut Vec<(Ray, RayProperties)>) 
+    -> usize { // Returns number of new rays traced.
+
+    let mut num_new_rays = 0;
     if let Some((segs_with_info, intersect, _)) = qtree.get_segments_touched_by_ray(ray) {
-        for (seg, info) in segs_with_info {
+        for (seg, _) in segs_with_info {
             // Is the ray hitting the left surface or the right surface of
             // the segment?
             let side = point_side_of_line_segment(seg.p1, seg.p2, ray.p1);
@@ -615,18 +620,33 @@ pub fn trace_ray<T>(ray: &Ray,
                     p2: new_ray_p2
                 };
 
-                new_rays.push(new_ray);
+                num_new_rays += 1;
+
+                new_rays.push((new_ray, *ray_props));
             }
         }
     }
+
+    num_new_rays
 }
 
-pub fn resursive_trace_ray<T>(
-    ray: &Ray,
-    ray_props: &RayProperties,
+pub fn recursive_trace_ray<'a,T>(
     tp: &TracingProperties,
     qtree: &QTree<T>,
-    new_rays: &mut Vec<Ray>,
+    mut rays: &'a mut Vec<(Ray, RayProperties)>,
+    mut new_rays: &'a mut Vec<(Ray, RayProperties)>,
     limit: usize) {
 
+    let mut total_ray_count = rays.len();
+
+    let mut old_r = &mut rays;
+    let mut new_r = &mut new_rays;
+
+    while total_ray_count <= limit && (**old_r).len() > 0 {
+        for &(ref ray, ref ray_props) in (*old_r).iter() {
+            total_ray_count += trace_ray(ray, ray_props, tp, qtree, new_r);
+        }
+        old_r.clear();
+        mem::swap(&mut old_r, &mut new_r);
+    }
 }

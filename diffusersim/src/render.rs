@@ -185,9 +185,9 @@ where E: piston_window::generic_event::GenericEvent {
     }
 }
 
-pub fn render_rays<E>(rays: &Vec<g::Ray>, window: &mut PistonWindow, e: &E, t: &DisplayTransform)
+pub fn render_rays<E>(rays: &Vec<(g::Ray, g::RayProperties)>, window: &mut PistonWindow, e: &E, t: &DisplayTransform)
 where E: piston_window::generic_event::GenericEvent {
-    for r in rays {
+    for &(ref r, _) in rays {
         let tp1 = tp(r.p1, t);
         let tp2 = tp(edge_clip_ray_dest(r, t), t);
 
