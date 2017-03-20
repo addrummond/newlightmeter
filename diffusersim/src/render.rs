@@ -16,6 +16,7 @@ pub fn get_display_transform(
     segments: &Vec<g::Segment>,
     width: u32,
     height: u32,
+    border_factor: g::Scalar,
     offset_x: g::Scalar,
     offset_y: g::Scalar)
 -> DisplayTransform {
@@ -61,13 +62,16 @@ pub fn get_display_transform(
         if ww == 0.0 { ww = 1.0 }
         if hh == 0.0 { hh = 1.0 }
 
-        let xscale = w/ww;
-        let yscale = h/hh;
+        let xscale = (1.0-border_factor)*(w/ww);
+        let yscale = (1.0-border_factor)*(h/hh);
+
+        let ox = offset_x + ((1.0-border_factor)*ww)/2.0;
+        let oy = offset_y + ((1.0-border_factor)*hh)/2.0;
 
         DisplayTransform {
             matrix: n::Matrix3::new(
-                xscale, 0.0,     (-min_x*xscale) + offset_x,
-                0.0,    -yscale, (-min_y*yscale) + offset_y,
+                xscale, 0.0,     (-min_x*xscale) + ox,
+                0.0,    -yscale, (-min_y*yscale) + oy,
                 0.0,    0.0,     1.0
             ),
             width: ww,

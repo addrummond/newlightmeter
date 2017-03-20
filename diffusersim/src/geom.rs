@@ -649,30 +649,56 @@ pub fn trace_ray(
     num_new_rays
 }
 
-pub fn recursive_trace_ray<'a>(
-    tp: &TracingProperties,
-    qtree: &QTree<MaterialProperties>,
-    mut rays: &'a mut Vec<(Ray, RayProperties)>,
-    mut new_rays: &'a mut Vec<(Ray, RayProperties)>,
+pub struct RayTraceState<'a> {
+    tracing_properties: &'a TracingProperties,
+    qtree: &'a QTree<'a, MaterialProperties>,
+    pub old_rays: &'a mut Vec<(Ray, RayProperties)>,
+    pub new_rays: &'a mut Vec<(Ray, RayProperties)>,
     recursion_limit: usize,
-    ray_limit: usize) {
+    ray_limit: usize,
+    ray_count: usize,
+    recursion_level: usize
+}
 
-    assert!(recursion_limit + ray_limit > 0);
-
-    let mut total_ray_count = rays.len();
-
-    let mut old_r = &mut rays;
-    let mut new_r = &mut new_rays;
-
-    let mut recursion_level = 0;
-    while (ray_limit == 0 || total_ray_count <= ray_limit) &&
-          (recursion_limit == 0 || recursion_level < recursion_limit) &&
-          (**old_r).len() > 0 {
-        for &(ref ray, ref ray_props) in (*old_r).iter() {
-            total_ray_count += trace_ray(ray, ray_props, tp, qtree, new_r);
+impl<'a> RayTraceState<'a> {
+    pub fn initial(
+        tp: &'a TracingProperties,
+        qtree: &'a QTree<MaterialProperties>,
+        old_rays: &'a mut Vec<(Ray, RayProperties)>,
+        new_rays: &'a mut Vec<(Ray, RayProperties)>,
+        recursion_limit: usize,
+        ray_limit: usize
+    ) -> RayTraceState<'a> {
+        RayTraceState {
+            tracing_properties: tp,
+            qtree: qtree,
+            old_rays: old_rays,
+            new_rays: new_rays,
+            recursion_limit: recursion_limit,
+            ray_limit: ray_limit,
+            ray_count: 0,
+            recursion_level: 0
         }
-        old_r.clear();
-        mem::swap(&mut old_r, &mut new_r);
-        recursion_level += 1;
     }
+
+    pub fn get_rays(&'a self) -> &'a Vec<(Ray, RayProperties)> {
+        if self.old_rays.len() == 0 { self.new_rays } else { self.old_rays }
+    }
+}
+
+pub fn ray_trace_step(st: &mut RayTraceState) -> bool {
+    if (st.ray_limit != 0 && st.ray_count >= st.ray_limit) ||
+       (st.recursion_limit != 0 && st.recursion_level >= st.recursion_limit) ||
+       (st.old_rays.len() == 0) {
+        return true;
+    }
+
+    for &(ref ray, ref ray_props) in st.old_rays.iter() {
+        st.ray_count += trace_ray(ray, ray_props, st.tracing_properties, st.qtree, st.new_rays);
+    }
+    st.old_rays.clear();
+    mem::swap(&mut (st.old_rays), &mut (st.new_rays));
+    st.recursion_level += 1;
+
+    false
 }

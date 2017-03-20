@@ -15,36 +15,6 @@ use geom_import as gi;
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 
-fn do_graphics<T>(
-    qtree: &g::QTree<T>,
-    segments: &Vec<g::Segment>,
-    rays: &Vec<(g::Ray,g::RayProperties)>,
-    touched: &Vec<g::Segment>)
--> simplesvg::Svg {
-
-    let t = render::get_display_transform(segments, WIDTH, HEIGHT, 0.0, 0.0);
-
-    let fseg = render::render_segments(segments, &t, [0.0, 1.0, 0.0]);
-    let frays = render::render_rays(rays, &t, [1.0, 0.0, 0.0]);
-
-    simplesvg::Svg(vec![ fseg, frays ], WIDTH, HEIGHT)
-    //simplesvg::Fig::Multiple(vec![ fseg, frays ])
-/*
-
-    let mut window: PistonWindow =
-        WindowSettings::new("Hello Piston!", [WIDTH, HEIGHT])
-        .exit_on_esc(true).build().unwrap();
-    while let Some(e) = window.next() {
-        //let lines = r::render_segments(segments, WIDTH, HEIGHT);
-
-        window.draw_2d(&e, |_, g| { clear([1.0; 4], g); });
-        render::render_segments(segments, &mut window, &e, &t, [0.0,1.0,0.0,1.0]);
-        render::render_rays(rays, &mut window, &e, &t);
-        render::render_qtree(qtree, &mut window, &e, &t);
-        render::render_segments(touched, &mut window, &e, &t, [1.0,0.25,0.0,1.0])
-    }*/
-}
-
 fn spit_out_svg(svg: &simplesvg::Svg) {
     let f = File::create("./foo.svg").expect("Unable to open figure file");
     let mut f = BufWriter::new(f);
@@ -84,27 +54,30 @@ fn test1() {
                     println!("QTREE: {:#?}", qtree);
 
                     let mut new_rays: Vec<(g::Ray, g::RayProperties)> = Vec::new();
-                    g::recursive_trace_ray(
-                        &g::TracingProperties {
-                            new_rays: 16,
-                            intensity_threshold: 0.01
-                        },
+                    let tracing_props = g::TracingProperties {
+                        new_rays: 16,
+                        intensity_threshold: 0.01
+                    };
+
+                    let mut st = g::RayTraceState::initial(
+                        &tracing_props,
                         &qtree,
                         &mut rays,
                         &mut new_rays,
-                        1,
-                        100
+                        10,
+                        100,
                     );
-                    rays.extend(new_rays.into_iter());
+      
+                    let mut figs: Vec<simplesvg::Fig> = Vec::new();
+                    let mut count = 0;
+                    while !g::ray_trace_step(&mut st) {
+                        let t = render::get_display_transform(&geom.segments, WIDTH, HEIGHT, 0.05, 0.0, (count*HEIGHT) as g::Scalar);
+                        figs.push(render::render_segments(&geom.segments, &t, [0.0, 1.0, 0.0]));
+                        figs.push(render::render_rays(st.get_rays(), &t, [1.0, 0.0, 0.0]));
+                        count += 1;
+                    }
 
-                    println!("DOING GRAPHICS!");
-                    let svg = do_graphics(
-                        &qtree,
-                        &geom.segments,
-                        &rays,
-                        &Vec::new()/*&touched*/
-                    );
-
+                    let svg = simplesvg::Svg(figs, WIDTH, (count*HEIGHT));
                     spit_out_svg(&svg);
                 }
             }
