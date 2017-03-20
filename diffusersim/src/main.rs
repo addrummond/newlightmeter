@@ -65,7 +65,7 @@ fn test1() {
                         &mut rays,
                         &mut new_rays,
                         10,
-                        100,
+                        0,
                     );
       
                     let mut figs: Vec<simplesvg::Fig> = Vec::new();

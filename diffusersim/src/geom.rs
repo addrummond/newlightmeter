@@ -534,6 +534,7 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
             r.push((s, si));
         }
 
+        println!("IS {:?}", intersects.iter().map(|x| x.2).collect::<Vec<Point2>>());
         let (_,_,pt0,d0) = intersects[0];
 
         return Some((r, pt0, d0));
