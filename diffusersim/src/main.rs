@@ -1,5 +1,6 @@
 extern crate nalgebra;
 extern crate simplesvg;
+extern crate rand;
 #[macro_use]
 
 pub mod geom;
@@ -55,7 +56,7 @@ fn test1() {
 
                     let mut new_rays: Vec<(g::Ray, g::RayProperties)> = Vec::new();
                     let tracing_props = g::TracingProperties {
-                        new_rays: 16,
+                        random_seed: [1],
                         intensity_threshold: 0.01
                     };
 
@@ -70,11 +71,13 @@ fn test1() {
       
                     let mut figs: Vec<simplesvg::Fig> = Vec::new();
                     let mut count = 0;
-                    while !g::ray_trace_step(&mut st) {
+                    loop {
                         let t = render::get_display_transform(&geom.segments, WIDTH, HEIGHT, 0.05, 0.0, (count*HEIGHT) as g::Scalar);
                         figs.push(render::render_segments(&geom.segments, &t, [0.0, 1.0, 0.0]));
                         figs.push(render::render_rays(st.get_rays(), &t, [1.0, 0.0, 0.0]));
                         count += 1;
+                        if g::ray_trace_step(&mut st)
+                            { break; }
                     }
 
                     let svg = simplesvg::Svg(figs, WIDTH, (count*HEIGHT));

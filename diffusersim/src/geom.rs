@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use rand::{Rng, SeedableRng, StdRng};
 
 //
 // Basic types.
@@ -552,7 +553,7 @@ pub struct RayProperties {
 }
 
 pub struct TracingProperties {
-    pub new_rays: usize,
+    pub random_seed: [usize; 1],
     // If a new ray is generated with intensity below
     // this threshold, it will be discarded.
     pub intensity_threshold: Scalar
@@ -571,7 +572,7 @@ pub struct MaterialProperties {
 impl MaterialProperties {
     pub fn default() -> MaterialProperties {
         MaterialProperties {
-            diffuse_reflect_fraction:  0.5,
+            diffuse_reflect_fraction:  1.0,
             specular_reflect_fraction: 0.0,
             refraction_fraction: 0.0,
             refractive_index: 0.0,
@@ -581,13 +582,15 @@ impl MaterialProperties {
     }
 }
 
-pub fn trace_ray(
+pub fn trace_ray<R>(
     ray: &Ray,
     ray_props: &RayProperties,
     tp: &TracingProperties,
     qtree: &QTree<MaterialProperties>,
-    new_rays: &mut Vec<(Ray, RayProperties)>) 
--> usize { // Returns number of new rays traced.
+    new_rays: &mut Vec<(Ray, RayProperties)>,
+    rng: &mut R)
+-> usize
+where R: Rng { // Returns number of new rays traced.
 
     let mut num_new_rays = 0;
     if let Some((segs_with_info, intersect, _)) = qtree.get_segments_touched_by_ray(ray) {
@@ -606,43 +609,37 @@ pub fn trace_ray(
             let mut surface_normal = Vector2::new(-segline.data[1], segline.data[0]);
 
             // Ensure that surface normal is pointing in opposite direction to ray.
-            if side == 1 {
-                surface_normal = -surface_normal;
-            }
+            //if side == -1 {
+            //    surface_normal = -surface_normal;
+            //}
             
             //
-            // Add rays for diffuse reflections.
+            // Add ray for diffuse reflection.
             //
 
-            let total_diffuse_reflect_intensity = ray_props.intensity * matprops.diffuse_reflect_fraction;
-            let mut new_diffuse_ray_props = *ray_props;
-            new_diffuse_ray_props.intensity =
+            let total_diffuse_reflect_intensity =
                 ray_props.intensity * matprops.diffuse_reflect_fraction;
             
-            // If the sum of the intensity of the new rays is above the threshold,
-            // add them.
-            if total_diffuse_reflect_intensity >= tp.intensity_threshold {
+            // If the intensity of the reflected ray is above the thresholed,
+            // then cast it in a randomly chosen direction.
+            if total_diffuse_reflect_intensity > tp.intensity_threshold {
+                num_new_rays += 1;
+
                 let mut new_diffuse_ray_props = *ray_props;
-                new_diffuse_ray_props.intensity =
-                    (ray_props.intensity * matprops.diffuse_reflect_fraction) /
-                    (tp.new_rays as Scalar);
-            
-                let n = (tp.new_rays - 1) as Scalar;
-                for i in 0..tp.new_rays {
-                    let an = (((i as Scalar)/n) * consts::PI) - consts::FRAC_PI_2;
-                    let along_seg = an.sin();
-                    let normal_to_seg = an.cos();
-                    let new_ray_p2 = intersect + (along_seg * segline) + (normal_to_seg * surface_normal);
+                new_diffuse_ray_props.intensity = total_diffuse_reflect_intensity;
+                
+                let angle = (rng.next_f64() as Scalar) * consts::PI;
 
-                    let new_ray = Ray {
-                        p1: intersect,
-                        p2: new_ray_p2
-                    };
+                let along_seg = angle.sin();
+                let normal_to_seg = angle.cos();
+                let new_ray_p2 = intersect + (along_seg * segline) + (normal_to_seg * surface_normal);
 
-                    num_new_rays += 1;
+                let new_ray = Ray {
+                    p1: intersect,
+                    p2: new_ray_p2
+                };
 
-                    new_rays.push((new_ray, new_diffuse_ray_props));
-                }
+                new_rays.push((new_ray, new_diffuse_ray_props));
             }
         }
     }
@@ -658,7 +655,8 @@ pub struct RayTraceState<'a> {
     recursion_limit: usize,
     ray_limit: usize,
     ray_count: usize,
-    recursion_level: usize
+    recursion_level: usize,
+    rng: StdRng
 }
 
 impl<'a> RayTraceState<'a> {
@@ -678,7 +676,8 @@ impl<'a> RayTraceState<'a> {
             recursion_limit: recursion_limit,
             ray_limit: ray_limit,
             ray_count: 0,
-            recursion_level: 0
+            recursion_level: 0,
+            rng: SeedableRng::from_seed(&(tp.random_seed)[..])
         }
     }
 
@@ -691,11 +690,15 @@ pub fn ray_trace_step(st: &mut RayTraceState) -> bool {
     if (st.ray_limit != 0 && st.ray_count >= st.ray_limit) ||
        (st.recursion_limit != 0 && st.recursion_level >= st.recursion_limit) ||
        (st.old_rays.len() == 0) {
+        println!("OLD RAYS LEN {}", st.old_rays.len());
         return true;
     }
 
     for &(ref ray, ref ray_props) in st.old_rays.iter() {
-        st.ray_count += trace_ray(ray, ray_props, st.tracing_properties, st.qtree, st.new_rays);
+        let n_new_rays = trace_ray(ray, ray_props, st.tracing_properties, st.qtree, st.new_rays, &mut st.rng);
+        st.ray_count += n_new_rays;
+        println!("N NEW {}", n_new_rays);
+        //st.ray_count += trace_ray(ray, ray_props, st.tracing_properties, st.qtree, st.new_rays);
     }
     st.old_rays.clear();
     mem::swap(&mut (st.old_rays), &mut (st.new_rays));

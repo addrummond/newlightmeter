@@ -6,5 +6,5 @@ authors = [ "Alex Drummond <a.d.drummond@gmail.com>" ]
 
 [dependencies]
 nalgebra = "0.11.1"
-piston_window = "0.61.0"
 simplesvg = "0.4.0"
+rand = "0.3.15"
