@@ -1,9 +1,6 @@
-use piston_window;
 use geom as g;
 use nalgebra as n;
-
-type GScalar = piston_window::math::Scalar;
-type PistonWindow = piston_window::PistonWindow;
+use simplesvg;
 
 pub type DisplayTransformMatrix = n::Matrix3<g::Scalar>;
 
@@ -15,7 +12,13 @@ pub struct DisplayTransform {
     pub min_y: g::Scalar
 }
 
-pub fn get_display_transform(segments: &Vec<g::Segment>, width: u32, height: u32) -> DisplayTransform {
+pub fn get_display_transform(
+    segments: &Vec<g::Segment>,
+    width: u32,
+    height: u32,
+    offset_x: g::Scalar,
+    offset_y: g::Scalar)
+-> DisplayTransform {
     let w = width as g::Scalar;
     let h = height as g::Scalar;
 
@@ -63,8 +66,8 @@ pub fn get_display_transform(segments: &Vec<g::Segment>, width: u32, height: u32
 
         DisplayTransform {
             matrix: n::Matrix3::new(
-                xscale, 0.0,     -min_x*xscale,
-                0.0,    -yscale, -min_y*yscale,
+                xscale, 0.0,     (-min_x*xscale) + offset_x,
+                0.0,    -yscale, (-min_y*yscale) + offset_y,
                 0.0,    0.0,     1.0
             ),
             width: ww,
@@ -88,13 +91,13 @@ pub fn get_display_transform(segments: &Vec<g::Segment>, width: u32, height: u32
     }
 }
 
-fn tp(p: g::Point2, t: &DisplayTransform) -> [GScalar; 2] {
+fn tp(p: g::Point2, t: &DisplayTransform) -> [g::Scalar; 2] {
     let pv: n::Vector3<g::Scalar> = n::Vector3::new(p.coords[0], p.coords[1], 1.0);
     let r = t.matrix * pv;
-    return [r[0] as GScalar, r[1] as GScalar];
+    return [r[0] as g::Scalar, r[1] as g::Scalar];
 }
 
-fn tl(ln: [g::Scalar; 4], t: &DisplayTransform) -> [GScalar; 4] {
+fn tl(ln: [g::Scalar; 4], t: &DisplayTransform) -> [g::Scalar; 4] {
     let p1v: n::Vector3<g::Scalar> = n::Vector3::new(ln[0], ln[1], 1.0);
     let p2v: n::Vector3<g::Scalar> = n::Vector3::new(ln[2], ln[3], 1.0);
     let r1 = t.matrix * p1v;
@@ -167,87 +170,81 @@ fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
     g::Point2::new(ex, ey)
 }
 
-pub fn render_segments<E>(segments: &Vec<g::Segment>, window: &mut PistonWindow, e: &E, t: &DisplayTransform, color: [f32; 4])
-where E: piston_window::generic_event::GenericEvent {
+pub fn to_svg_color(color: [f32; 3]) -> simplesvg::ColorAttr {
+    simplesvg::ColorAttr::Color(
+        (color[0] * 255.0) as u8,
+        (color[1] * 255.0) as u8,
+        (color[2] * 255.0) as u8
+    )
+}
+
+pub fn render_segments(segments: &Vec<g::Segment>, t: &DisplayTransform, color: [f32; 3])
+-> simplesvg::Fig {
+    let mut segs: Vec<simplesvg::Fig> = Vec::new();
     for s in segments {
         let tp1 = tp(s.p1, t);
         let tp2 = tp(s.p2, t);
-        
-        window.draw_2d(e, |c, g| {
-            piston_window::line(
-                color,
-                0.5, // Radius
-                [tp1[0], tp1[1], tp2[0], tp2[1]],
-                c.transform,
-                g
-            );
-        });
+
+        let mut attr = simplesvg::Attr::default();
+        attr.fill = None;
+        attr.stroke = Some(to_svg_color(color));
+        attr.stroke_width = Some(2.0);
+        attr.opacity = Some(1.0);
+        attr.font_family = None;
+
+        segs.push(
+            simplesvg::Fig::Styled(
+                attr,
+                Box::new(simplesvg::Fig::Line(
+                    tp1[0] as f32,
+                    tp1[1] as f32,
+                    tp2[0] as f32,
+                    tp2[1] as f32
+                ))
+            )
+        );
     }
+
+    simplesvg::Fig::Multiple(segs)
 }
 
-pub fn render_rays<E>(rays: &Vec<(g::Ray, g::RayProperties)>, window: &mut PistonWindow, e: &E, t: &DisplayTransform)
-where E: piston_window::generic_event::GenericEvent {
+pub fn render_rays(rays: &Vec<(g::Ray, g::RayProperties)>, t: &DisplayTransform, color: [f32; 3])
+-> simplesvg::Fig {
+    let mut figs: Vec<simplesvg::Fig> = Vec::new();
     for &(ref r, _) in rays {
         let tp1 = tp(r.p1, t);
         let tp2 = tp(edge_clip_ray_dest(r, t), t);
 
         let diam = 0.05 * t.height;
 
-        window.draw_2d(e, |c, g| {
-            piston_window::line(
-                [1.0, 0.0, 0.0, 1.0], // Color
-                0.5, // Radius
-                [tp1[0], tp1[1], tp2[0], tp2[1]],
-                c.transform,
-                g
-            );
-            piston_window::ellipse(
-                [1.0, 0.0, 0.0, 1.0],
-                [tp1[0] - diam/2.0, tp1[1] - diam/2.0, diam, diam],
-                c.transform,
-                g
-            )
-        });
-    }
-}
+        let mut attr = simplesvg::Attr::default();
+        attr.fill = None;
+        attr.stroke = Some(to_svg_color(color));
+        attr.stroke_width = Some(2.0);
+        attr.opacity = Some(1.0);
+        attr.font_family = None;
 
-pub fn render_qtree<E,SegmentInfo>(qtree: &g::QTree<SegmentInfo>, window: &mut PistonWindow, e: &E, t: &DisplayTransform)
-where E: piston_window::generic_event::GenericEvent {
-    let diam = t.height*0.01;
-
-    let mut first = true;
-    for (depth, n) in qtree.in_order_iter() {
-        if let Some(ref ci) = n.child_info {
-            let lines = [
-                [ ci.center.coords[0], t.min_y, ci.center.coords[0], t.min_y + t.height],
-                [ t.min_x, ci.center.coords[1], t.min_x + t.width, ci.center.coords[1] ]
-            ];
-
-            let bcol = 1.0 - ((depth as f32)*0.1);
-            let gcol = (depth as f32)*0.15;
-
-            window.draw_2d(e, |c, g| {
-                for l in &lines {
-                    piston_window::line(
-                        [0.3, gcol, bcol, 1.0], // Color
-                        0.5, // Radius
-                        tl(*l, t),
-                        c.transform,
-                        g
-                    );
-                    if first {
-                        let cp = tp(ci.center, t);
-                        piston_window::ellipse(
-                            [0.0, 0.0, 1.0, 1.0],
-                            [cp[0]-diam/2.0, cp[1]-diam/2.0, diam, diam],
-                            c.transform,
-                            g
+        figs.push(
+            simplesvg::Fig::Styled(
+                attr,
+                Box::new(simplesvg::Fig::Multiple(
+                    vec![
+                        simplesvg::Fig::Line(
+                            tp1[0] as f32,
+                            tp1[1] as f32,
+                            tp2[0] as f32,
+                            tp2[1] as f32
+                        ),
+                        simplesvg::Fig::Circle(
+                            tp1[0] as f32,
+                            tp1[1] as f32,
+                            diam as f32
                         )
-                    }
-                }
-            });
-        }
-
-        first = false;
+                    ]
+                ))
+            )
+        );
     }
+
+    simplesvg::Fig::Multiple(figs)
 }

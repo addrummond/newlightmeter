@@ -654,18 +654,25 @@ pub fn recursive_trace_ray<'a>(
     qtree: &QTree<MaterialProperties>,
     mut rays: &'a mut Vec<(Ray, RayProperties)>,
     mut new_rays: &'a mut Vec<(Ray, RayProperties)>,
-    limit: usize) {
+    recursion_limit: usize,
+    ray_limit: usize) {
+
+    assert!(recursion_limit + ray_limit > 0);
 
     let mut total_ray_count = rays.len();
 
     let mut old_r = &mut rays;
     let mut new_r = &mut new_rays;
 
-    while total_ray_count <= limit && (**old_r).len() > 0 {
+    let mut recursion_level = 0;
+    while (ray_limit == 0 || total_ray_count <= ray_limit) &&
+          (recursion_limit == 0 || recursion_level < recursion_limit) &&
+          (**old_r).len() > 0 {
         for &(ref ray, ref ray_props) in (*old_r).iter() {
             total_ray_count += trace_ray(ray, ray_props, tp, qtree, new_r);
         }
         old_r.clear();
         mem::swap(&mut old_r, &mut new_r);
+        recursion_level += 1;
     }
 }

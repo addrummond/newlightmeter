@@ -1,12 +1,14 @@
 extern crate nalgebra;
-extern crate piston_window;
+extern crate simplesvg;
 #[macro_use]
 
 pub mod geom;
 pub mod geom_import;
 pub mod render;
 
-use piston_window::*;
+use std::fs::File;
+use std::io::{Write, BufWriter};
+
 use geom as g;
 use geom_import as gi;
 
@@ -17,9 +19,17 @@ fn do_graphics<T>(
     qtree: &g::QTree<T>,
     segments: &Vec<g::Segment>,
     rays: &Vec<(g::Ray,g::RayProperties)>,
-    touched: &Vec<g::Segment>) {
+    touched: &Vec<g::Segment>)
+-> simplesvg::Svg {
 
-    let t = render::get_display_transform(segments, WIDTH, HEIGHT);
+    let t = render::get_display_transform(segments, WIDTH, HEIGHT, 0.0, 0.0);
+
+    let fseg = render::render_segments(segments, &t, [0.0, 1.0, 0.0]);
+    let frays = render::render_rays(rays, &t, [1.0, 0.0, 0.0]);
+
+    simplesvg::Svg(vec![ fseg, frays ], WIDTH, HEIGHT)
+    //simplesvg::Fig::Multiple(vec![ fseg, frays ])
+/*
 
     let mut window: PistonWindow =
         WindowSettings::new("Hello Piston!", [WIDTH, HEIGHT])
@@ -32,7 +42,13 @@ fn do_graphics<T>(
         render::render_rays(rays, &mut window, &e, &t);
         render::render_qtree(qtree, &mut window, &e, &t);
         render::render_segments(touched, &mut window, &e, &t, [1.0,0.25,0.0,1.0])
-    }
+    }*/
+}
+
+fn spit_out_svg(svg: &simplesvg::Svg) {
+    let f = File::create("./foo.svg").expect("Unable to open figure file");
+    let mut f = BufWriter::new(f);
+    f.write_all(svg.to_string().as_bytes()).expect("Unable to write figure file");
 }
 
 #[allow(dead_code)]
@@ -76,58 +92,24 @@ fn test1() {
                         &qtree,
                         &mut rays,
                         &mut new_rays,
+                        1,
                         100
                     );
                     rays.extend(new_rays.into_iter());
 
                     println!("DOING GRAPHICS!");
-                    do_graphics(
+                    let svg = do_graphics(
                         &qtree,
                         &geom.segments,
                         &rays,
                         &Vec::new()/*&touched*/
-                    );   
+                    );
+
+                    spit_out_svg(&svg);
                 }
             }
         }
     }
-}
-
-#[allow(dead_code)]
-fn test2() {
-    let mut test_segments: Vec<g::Segment> = Vec::new();
-    for i in 1..100 {
-        let v = i as f64;
-        test_segments.push(g::seg(-2.0*v, v, -v, 2.0*v));
-        test_segments.push(g::seg(2.0*v, -v, v, -2.0*v));
-    }
-
-    let bare_rays = vec![
-        g::ray(-1.0, -1.0, 1.0, -1.0),
-        g::ray(10.0, -40.0, 20.0, 50.0),
-        g::ray(-100.0, 100.0, -120.0, 200.0),
-        g::ray(100.0, -100.0, 120.0, -200.0)
-    ];
-    let rays: Vec<(g::Ray, g::RayProperties)> = bare_rays.into_iter().map(|r| {
-        (r, g::RayProperties { wavelength: 0.0, intensity: 0.0 })
-    }).collect();
-
-    let inf = g::MaterialProperties::default();
-    let mut qtree: g::QTree<g::MaterialProperties> = g::QTree::make_empty_qtree();
-    qtree.insert_segments(&test_segments, |_| &inf);
-
-    println!("N NODES: {} {}", qtree.get_n_nodes(), qtree.get_n_nonempty_nodes());
-
-    let mut segs: Vec<&g::Segment> = Vec::new();
-    for r in &rays {
-        if let Some((sts, _, _)) = qtree.get_segments_touched_by_ray(&r.0) {
-            segs.extend(sts.iter().map(|&(s,_)| s));
-        }
-    }
-
-    let touched: Vec<g::Segment> = segs.into_iter().map(|x| x.clone()).collect();
-    println!("COMPUTED TOUCHES");
-    do_graphics(&qtree, &test_segments, &rays, &touched);
 }
 
 fn main() {
