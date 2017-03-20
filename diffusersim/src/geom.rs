@@ -609,9 +609,9 @@ where R: Rng { // Returns number of new rays traced.
             let mut surface_normal = Vector2::new(-segline.data[1], segline.data[0]);
 
             // Ensure that surface normal is pointing in opposite direction to ray.
-            //if side == -1 {
-            //    surface_normal = -surface_normal;
-            //}
+            if side == -1 {
+                surface_normal = -surface_normal;
+            }
             
             //
             // Add ray for diffuse reflection.
@@ -682,6 +682,7 @@ impl<'a> RayTraceState<'a> {
     }
 
     pub fn get_rays(&'a self) -> &'a Vec<(Ray, RayProperties)> {
+        assert!(self.old_rays.len() == 0 || self.new_rays.len() == 0);
         if self.old_rays.len() == 0 { self.new_rays } else { self.old_rays }
     }
 }
