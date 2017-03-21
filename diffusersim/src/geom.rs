@@ -14,6 +14,8 @@ pub type Scalar = f64;
 pub type Vector2 = Vector2_<Scalar>;
 pub type Point2 = Point2_<Scalar>;
 
+const EPSILON: Scalar = 0.0001;
+
 //
 // QTrees
 //
@@ -161,6 +163,8 @@ impl<'a, SegmentInfo> Iterator for QTreeInOrderIterator<'a, SegmentInfo> {
 }
 
 fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
+    //println!("TESTINTER RAY {} {} {} {}", segment.p1.coords[0],segment.p1.coords[1],segment.p2.coords[0],segment.p2.coords[1]);
+
     let ray_slope_num = ray.p2.coords[1] - ray.p1.coords[1];
     let seg_slope_num = segment.p2.coords[1] - segment.p1.coords[1];
     let ray_slope_denom = ray.p2.coords[0] - ray.p1.coords[0];
@@ -212,6 +216,8 @@ fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
         y = (seg_k*ray_slope - ray_k*seg_slope) / (ray_slope - seg_slope);
     }
 
+    //println!("CALC: {} {}", x, y);
+
     // Is the intersection point on the ray?
     if ray_slope_num > 0.0 && y < ray.p1.coords[1]
         { return None }
@@ -225,12 +231,13 @@ fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
     // It's on the ray. Is it on the segment?
     // Because of the ordering of segment points, we know that
     // the x value of the first point <= the x value of the second point.
-    if x >= segment.p1.coords[0] && x <= segment.p2.coords[0] &&
-       ((y >= segment.p1.coords[1] && y <= segment.p2.coords[1]) ||
-        (y <= segment.p1.coords[1] && y >= segment.p2.coords[1])) {
+    if x >= segment.p1.coords[0] - EPSILON && x <= segment.p2.coords[0] + EPSILON &&
+       ((y >= segment.p1.coords[1] - EPSILON && y <= segment.p2.coords[1] + EPSILON) ||
+        (y <= segment.p1.coords[1] + EPSILON && y >= segment.p2.coords[1] - EPSILON)) {
         return Some(Point2::new(x, y));
     }
     else {
+        //println!("ULTIFAIL {} {} {} {}", segment.p1.coords[0], segment.p1.coords[1], segment.p2.coords[0], segment.p2.coords[1]);
         return None;
     }
 }
@@ -521,11 +528,44 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
             d1.partial_cmp(&d2).unwrap()
         });
 
-        const EPSILON: Scalar = 0.0000001;
-        let mut r: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
+        println!("ALL {:?}", intersects.iter().map(|&(_,_,pt,_)| pt).collect::<Vec<Point2>>());
+
+        // Skip any initial zero intercepts.
+        let it = intersects.iter().skip_while(|&&(_,_,_,d)| { println!("TO SKIP {}", d); d - EPSILON < 0.0 });
+        
+        let mut last_d: Scalar = 0.0;
+        let mut last_pt: Point2 = Point2::new(0.0, 0.0);
+        let mut rs: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
+        for &(s, si, pt, d) in it {
+            println!("D: {}", d);
+            if last_d == 0.0 || d == last_d {
+                last_d = d;
+                last_pt = pt;
+                rs.push((s, si));
+            }
+            else {
+                break;
+            }
+        }
+
+        if rs.len() == 0 {
+            None
+        }
+        else {
+            let pt = last_pt;
+            let d = last_d;
+            println!("INTERSECT {} {} FROM {} {} at {}", pt.coords[0], pt.coords[1], ray.p1.coords[0], ray.p1.coords[1], d);
+            Some((rs, pt, d))
+        }
+
+        /*let mut r: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
         let mut prev_d: Scalar = 0.0;
         let mut past_zero = false;
-        for &(s,si,_,d) in &intersects {
+        let mut last_int = &(intersects[0]); // Rust doesn't know that intersects is nonempty.
+        for int in &intersects {
+            let last_int = int;
+            let &(s, si, pt, d) = int;
+            println!("PT: {} {}", pt.coords[0], pt.coords[1]);
             if d - EPSILON <= 0.0 // The ray actually started on the segment, so this intersect doesn't count.
                 { continue; }
             if past_zero && d != prev_d
@@ -535,10 +575,14 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
             r.push((s, si));
         }
 
-        println!("IS {:?}", intersects.iter().map(|x| x.2).collect::<Vec<Point2>>());
-        let (_,_,pt0,d0) = intersects[0];
+        let intersection_d = last_int.3;
+        let intersection_pt = last_int.2;
+        
+        //println!("IS {:?}", intersects.iter().map(|x| x.2).collect::<Vec<Point2>>());
+        //let (_,_,pt0,d0) = intersects[0];
+        println!("IPNT: {} {} FROM {} {}", intersection_pt.coords[0], intersection_pt.coords[1], ray.p1.coords[0], ray.p1.coords[1]);
 
-        return Some((r, pt0, d0));
+        return Some((r, intersection_pt, intersection_d));*/
     }
 }
 
@@ -592,6 +636,7 @@ pub fn trace_ray<R>(
 -> usize
 where R: Rng { // Returns number of new rays traced.
 
+    println!("TRACE RAY ITERATION");
     let mut num_new_rays = 0;
     if let Some((segs_with_info, intersect, _)) = qtree.get_segments_touched_by_ray(ray) {
         for (seg, matprops) in segs_with_info {

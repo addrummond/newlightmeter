@@ -65,7 +65,7 @@ fn test1() {
                         &qtree,
                         &mut rays,
                         &mut new_rays,
-                        10,
+                        2,
                         0,
                     );
       
@@ -81,6 +81,7 @@ fn test1() {
                     }
 
                     let svg = simplesvg::Svg(figs, WIDTH, (count*HEIGHT));
+                    println!("SVG OUT");
                     spit_out_svg(&svg);
                 }
             }

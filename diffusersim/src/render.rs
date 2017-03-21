@@ -101,14 +101,6 @@ fn tp(p: g::Point2, t: &DisplayTransform) -> [g::Scalar; 2] {
     return [r[0] as g::Scalar, r[1] as g::Scalar];
 }
 
-fn tl(ln: [g::Scalar; 4], t: &DisplayTransform) -> [g::Scalar; 4] {
-    let p1v: n::Vector3<g::Scalar> = n::Vector3::new(ln[0], ln[1], 1.0);
-    let p2v: n::Vector3<g::Scalar> = n::Vector3::new(ln[2], ln[3], 1.0);
-    let r1 = t.matrix * p1v;
-    let r2 = t.matrix * p2v;
-    return [r1[0], r1[1], r2[0], r2[1]];
-}
-
 fn edge_clip_ray_dest(r: &g::Ray, t: &DisplayTransform) -> g::Point2 {
     let v1 = r.p1.coords;
     let v2 = r.p2.coords;
