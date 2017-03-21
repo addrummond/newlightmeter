@@ -528,16 +528,13 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
             d1.partial_cmp(&d2).unwrap()
         });
 
-        println!("ALL {:?}", intersects.iter().map(|&(_,_,pt,_)| pt).collect::<Vec<Point2>>());
-
         // Skip any initial zero intercepts.
-        let it = intersects.iter().skip_while(|&&(_,_,_,d)| { println!("TO SKIP {}", d); d - EPSILON < 0.0 });
+        let it = intersects.iter().skip_while(|&&(_,_,_,d)| d - EPSILON < 0.0);
         
         let mut last_d: Scalar = 0.0;
         let mut last_pt: Point2 = Point2::new(0.0, 0.0);
         let mut rs: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
         for &(s, si, pt, d) in it {
-            println!("D: {}", d);
             if last_d == 0.0 || d == last_d {
                 last_d = d;
                 last_pt = pt;
@@ -554,35 +551,9 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
         else {
             let pt = last_pt;
             let d = last_d;
-            println!("INTERSECT {} {} FROM {} {} at {}", pt.coords[0], pt.coords[1], ray.p1.coords[0], ray.p1.coords[1], d);
+            //println!("INTERSECT {} {} FROM {} {} at {}", pt.coords[0], pt.coords[1], ray.p1.coords[0], ray.p1.coords[1], d);
             Some((rs, pt, d))
         }
-
-        /*let mut r: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
-        let mut prev_d: Scalar = 0.0;
-        let mut past_zero = false;
-        let mut last_int = &(intersects[0]); // Rust doesn't know that intersects is nonempty.
-        for int in &intersects {
-            let last_int = int;
-            let &(s, si, pt, d) = int;
-            println!("PT: {} {}", pt.coords[0], pt.coords[1]);
-            if d - EPSILON <= 0.0 // The ray actually started on the segment, so this intersect doesn't count.
-                { continue; }
-            if past_zero && d != prev_d
-                { break; }
-            past_zero = true;
-            prev_d = d;
-            r.push((s, si));
-        }
-
-        let intersection_d = last_int.3;
-        let intersection_pt = last_int.2;
-        
-        //println!("IS {:?}", intersects.iter().map(|x| x.2).collect::<Vec<Point2>>());
-        //let (_,_,pt0,d0) = intersects[0];
-        println!("IPNT: {} {} FROM {} {}", intersection_pt.coords[0], intersection_pt.coords[1], ray.p1.coords[0], ray.p1.coords[1]);
-
-        return Some((r, intersection_pt, intersection_d));*/
     }
 }
 
@@ -636,7 +607,6 @@ pub fn trace_ray<R>(
 -> usize
 where R: Rng { // Returns number of new rays traced.
 
-    println!("TRACE RAY ITERATION");
     let mut num_new_rays = 0;
     if let Some((segs_with_info, intersect, _)) = qtree.get_segments_touched_by_ray(ray) {
         for (seg, matprops) in segs_with_info {
@@ -654,7 +624,7 @@ where R: Rng { // Returns number of new rays traced.
             let mut surface_normal = Vector2::new(-segline.data[1], segline.data[0]);
 
             // Ensure that surface normal is pointing in opposite direction to ray.
-            if side == -1 {
+            if side == 1 {
                 surface_normal = -surface_normal;
             }
             
@@ -675,14 +645,16 @@ where R: Rng { // Returns number of new rays traced.
                 
                 let angle = (rng.next_f64() as Scalar) * consts::PI;
 
-                let along_seg = angle.sin();
-                let normal_to_seg = angle.cos();
+                let along_seg = angle.cos();
+                let normal_to_seg = angle.sin();
                 let new_ray_p2 = intersect + (along_seg * segline) + (normal_to_seg * surface_normal);
 
                 let new_ray = Ray {
                     p1: intersect,
                     p2: new_ray_p2
                 };
+
+                //println!("NEW RAY {} {} {} {}", intersect.coords[0], intersect.coords[1], new_ray_p2.coords[0], new_ray_p2.coords[1]);
 
                 new_rays.push((new_ray, new_diffuse_ray_props));
             }
@@ -736,15 +708,12 @@ pub fn ray_trace_step(st: &mut RayTraceState) -> bool {
     if (st.ray_limit != 0 && st.ray_count >= st.ray_limit) ||
        (st.recursion_limit != 0 && st.recursion_level >= st.recursion_limit) ||
        (st.old_rays.len() == 0) {
-        println!("OLD RAYS LEN {}", st.old_rays.len());
         return true;
     }
 
     for &(ref ray, ref ray_props) in st.old_rays.iter() {
         let n_new_rays = trace_ray(ray, ray_props, st.tracing_properties, st.qtree, st.new_rays, &mut st.rng);
         st.ray_count += n_new_rays;
-        println!("N NEW {}", n_new_rays);
-        //st.ray_count += trace_ray(ray, ray_props, st.tracing_properties, st.qtree, st.new_rays);
     }
     st.old_rays.clear();
     mem::swap(&mut (st.old_rays), &mut (st.new_rays));

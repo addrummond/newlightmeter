@@ -65,7 +65,7 @@ fn test1() {
                         &qtree,
                         &mut rays,
                         &mut new_rays,
-                        2,
+                        16,
                         0,
                     );
       
