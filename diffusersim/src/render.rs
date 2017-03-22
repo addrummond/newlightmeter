@@ -174,6 +174,23 @@ pub fn to_svg_color(color: [f32; 3]) -> simplesvg::ColorAttr {
     )
 }
 
+pub fn lighten_color(color: [f32; 3], amount: f32) -> [f32; 3] {
+    let mut new: [f32; 3] = [
+        color[0] + amount*1.0,
+        color[1] + amount*1.0,
+        color[2] + amount*1.0
+    ];
+
+    let total: f32 = new.iter().sum();
+
+    new[0] = new[0]/total;
+    new[1] = new[1]/total;
+    new[2] = new[2]/total;
+
+    new
+}
+
+
 pub fn render_segments(segments: &Vec<g::Segment>, t: &DisplayTransform, color: [f32; 3])
 -> simplesvg::Fig {
     let mut segs: Vec<simplesvg::Fig> = Vec::new();
@@ -207,22 +224,24 @@ pub fn render_segments(segments: &Vec<g::Segment>, t: &DisplayTransform, color: 
 pub fn render_rays(rays: &Vec<(g::Ray, g::RayProperties)>, t: &DisplayTransform, color: [f32; 3])
 -> simplesvg::Fig {
     let mut figs: Vec<simplesvg::Fig> = Vec::new();
-    for &(ref r, _) in rays {
+    for &(ref r, props) in rays {
         let tp1 = tp(r.p1, t);
         let tp2 = tp(edge_clip_ray_dest(r, t), t);
 
         let diam = 3.0;
 
+        let col = to_svg_color(lighten_color(color, (0.25 * (1.0 - props.intensity) as f32)));
+
         let mut line_attr = simplesvg::Attr::default();
         line_attr.fill = None;
-        line_attr.stroke = Some(to_svg_color(color));
+        line_attr.stroke = Some(col);
         line_attr.stroke_width = Some(1.0);
         line_attr.opacity = Some(1.0);
         line_attr.font_family = None;
 
         let mut circle_attr = simplesvg::Attr::default();
-        circle_attr.fill = Some(to_svg_color(color));
-        circle_attr.stroke = Some(to_svg_color(color));
+        circle_attr.fill = Some(col);
+        circle_attr.stroke = Some(col);
         circle_attr.stroke_width = Some(2.0);
         circle_attr.opacity = Some(1.0);
         circle_attr.font_family = None;

@@ -587,7 +587,7 @@ pub struct MaterialProperties {
 impl MaterialProperties {
     pub fn default() -> MaterialProperties {
         MaterialProperties {
-            diffuse_reflect_fraction:  1.0,
+            diffuse_reflect_fraction:  0.8,
             specular_reflect_fraction: 0.0,
             refraction_fraction: 0.0,
             refractive_index: 0.0,
