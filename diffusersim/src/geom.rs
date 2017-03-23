@@ -656,7 +656,7 @@ where R: Rng { // Returns number of new rays traced.
 
             num_new_rays += add_diffuse(args, &segline, &matprops, &intersect, &surface_normal);
             num_new_rays += add_specular(args, &matprops, &intersect, &surface_normal);
-            num_new_rays += add_refraction(args, &matprops, &intersect, &surface_normal);
+            num_new_rays += add_refraction(args, &matprops, &intersect, &surface_normal, side);
         }
     }
 
@@ -722,7 +722,6 @@ where R: Rng {
 
         let mut new_specular_ray_props = *(args.ray_props);
         new_specular_ray_props.intensity = total_specular_reflect_intensity;
-
         // Get a normalized normal vector and ray vector.
         let surface_normal_n = surface_normal.normalize();
         let ray_n = (args.ray.p2 - args.ray.p1).normalize();
@@ -745,11 +744,23 @@ fn add_refraction<R>(
     args: &mut TraceRayArgs<R>,
     matprops: &MaterialProperties,
     intersect: &Point2,
-    surface_normal: &Vector2
+    surface_normal: &Vector2,
+    side: i32
 )
 -> usize
 where R: Rng {
+    assert!(side != 0);
+    assert!(matprops.cauchy_coeffs.len() > 0);
+
     let mut num_new_rays = 0;
+
+    // Calculate the refractive index given the wavelength and the material properties.
+    let mut ri = matprops.cauchy_coeffs[0];
+    let mut pow: i32 = 2;
+    for c in matprops.cauchy_coeffs.iter().skip(1) {
+        ri += c / args.ray_props.wavelength.powi(pow);
+        pow += 2;
+    }
 
     num_new_rays
 }
