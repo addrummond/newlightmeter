@@ -377,8 +377,17 @@ fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(
     let mut max_coeff_n = 0;
     
     for &(ref n, ref v) in assignments {
-        if n == "ex" {
-            m.extinction = *v;
+        if n == "drf" {
+            m.diffuse_reflect_fraction = *v;
+        }
+        else if n == "srf" {
+            m.specular_reflect_fraction = *v;
+        }
+        else if n == "rff" {
+            m.refraction_fraction = *v;
+        }
+        else if n == "at" {
+            m.attenuation_coeff = *v;
         }
         else {
             let mut it = n.chars();

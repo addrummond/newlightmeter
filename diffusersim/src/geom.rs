@@ -580,7 +580,7 @@ pub struct MaterialProperties {
     pub diffuse_reflect_fraction: Scalar,
     pub specular_reflect_fraction: Scalar,
     pub refraction_fraction: Scalar,
-    pub extinction: Scalar,
+    pub attenuation_coeff: Scalar,
     pub cauchy_coeffs: Vec<Scalar>
 }
 
@@ -590,7 +590,7 @@ impl MaterialProperties {
             diffuse_reflect_fraction:  0.5,
             specular_reflect_fraction: 0.5,
             refraction_fraction: 0.0,
-            extinction: 0.0,
+            attenuation_coeff: 0.0,
             cauchy_coeffs: vec![ 1.0 ]
         }
     }
@@ -652,9 +652,16 @@ where R: Rng { // Returns number of new rays traced.
                 surface_normal = -surface_normal;
             }
 
-            num_new_rays += add_diffuse(args, &segline, &matprops, &intersect, &surface_normal);
-            num_new_rays += add_specular(args, &matprops, &intersect, &surface_normal);
-            num_new_rays += add_refraction(args, &matprops, &intersect, &surface_normal, side);
+            // We need to calculate the extent to which the ray's intensity has been attenuated
+            // by traveling through the relevant material for whatever distance.
+            let traveled = intersect - args.ray.p1;
+            let distance2 = nalgebra::distance_squared(&intersect, &(args.ray.p1));
+            let att = matprops.attenuation_coeff * distance2;
+            let new_intensity = args.ray_props.intensity - att;
+
+            num_new_rays += add_diffuse(args, new_intensity, &segline, &matprops, &intersect, &surface_normal);
+            num_new_rays += add_specular(args, new_intensity, &matprops, &intersect, &surface_normal);
+            num_new_rays += add_refraction(args, new_intensity, &matprops, &intersect, &surface_normal, side);
         }
     }
 
@@ -663,6 +670,7 @@ where R: Rng { // Returns number of new rays traced.
 
 fn add_diffuse<R>(
     args: &mut TraceRayArgs<R>,
+    new_intensity: Scalar,
     segline: &Vector2,
     matprops: &MaterialProperties,
     intersect: &Point2,
@@ -673,7 +681,7 @@ where R: Rng {
     let mut num_new_rays = 0;
 
     let total_diffuse_reflect_intensity =
-    args.ray_props.intensity * matprops.diffuse_reflect_fraction;
+        new_intensity * matprops.diffuse_reflect_fraction;
             
     // If the intensity of the reflected ray is above the thresholed,
     // then cast it in a randomly chosen direction.
@@ -704,6 +712,7 @@ where R: Rng {
 
 fn add_specular<R>(
     args: &mut TraceRayArgs<R>,
+    new_intensity: Scalar,
     matprops: &MaterialProperties,
     intersect: &Point2,
     surface_normal: &Vector2
@@ -713,7 +722,7 @@ where R: Rng {
     let mut num_new_rays = 0;
 
     let total_specular_reflect_intensity =
-        args.ray_props.intensity * matprops.specular_reflect_fraction;
+        new_intensity * matprops.specular_reflect_fraction;
             
     if total_specular_reflect_intensity > args.tp.intensity_threshold {
         num_new_rays += 1;
@@ -740,6 +749,7 @@ where R: Rng {
 
 fn add_refraction<R>(
     args: &mut TraceRayArgs<R>,
+    new_intensity: Scalar,
     matprops: &MaterialProperties,
     intersect: &Point2,
     surface_normal: &Vector2,
