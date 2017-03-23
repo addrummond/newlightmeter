@@ -654,18 +654,9 @@ where R: Rng { // Returns number of new rays traced.
                 surface_normal = -surface_normal;
             }
 
-            // We randomly do diffuse reflection, specular reflection or refraction,
-            // weighting by the proportion for each in the material properties.
-            let rnd = args.rng.next_f64();
-            if rnd < matprops.diffuse_reflect_fraction {
-                num_new_rays += add_diffuse(args, &segline, &matprops, &intersect, &surface_normal);
-            }
-            else if rnd < matprops.diffuse_reflect_fraction + matprops.specular_reflect_fraction {
-                num_new_rays += add_specular(args, &matprops, &intersect, &surface_normal);
-            }
-            else {
-                // TODO: Refraction.
-            }
+            num_new_rays += add_diffuse(args, &segline, &matprops, &intersect, &surface_normal);
+            num_new_rays += add_specular(args, &matprops, &intersect, &surface_normal);
+            num_new_rays += add_refraction(args, &matprops, &intersect, &surface_normal);
         }
     }
 
@@ -746,6 +737,19 @@ where R: Rng {
 
         args.new_rays.push((new_ray, new_specular_ray_props));
     }
+
+    num_new_rays
+}
+
+fn add_refraction<R>(
+    args: &mut TraceRayArgs<R>,
+    matprops: &MaterialProperties,
+    intersect: &Point2,
+    surface_normal: &Vector2
+)
+-> usize
+where R: Rng {
+    let mut num_new_rays = 0;
 
     num_new_rays
 }
