@@ -580,7 +580,6 @@ pub struct MaterialProperties {
     pub diffuse_reflect_fraction: Scalar,
     pub specular_reflect_fraction: Scalar,
     pub refraction_fraction: Scalar,
-    pub refractive_index: Scalar,
     pub extinction: Scalar,
     pub cauchy_coeffs: Vec<Scalar>
 }
@@ -591,9 +590,8 @@ impl MaterialProperties {
             diffuse_reflect_fraction:  0.5,
             specular_reflect_fraction: 0.5,
             refraction_fraction: 0.0,
-            refractive_index: 0.0,
             extinction: 0.0,
-            cauchy_coeffs: vec![ ]
+            cauchy_coeffs: vec![ 1.0 ]
         }
     }
 }

@@ -377,10 +377,7 @@ fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(
     let mut max_coeff_n = 0;
     
     for &(ref n, ref v) in assignments {
-        if n == "ri" {
-            m.refractive_index = *v;
-        }
-        else if n == "ex" {
+        if n == "ex" {
             m.extinction = *v;
         }
         else {
