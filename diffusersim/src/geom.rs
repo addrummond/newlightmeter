@@ -589,7 +589,7 @@ impl MaterialProperties {
     pub fn default() -> MaterialProperties {
         MaterialProperties {
             diffuse_reflect_fraction:  0.5,
-            specular_reflect_fraction: 0.4,
+            specular_reflect_fraction: 0.5,
             refraction_fraction: 0.0,
             refractive_index: 0.0,
             extinction: 0.0,
@@ -619,7 +619,7 @@ pub fn trace_ray<R>(
 -> usize
 where R: Rng {
 
-    trace_ray_args(TraceRayArgs {
+    trace_ray_args(&mut TraceRayArgs {
         ray: ray,
         ray_props: ray_props,
         tp: tp,
@@ -629,7 +629,7 @@ where R: Rng {
     })
 }
 
-fn trace_ray_args<R>(args: TraceRayArgs<R>)
+fn trace_ray_args<R>(args: &mut TraceRayArgs<R>)
 -> usize
 where R: Rng { // Returns number of new rays traced.
 
@@ -653,66 +653,98 @@ where R: Rng { // Returns number of new rays traced.
             if side == 1 {
                 surface_normal = -surface_normal;
             }
-            
-            //
-            // Add ray for diffuse reflection.
-            //
 
-            let total_diffuse_reflect_intensity =
-                args.ray_props.intensity * matprops.diffuse_reflect_fraction;
-            
-            // If the intensity of the reflected ray is above the thresholed,
-            // then cast it in a randomly chosen direction.
-            if total_diffuse_reflect_intensity > args.tp.intensity_threshold {
-                num_new_rays += 1;
-
-                let mut new_diffuse_ray_props = *(args.ray_props);
-                new_diffuse_ray_props.intensity = total_diffuse_reflect_intensity;
-                
-                let angle = (args.rng.next_f64() as Scalar) * consts::PI;
-
-                let along_seg = angle.cos();
-                let normal_to_seg = angle.sin();
-                let new_ray_p2 = intersect + (along_seg * segline) + (normal_to_seg * surface_normal);
-
-                let new_ray = Ray {
-                    p1: intersect,
-                    p2: new_ray_p2
-                };
-
-                //println!("NEW RAY {} {} {} {}", intersect.coords[0], intersect.coords[1], new_ray_p2.coords[0], new_ray_p2.coords[1]);
-
-                args.new_rays.push((new_ray, new_diffuse_ray_props));
+            // We randomly do diffuse reflection, specular reflection or refraction,
+            // weighting by the proportion for each in the material properties.
+            let rnd = args.rng.next_f64();
+            if rnd < matprops.diffuse_reflect_fraction {
+                num_new_rays += add_diffuse(args, &segline, &matprops, &intersect, &surface_normal);
             }
-
-            //
-            // Add ray for specular reflection.
-            //
-            
-            let total_specular_reflect_intensity =
-                args.ray_props.intensity * matprops.specular_reflect_fraction;
-            
-            if total_specular_reflect_intensity > args.tp.intensity_threshold {
-                num_new_rays += 1;
-
-                let mut new_specular_ray_props = *(args.ray_props);
-                new_specular_ray_props.intensity = total_specular_reflect_intensity;
-
-                // Get a normalized normal vector and ray vector.
-                let surface_normal_n = surface_normal.normalize();
-                let ray_n = (args.ray.p2 - args.ray.p1).normalize();
-
-                let dot = nalgebra::dot(&ray_n, &surface_normal_n);
-                let reflection = ray_n  -((2.0 * dot) * surface_normal_n);
-
-                let new_ray = Ray {
-                    p1: intersect,
-                    p2: intersect + reflection
-                };
-
-                args.new_rays.push((new_ray, new_specular_ray_props));
+            else if rnd < matprops.diffuse_reflect_fraction + matprops.specular_reflect_fraction {
+                num_new_rays += add_specular(args, &matprops, &intersect, &surface_normal);
+            }
+            else {
+                // TODO: Refraction.
             }
         }
+    }
+
+    num_new_rays
+}
+
+fn add_diffuse<R>(
+    args: &mut TraceRayArgs<R>,
+    segline: &Vector2,
+    matprops: &MaterialProperties,
+    intersect: &Point2,
+    surface_normal: &Vector2
+)
+-> usize
+where R: Rng {
+    let mut num_new_rays = 0;
+
+    let total_diffuse_reflect_intensity =
+    args.ray_props.intensity * matprops.diffuse_reflect_fraction;
+            
+    // If the intensity of the reflected ray is above the thresholed,
+    // then cast it in a randomly chosen direction.
+    if total_diffuse_reflect_intensity > args.tp.intensity_threshold {
+        num_new_rays += 1;
+
+        let mut new_diffuse_ray_props = *(args.ray_props);
+        new_diffuse_ray_props.intensity = total_diffuse_reflect_intensity;
+                
+        let angle = (args.rng.next_f64() as Scalar) * consts::PI;
+
+        let along_seg = angle.cos();
+        let normal_to_seg = angle.sin();
+        let new_ray_p2 = intersect + (along_seg * segline) + (normal_to_seg * surface_normal);
+
+        let new_ray = Ray {
+            p1: *intersect,
+            p2: new_ray_p2
+        };
+
+        //println!("NEW RAY {} {} {} {}", intersect.coords[0], intersect.coords[1], new_ray_p2.coords[0], new_ray_p2.coords[1]);
+
+        args.new_rays.push((new_ray, new_diffuse_ray_props));
+    }
+
+    num_new_rays
+}
+
+fn add_specular<R>(
+    args: &mut TraceRayArgs<R>,
+    matprops: &MaterialProperties,
+    intersect: &Point2,
+    surface_normal: &Vector2
+)
+-> usize
+where R: Rng {
+    let mut num_new_rays = 0;
+
+    let total_specular_reflect_intensity =
+        args.ray_props.intensity * matprops.specular_reflect_fraction;
+            
+    if total_specular_reflect_intensity > args.tp.intensity_threshold {
+        num_new_rays += 1;
+
+        let mut new_specular_ray_props = *(args.ray_props);
+        new_specular_ray_props.intensity = total_specular_reflect_intensity;
+
+        // Get a normalized normal vector and ray vector.
+        let surface_normal_n = surface_normal.normalize();
+        let ray_n = (args.ray.p2 - args.ray.p1).normalize();
+
+        let dot = nalgebra::dot(&ray_n, &surface_normal_n);
+        let reflection = ray_n  -((2.0 * dot) * surface_normal_n);
+
+        let new_ray = Ray {
+            p1: *intersect,
+            p2: intersect + reflection
+        };
+
+        args.new_rays.push((new_ray, new_specular_ray_props));
     }
 
     num_new_rays
