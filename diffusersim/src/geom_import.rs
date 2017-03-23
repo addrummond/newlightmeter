@@ -11,8 +11,8 @@ use std::io::prelude::*;
 pub struct ImportedGeometry {
     pub segments: Vec<g::Segment>,
     pub materials: Vec<g::MaterialProperties>,
-    pub left_material_properties: Vec<usize>,
-    pub right_material_properties: Vec<usize>,
+    pub left_material_properties: Vec<u8>,
+    pub right_material_properties: Vec<u8>,
 }
 
 #[derive(Debug)]
@@ -332,7 +332,7 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Entry> {
                     // we also want to swap i1 and i2.
                     let ii1;
                     let ii2;
-                    if newseg.p1.coords[0] == coords[0] && newseg.p1.coords[1] == coords[1] {
+                    if  newseg.p1.coords[0] == coords[0] && newseg.p1.coords[1] == coords[1] {
                         ii1 = i1;
                         ii2 = i2;
                     }
@@ -480,12 +480,16 @@ fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
 }
 
 fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Entry>) -> ParseResult<ImportedGeometry> {
-    let mut material_lookup: HashMap<&str, usize> = HashMap::new();
+    let mut material_lookup: HashMap<&str, u8> = HashMap::new();
     let mut materials: Vec<g::MaterialProperties> = Vec::new();
 
     let mut mi = 0;
     for e in entries {
         if let Entry::Material(ref name, ref props) = *e {
+            if materials.len() >= 255 {
+                return parse_error(st, "Cannot have more than 255 materials.");
+            }
+
             materials.push(props.clone());
             material_lookup.insert(name, mi);
             mi += 1;
@@ -493,8 +497,8 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Entry>) -> Pa
     }
 
     let mut segs: Vec<g::Segment> = Vec::new();
-    let mut lmat: Vec<usize> = Vec::new();
-    let mut rmat: Vec<usize> = Vec::new();
+    let mut lmat: Vec<u8> = Vec::new();
+    let mut rmat: Vec<u8> = Vec::new();
 
     for e in entries {
         if let Entry::Segment(ref ml, ref mr, ref seg) = *e {

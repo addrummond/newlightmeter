@@ -64,23 +64,23 @@ pub fn ray(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Ray {
 const QTREE_BIN_SIZE : usize = 8;
 
 #[derive(Debug)]
-pub struct QTreeChildInfo<'a,SegmentInfo>
-where SegmentInfo: 'a {
+pub struct QTreeChildInfo<'a,SI>
+where SI: 'a + Copy {
     pub center: Point2,
-    pub children: [Box<QTreeNode<'a,SegmentInfo>>; 4] // Clockwise from NW
+    pub children: [Box<QTreeNode<'a,SI>>; 4] // Clockwise from NW
 }
 
 #[derive(Debug)]
-pub struct QTreeNode<'a, SegmentInfo>
-where SegmentInfo: 'a {
-    pub segments: Vec<(&'a Segment, &'a SegmentInfo)>,
-    pub child_info: Option<QTreeChildInfo<'a,SegmentInfo>>
+pub struct QTreeNode<'a, SI>
+where SI: 'a + Copy {
+    pub segments: Vec<(&'a Segment, SI)>,
+    pub child_info: Option<QTreeChildInfo<'a,SI>>
 }
 
 #[derive(Debug)]
-pub struct QTree<'a, SegmentInfo>
-where SegmentInfo: 'a {
-    root: Box<QTreeNode<'a, SegmentInfo>>,
+pub struct QTree<'a, SI>
+where SI: 'a + Copy {
+    root: Box<QTreeNode<'a, SI>>,
     n_nodes: usize,
     n_nonempty_nodes: usize
 }
@@ -142,13 +142,15 @@ fn get_segment_quad_mask(segment: &Segment, c: Point2) -> i32
     }
 }
 
-pub struct QTreeInOrderIterator<'a, SegmentInfo>
-where SegmentInfo: 'a {
-    stack: Vec<(usize, &'a QTreeNode<'a,SegmentInfo>)>,
+pub struct QTreeInOrderIterator<'a, SI>
+where SI: 'a + Copy {
+    stack: Vec<(usize, &'a QTreeNode<'a,SI>)>,
 }
 
-impl<'a, SegmentInfo> Iterator for QTreeInOrderIterator<'a, SegmentInfo> {
-    type Item = (usize, &'a QTreeNode<'a,SegmentInfo>);
+impl<'a, SI> Iterator for QTreeInOrderIterator<'a, SI>
+where SI: 'a + Copy
+{
+    type Item = (usize, &'a QTreeNode<'a,SI>);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.stack.pop() {
@@ -243,16 +245,17 @@ fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
     }
 }
 
-pub struct QTreeRayTraceIterator<'a, 'b, SegmentInfo>
-where SegmentInfo: 'a {
+pub struct QTreeRayTraceIterator<'a, 'b, SI>
+where SI: 'a + Copy {
     ray: &'b Ray,
     ray_m: Scalar,
     ray_k: Scalar,
-    stack: Vec<(bool, &'a QTreeNode<'a,SegmentInfo>)>
+    stack: Vec<(bool, &'a QTreeNode<'a,SI>)>
 }
 
-impl<'a,'b, SegmentInfo> Iterator for QTreeRayTraceIterator<'a, 'b, SegmentInfo> {
-    type Item = &'a Vec<(&'a Segment, &'a SegmentInfo)>;
+impl<'a,'b, SI> Iterator for QTreeRayTraceIterator<'a, 'b, SI>
+where SI: 'a + Copy {
+    type Item = &'a Vec<(&'a Segment, SI)>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(&(already, r)) = self.stack.last() {
@@ -334,8 +337,9 @@ pub fn point_side_of_line_segment(lp1: Point2, lp2: Point2, p: Point2) -> i32 {
         { return 0 }
 }
 
-impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
-    pub fn make_empty_qtree() -> QTree<'a,SegmentInfo>
+impl<'a, SI> QTree<'a, SI>
+where SI: 'a + Copy {
+    pub fn make_empty_qtree() -> QTree<'a,SI>
     {
         let root = QTreeNode {
             segments: vec! [],
@@ -351,11 +355,11 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
     pub fn get_n_nodes(&self) -> usize { self.n_nodes }
     pub fn get_n_nonempty_nodes(&self) -> usize { self.n_nonempty_nodes }
 
-    pub fn in_order_iter(&self) -> QTreeInOrderIterator<SegmentInfo> {
+    pub fn in_order_iter(&self) -> QTreeInOrderIterator<SI> {
         QTreeInOrderIterator { stack: vec![(0, &*self.root)] }
     }
 
-    pub fn ray_trace_iter<'b>(&'a self, ray: &'b Ray) -> QTreeRayTraceIterator<'a,'b,SegmentInfo> {
+    pub fn ray_trace_iter<'b>(&'a self, ray: &'b Ray) -> QTreeRayTraceIterator<'a,'b,SI> {
         let m = (ray.p2.coords[1] - ray.p1.coords[1]) /
                 (ray.p2.coords[0] - ray.p1.coords[0]);
         let k = ray.p2.coords[1] - (m * ray.p1.coords[0]);
@@ -368,9 +372,9 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
         }
     }
 
-    pub fn insert_segment(&mut self, s: &'a Segment, info: &'a SegmentInfo)
+    pub fn insert_segment(&mut self, s: &'a Segment, info: SI)
     {
-        let mut stack : Vec<&mut QTreeNode<'a,SegmentInfo>> = Vec::new();
+        let mut stack : Vec<&mut QTreeNode<'a,SI>> = Vec::new();
         stack.push(&mut*self.root);
 
         while let Some(r) = stack.pop() {
@@ -458,7 +462,7 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
     }
 
     pub fn insert_segments<F>(&mut self, segments: &'a Vec<Segment>, get_info: F) 
-    where F: Fn(usize) -> &'a SegmentInfo
+    where F: Fn(usize) -> SI
     {
         // Our aim here is to find a good order for segment insertion.
         // Generally, alternately going from the outside in and the inside out
@@ -475,7 +479,8 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
         avg_x /= segments.len() as Scalar;
         avg_y /= segments.len() as Scalar;
         
-        let mut sls: Vec<(Scalar, &'a Segment)> = Vec::new();
+        let mut sls: Vec<(Scalar, &'a Segment, usize)> = Vec::new();
+        let mut ind = 0;
         for s in segments {
             let x1d = s.p1.coords[0] - avg_x;
             let x2d = s.p2.coords[0] - avg_x;
@@ -484,34 +489,37 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
 
             sls.push((
                 (x1d*x1d + x2d*x2d + y1d*y1d + y2d*y2d),
-                &s
+                &s,
+                ind
             ));
+
+            ind += 1;
         }
 
-        sls.sort_by(|&(d1,_), &(d2,_)| d2.partial_cmp(&d1).unwrap());
+        sls.sort_by(|&(d1,_,_), &(d2,_,_)| d2.partial_cmp(&d1).unwrap());
 
         let mut si = 0;
         let mut ei = sls.len()-1;
         while si < ei {
-            self.insert_segment(sls[si].1, get_info(si));
-            self.insert_segment(sls[ei].1, get_info(ei));
+            self.insert_segment(sls[si].1, get_info(sls[si].2));
+            self.insert_segment(sls[ei].1, get_info(sls[ei].2));
             si += 1;
             ei -= 1;
         }
         if si == ei {
-            self.insert_segment(sls[si].1, get_info(si));
+            self.insert_segment(sls[si].1, get_info(sls[si].2));
         }
     }
 
-    pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<(&'a Segment, &'a SegmentInfo)> {
+    pub fn get_segments_possibly_touched_by_ray(&'a self, ray: &Ray) -> Vec<(&'a Segment, SI)> {
         return self.ray_trace_iter(ray).flat_map(|x| x.iter()).map(|x| *x).collect();
     }
 
     pub fn get_segments_touched_by_ray(&'a self, ray: &Ray)
-    -> Option <(Vec<(&'a Segment, &'a SegmentInfo)>, Point2, Scalar)> {
+    -> Option <(Vec<(&'a Segment, SI)>, Point2, Scalar)> {
         let segs = self.get_segments_possibly_touched_by_ray(ray);
 
-        let mut intersects: Vec<(&'a Segment, &'a SegmentInfo, Point2, Scalar)> = Vec::new();
+        let mut intersects: Vec<(&'a Segment, SI, Point2, Scalar)> = Vec::new();
         for (s,si) in segs {
             if let Some(pt) = ray_intersects_segment(ray, s) {
                 let xd = pt.coords[0] - ray.p1.coords[0];
@@ -534,7 +542,7 @@ impl<'a, SegmentInfo> QTree<'a, SegmentInfo> {
         
         let mut last_d: Scalar = 0.0;
         let mut last_pt: Point2 = Point2::new(0.0, 0.0);
-        let mut rs: Vec<(&'a Segment, &'a SegmentInfo)> = Vec::new();
+        let mut rs: Vec<(&'a Segment, SI)> = Vec::new();
         for &(s, si, pt, d) in it {
             if last_d == 0.0 || d == last_d {
                 last_d = d;
@@ -596,12 +604,17 @@ impl MaterialProperties {
     }
 }
 
+pub type RayTraceSegmentInfo = usize;
+
 struct TraceRayArgs<'a, R>
 where R: Rng + 'a {
     ray: &'a Ray,
     ray_props: &'a RayProperties,
     tp: &'a TracingProperties,
-    qtree: &'a QTree<'a, MaterialProperties>,
+    qtree: &'a QTree<'a, RayTraceSegmentInfo>,
+    materials: &'a Vec<MaterialProperties>,
+    left_matprops_indices: &'a Vec<u8>,
+    right_matprops_indices: &'a Vec<u8>,
     new_rays: &'a mut Vec<(Ray, RayProperties)>,
     rng: &'a mut R
 }
@@ -610,7 +623,10 @@ pub fn trace_ray<R>(
     ray: &Ray,
     ray_props: &RayProperties,
     tp: &TracingProperties,
-    qtree: &QTree<MaterialProperties>,
+    qtree: &QTree<RayTraceSegmentInfo>,
+    materials: &Vec<MaterialProperties>,
+    left_matprops_indices: &Vec<u8>,
+    right_matprops_indices: &Vec<u8>,
     new_rays: &mut Vec<(Ray, RayProperties)>,
     rng: &mut R
 )
@@ -622,6 +638,9 @@ where R: Rng {
         ray_props: ray_props,
         tp: tp,
         qtree: qtree,
+        materials: materials,
+        left_matprops_indices: left_matprops_indices,
+        right_matprops_indices: right_matprops_indices,
         new_rays: new_rays,
         rng: rng
     })
@@ -633,7 +652,7 @@ where R: Rng { // Returns number of new rays traced.
 
     let mut num_new_rays = 0;
     if let Some((segs_with_info, intersect, _)) = args.qtree.get_segments_touched_by_ray(args.ray) {
-        for (seg, matprops) in segs_with_info {
+        for (seg, segi) in segs_with_info {
             // Is the ray hitting the left surface or the right surface of
             // the segment?
             let side = point_side_of_line_segment(seg.p1, seg.p2, args.ray.p1);
@@ -641,6 +660,7 @@ where R: Rng { // Returns number of new rays traced.
             // If the ray actually originates on this segment, ignore it.
             if side == 0
                 { continue; }
+            //println!("SIDE: ({}, {}, {}, {}) segi={} {}", seg.p1.coords[0], seg.p1.coords[1], seg.p2.coords[0], seg.p2.coords[1], segi, side);
             
             let segline = seg.p2 - seg.p1;
 
@@ -652,16 +672,31 @@ where R: Rng { // Returns number of new rays traced.
                 surface_normal = -surface_normal;
             }
 
+            let mut into_matprops_i;
+            let mut from_matprops_i;
+            if side == -1 {
+                into_matprops_i = args.right_matprops_indices[segi];
+                from_matprops_i = args.left_matprops_indices[segi];
+            }
+            else {
+                into_matprops_i = args.left_matprops_indices[segi];
+                from_matprops_i = args.right_matprops_indices[segi];
+            }
+
+            let ref into_matprops = args.materials[into_matprops_i as usize];
+            let ref from_matprops = args.materials[from_matprops_i as usize];
+
             // We need to calculate the extent to which the ray's intensity has been attenuated
             // by traveling through the relevant material for whatever distance.
             let traveled = intersect - args.ray.p1;
             let distance2 = nalgebra::distance_squared(&intersect, &(args.ray.p1));
-            let att = matprops.attenuation_coeff * distance2;
+            let att = from_matprops.attenuation_coeff * distance2;
+            // TODO TODO TODO FIX
             let new_intensity = args.ray_props.intensity - att;
 
-            num_new_rays += add_diffuse(args, new_intensity, &segline, &matprops, &intersect, &surface_normal);
-            num_new_rays += add_specular(args, new_intensity, &matprops, &intersect, &surface_normal);
-            num_new_rays += add_refraction(args, new_intensity, &matprops, &intersect, &surface_normal, side);
+            num_new_rays += add_diffuse(args, new_intensity, &segline, &into_matprops, &intersect, &surface_normal);
+            num_new_rays += add_specular(args, new_intensity, &into_matprops, &intersect, &surface_normal);
+            //num_new_rays += add_refraction(args, new_intensity, &matprops, &intersect, &surface_normal, side);
         }
     }
 
@@ -678,6 +713,7 @@ fn add_diffuse<R>(
 )
 -> usize
 where R: Rng {
+    //print!("DIFFMAT {:?} {:?}", matprops, segline);
     let mut num_new_rays = 0;
 
     let total_diffuse_reflect_intensity =
@@ -719,6 +755,7 @@ fn add_specular<R>(
 )
 -> usize
 where R: Rng {
+    //print!("SPECMAT {:?} {:?}", matprops, surface_normal);
     let mut num_new_rays = 0;
 
     let total_specular_reflect_intensity =
@@ -747,6 +784,7 @@ where R: Rng {
     num_new_rays
 }
 
+/*
 fn add_refraction<R>(
     args: &mut TraceRayArgs<R>,
     new_intensity: Scalar,
@@ -771,11 +809,14 @@ where R: Rng {
     }
 
     num_new_rays
-}
+}*/
 
 pub struct RayTraceState<'a> {
     tracing_properties: &'a TracingProperties,
-    qtree: &'a QTree<'a, MaterialProperties>,
+    qtree: &'a QTree<'a, RayTraceSegmentInfo>,
+    materials: &'a Vec<MaterialProperties>,
+    left_matprops_indices: &'a Vec<u8>,
+    right_matprops_indices: &'a Vec<u8>,
     pub old_rays: &'a mut Vec<(Ray, RayProperties)>,
     pub new_rays: &'a mut Vec<(Ray, RayProperties)>,
     recursion_limit: usize,
@@ -788,7 +829,10 @@ pub struct RayTraceState<'a> {
 impl<'a> RayTraceState<'a> {
     pub fn initial(
         tp: &'a TracingProperties,
-        qtree: &'a QTree<MaterialProperties>,
+        qtree: &'a QTree<RayTraceSegmentInfo>,
+        materials: &'a Vec<MaterialProperties>,
+        left_matprops_indices: &'a Vec<u8>,
+        right_matprops_indices: &'a Vec<u8>,
         old_rays: &'a mut Vec<(Ray, RayProperties)>,
         new_rays: &'a mut Vec<(Ray, RayProperties)>,
         recursion_limit: usize,
@@ -797,6 +841,9 @@ impl<'a> RayTraceState<'a> {
         RayTraceState {
             tracing_properties: tp,
             qtree: qtree,
+            materials: materials,
+            left_matprops_indices: left_matprops_indices,
+            right_matprops_indices: right_matprops_indices,
             old_rays: old_rays,
             new_rays: new_rays,
             recursion_limit: recursion_limit,
@@ -821,7 +868,16 @@ pub fn ray_trace_step(st: &mut RayTraceState) -> bool {
     }
 
     for &(ref ray, ref ray_props) in st.old_rays.iter() {
-        let n_new_rays = trace_ray(ray, ray_props, st.tracing_properties, st.qtree, st.new_rays, &mut st.rng);
+        let n_new_rays = trace_ray(
+            ray, ray_props,
+            st.tracing_properties,
+            st.qtree,
+            st.materials,
+            st.left_matprops_indices,
+            st.right_matprops_indices,
+            st.new_rays,
+            &mut st.rng
+        );
         st.ray_count += n_new_rays;
     }
     st.old_rays.clear();

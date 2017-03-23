@@ -48,11 +48,8 @@ fn test1() {
                         (r, g::RayProperties { wavelength: 0.0, intensity: 1.0 })
                     }).collect();
 
-                    let inf = g::MaterialProperties::default();
-
-                    let mut qtree: g::QTree<g::MaterialProperties> = g::QTree::make_empty_qtree();
-                    qtree.insert_segments(&geom.segments, |_| &inf);
-                    println!("QTREE: {:#?}", qtree);
+                    let mut qtree: g::QTree<g::RayTraceSegmentInfo> = g::QTree::make_empty_qtree();
+                    qtree.insert_segments(&geom.segments, |i| i);
 
                     let mut new_rays: Vec<(g::Ray, g::RayProperties)> = Vec::new();
                     let tracing_props = g::TracingProperties {
@@ -63,6 +60,9 @@ fn test1() {
                     let mut st = g::RayTraceState::initial(
                         &tracing_props,
                         &qtree,
+                        &(geom.materials),
+                        &(geom.left_material_properties),
+                        &(geom.right_material_properties),
                         &mut rays,
                         &mut new_rays,
                         16,
