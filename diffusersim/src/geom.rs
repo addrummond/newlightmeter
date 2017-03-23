@@ -7,6 +7,7 @@ use rand::{Rng, SeedableRng, StdRng};
 
 use nalgebra::Vector2 as Vector2_;
 use nalgebra::Point2 as Point2_;
+use nalgebra;
 use std::f64::consts;
 use std::mem;
 
@@ -587,8 +588,8 @@ pub struct MaterialProperties {
 impl MaterialProperties {
     pub fn default() -> MaterialProperties {
         MaterialProperties {
-            diffuse_reflect_fraction:  0.8,
-            specular_reflect_fraction: 0.0,
+            diffuse_reflect_fraction:  0.5,
+            specular_reflect_fraction: 0.4,
             refraction_fraction: 0.0,
             refractive_index: 0.0,
             extinction: 0.0,
@@ -657,6 +658,34 @@ where R: Rng { // Returns number of new rays traced.
                 //println!("NEW RAY {} {} {} {}", intersect.coords[0], intersect.coords[1], new_ray_p2.coords[0], new_ray_p2.coords[1]);
 
                 new_rays.push((new_ray, new_diffuse_ray_props));
+            }
+
+            //
+            // Add ray for specular reflection.
+            //
+            
+            let total_specular_reflect_intensity =
+                ray_props.intensity * matprops.specular_reflect_fraction;
+            
+            if total_specular_reflect_intensity > tp.intensity_threshold {
+                num_new_rays += 1;
+
+                let mut new_specular_ray_props = *ray_props;
+                new_specular_ray_props.intensity = total_specular_reflect_intensity;
+
+                // Get a normalized normal vector and ray vector.
+                let surface_normal_n = surface_normal.normalize();
+                let ray_n = (ray.p2 - ray.p1).normalize();
+
+                let dot = nalgebra::dot(&ray_n, &surface_normal_n);
+                let reflection = ray_n  -((2.0 * dot) * surface_normal_n);
+
+                let new_ray = Ray {
+                    p1: intersect,
+                    p2: intersect + reflection
+                };
+
+                new_rays.push((new_ray, new_specular_ray_props));
             }
         }
     }
