@@ -598,22 +598,47 @@ impl MaterialProperties {
     }
 }
 
+struct TraceRayArgs<'a, R>
+where R: Rng + 'a {
+    ray: &'a Ray,
+    ray_props: &'a RayProperties,
+    tp: &'a TracingProperties,
+    qtree: &'a QTree<'a, MaterialProperties>,
+    new_rays: &'a mut Vec<(Ray, RayProperties)>,
+    rng: &'a mut R
+}
+
 pub fn trace_ray<R>(
     ray: &Ray,
     ray_props: &RayProperties,
     tp: &TracingProperties,
     qtree: &QTree<MaterialProperties>,
     new_rays: &mut Vec<(Ray, RayProperties)>,
-    rng: &mut R)
+    rng: &mut R
+)
+-> usize
+where R: Rng {
+
+    trace_ray_args(TraceRayArgs {
+        ray: ray,
+        ray_props: ray_props,
+        tp: tp,
+        qtree: qtree,
+        new_rays: new_rays,
+        rng: rng
+    })
+}
+
+fn trace_ray_args<R>(args: TraceRayArgs<R>)
 -> usize
 where R: Rng { // Returns number of new rays traced.
 
     let mut num_new_rays = 0;
-    if let Some((segs_with_info, intersect, _)) = qtree.get_segments_touched_by_ray(ray) {
+    if let Some((segs_with_info, intersect, _)) = args.qtree.get_segments_touched_by_ray(args.ray) {
         for (seg, matprops) in segs_with_info {
             // Is the ray hitting the left surface or the right surface of
             // the segment?
-            let side = point_side_of_line_segment(seg.p1, seg.p2, ray.p1);
+            let side = point_side_of_line_segment(seg.p1, seg.p2, args.ray.p1);
 
             // If the ray actually originates on this segment, ignore it.
             if side == 0
@@ -634,17 +659,17 @@ where R: Rng { // Returns number of new rays traced.
             //
 
             let total_diffuse_reflect_intensity =
-                ray_props.intensity * matprops.diffuse_reflect_fraction;
+                args.ray_props.intensity * matprops.diffuse_reflect_fraction;
             
             // If the intensity of the reflected ray is above the thresholed,
             // then cast it in a randomly chosen direction.
-            if total_diffuse_reflect_intensity > tp.intensity_threshold {
+            if total_diffuse_reflect_intensity > args.tp.intensity_threshold {
                 num_new_rays += 1;
 
-                let mut new_diffuse_ray_props = *ray_props;
+                let mut new_diffuse_ray_props = *(args.ray_props);
                 new_diffuse_ray_props.intensity = total_diffuse_reflect_intensity;
                 
-                let angle = (rng.next_f64() as Scalar) * consts::PI;
+                let angle = (args.rng.next_f64() as Scalar) * consts::PI;
 
                 let along_seg = angle.cos();
                 let normal_to_seg = angle.sin();
@@ -657,7 +682,7 @@ where R: Rng { // Returns number of new rays traced.
 
                 //println!("NEW RAY {} {} {} {}", intersect.coords[0], intersect.coords[1], new_ray_p2.coords[0], new_ray_p2.coords[1]);
 
-                new_rays.push((new_ray, new_diffuse_ray_props));
+                args.new_rays.push((new_ray, new_diffuse_ray_props));
             }
 
             //
@@ -665,17 +690,17 @@ where R: Rng { // Returns number of new rays traced.
             //
             
             let total_specular_reflect_intensity =
-                ray_props.intensity * matprops.specular_reflect_fraction;
+                args.ray_props.intensity * matprops.specular_reflect_fraction;
             
-            if total_specular_reflect_intensity > tp.intensity_threshold {
+            if total_specular_reflect_intensity > args.tp.intensity_threshold {
                 num_new_rays += 1;
 
-                let mut new_specular_ray_props = *ray_props;
+                let mut new_specular_ray_props = *(args.ray_props);
                 new_specular_ray_props.intensity = total_specular_reflect_intensity;
 
                 // Get a normalized normal vector and ray vector.
                 let surface_normal_n = surface_normal.normalize();
-                let ray_n = (ray.p2 - ray.p1).normalize();
+                let ray_n = (args.ray.p2 - args.ray.p1).normalize();
 
                 let dot = nalgebra::dot(&ray_n, &surface_normal_n);
                 let reflection = ray_n  -((2.0 * dot) * surface_normal_n);
@@ -685,7 +710,7 @@ where R: Rng { // Returns number of new rays traced.
                     p2: intersect + reflection
                 };
 
-                new_rays.push((new_ray, new_specular_ray_props));
+                args.new_rays.push((new_ray, new_specular_ray_props));
             }
         }
     }
