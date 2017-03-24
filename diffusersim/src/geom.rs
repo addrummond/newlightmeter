@@ -693,8 +693,16 @@ where R: Rng { // Returns number of new rays traced.
             let att = from_matprops.attenuation_coeff * distance2;
             let new_intensity = args.ray_props.intensity - att;
 
-            num_new_rays += add_diffuse(args, new_intensity, &segline, &into_matprops, &intersect, &surface_normal);
-            num_new_rays += add_specular(args, new_intensity, &into_matprops, &intersect, &surface_normal);
+            // Decide whether we're going to do diffuse reflection or specular reflection based
+            // on the relative amount of intensity they preserve.
+            let tot = into_matprops.diffuse_reflect_fraction + into_matprops.specular_reflect_fraction;
+            let rnd = args.rng.next_f64() * tot;
+            if rnd < into_matprops.diffuse_reflect_fraction {
+                num_new_rays += add_diffuse(args, new_intensity, &segline, &into_matprops, &intersect, &surface_normal);
+            }
+            else {
+                num_new_rays += add_specular(args, new_intensity, &into_matprops, &intersect, &surface_normal);
+            }
             //num_new_rays += add_refraction(args, new_intensity, &matprops, &intersect, &surface_normal, side);
         }
     }
