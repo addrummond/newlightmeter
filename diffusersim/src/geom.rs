@@ -691,7 +691,6 @@ where R: Rng { // Returns number of new rays traced.
             let traveled = intersect - args.ray.p1;
             let distance2 = nalgebra::distance_squared(&intersect, &(args.ray.p1));
             let att = from_matprops.attenuation_coeff * distance2;
-            // TODO TODO TODO FIX
             let new_intensity = args.ray_props.intensity - att;
 
             num_new_rays += add_diffuse(args, new_intensity, &segline, &into_matprops, &intersect, &surface_normal);
