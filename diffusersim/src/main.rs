@@ -45,7 +45,7 @@ fn test1() {
                         //g::ray(18.0, 10.0, 16.0, -5.0)
                     ];
                     let mut rays: Vec<(g::Ray, g::RayProperties)> = bare_rays.into_iter().map(|r| {
-                        (r, g::RayProperties { wavelength: 0.0, intensity: 1.0 })
+                        (r, g::RayProperties { wavelength: 1.0, intensity: 1.0 })
                     }).collect();
 
                     let mut qtree: g::QTree<g::RayTraceSegmentInfo> = g::QTree::make_empty_qtree();

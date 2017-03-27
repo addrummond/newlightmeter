@@ -10,6 +10,7 @@ use nalgebra::Point2 as Point2_;
 use nalgebra;
 use std::f64::consts;
 use std::mem;
+use std::num;
 
 pub type Scalar = f64;
 pub type Vector2 = Vector2_<Scalar>;
@@ -650,6 +651,8 @@ fn trace_ray_args<R>(args: &mut TraceRayArgs<R>)
 -> usize
 where R: Rng { // Returns number of new rays traced.
 
+    let rayline = args.ray.p2 - args.ray.p1;
+
     let mut num_new_rays = 0;
     if let Some((segs_with_info, intersect, _)) = args.qtree.get_segments_touched_by_ray(args.ray) {
         for (seg, segi) in segs_with_info {
@@ -693,17 +696,19 @@ where R: Rng { // Returns number of new rays traced.
             let att = from_matprops.attenuation_coeff * distance2;
             let new_intensity = args.ray_props.intensity - att;
 
-            // Decide whether we're going to do diffuse reflection or specular reflection based
-            // on the relative amount of intensity they preserve.
+            // Decide whether we're going to do diffuse reflection, specular reflection,
+            // or refraction, based on the relative amount of intensity they preserve.
             let tot = into_matprops.diffuse_reflect_fraction + into_matprops.specular_reflect_fraction;
             let rnd = args.rng.next_f64() * tot;
             if rnd < into_matprops.diffuse_reflect_fraction {
                 num_new_rays += add_diffuse(args, new_intensity, &segline, &into_matprops, &intersect, &surface_normal);
             }
-            else {
-                num_new_rays += add_specular(args, new_intensity, &into_matprops, &intersect, &surface_normal);
+            else if rnd < into_matprops.diffuse_reflect_fraction + into_matprops.specular_reflect_fraction {
+                num_new_rays += add_specular(args, new_intensity, &rayline, &into_matprops, &intersect, &surface_normal);
             }
-            //num_new_rays += add_refraction(args, new_intensity, &matprops, &intersect, &surface_normal, side);
+            else if rnd < into_matprops.diffuse_reflect_fraction + into_matprops.specular_reflect_fraction + into_matprops.refraction_fraction {
+                num_new_rays += add_refraction(args, new_intensity, &rayline, &from_matprops, &into_matprops, &intersect, &surface_normal, side);
+            }
         }
     }
 
@@ -756,6 +761,7 @@ where R: Rng {
 fn add_specular<R>(
     args: &mut TraceRayArgs<R>,
     new_intensity: Scalar,
+    rayline: &Vector2,
     matprops: &MaterialProperties,
     intersect: &Point2,
     surface_normal: &Vector2
@@ -775,7 +781,7 @@ where R: Rng {
         new_specular_ray_props.intensity = total_specular_reflect_intensity;
         // Get a normalized normal vector and ray vector.
         let surface_normal_n = surface_normal.normalize();
-        let ray_n = (args.ray.p2 - args.ray.p1).normalize();
+        let ray_n = rayline.normalize();
 
         let dot = nalgebra::dot(&ray_n, &surface_normal_n);
         let reflection = ray_n  -((2.0 * dot) * surface_normal_n);
@@ -791,11 +797,12 @@ where R: Rng {
     num_new_rays
 }
 
-/*
 fn add_refraction<R>(
     args: &mut TraceRayArgs<R>,
     new_intensity: Scalar,
-    matprops: &MaterialProperties,
+    rayline: &Vector2,
+    from_matprops: &MaterialProperties,
+    into_matprops: &MaterialProperties,
     intersect: &Point2,
     surface_normal: &Vector2,
     side: i32
@@ -803,20 +810,50 @@ fn add_refraction<R>(
 -> usize
 where R: Rng {
     assert!(side != 0);
-    assert!(matprops.cauchy_coeffs.len() > 0);
+    assert!(from_matprops.cauchy_coeffs.len() > 0);
+    assert!(into_matprops.cauchy_coeffs.len() > 0);
 
     let mut num_new_rays = 0;
 
-    // Calculate the refractive index given the wavelength and the material properties.
-    let mut ri = matprops.cauchy_coeffs[0];
+    // Calculate the refractive index for each material given
+    // the wavelength and the material properties.
+    let mut from_ri = from_matprops.cauchy_coeffs[0];
     let mut pow: i32 = 2;
-    for c in matprops.cauchy_coeffs.iter().skip(1) {
-        ri += c / args.ray_props.wavelength.powi(pow);
+    for c in from_matprops.cauchy_coeffs.iter().skip(1) {
+        from_ri += c / args.ray_props.wavelength.powi(pow);
+        pow += 2;
+    }
+    let mut into_ri = into_matprops.cauchy_coeffs[0];
+    for c in into_matprops.cauchy_coeffs.iter().skip(1) {
+        into_ri += c / args.ray_props.wavelength.powi(pow);
         pow += 2;
     }
 
+    let ri = (from_ri / into_ri);
+
+    let nsn = nalgebra::normalize(surface_normal);
+    let rayline = nalgebra::normalize(rayline);
+    let n_1 = -nsn;
+    let c = nalgebra::dot(&n_1, &rayline);  
+    assert!(c >= 0.0);
+
+    let vrefract =
+        (ri * rayline) +
+        (((ri * c) -
+          (1.0 - ri*ri*(1.0 - c*c)).sqrt())
+         *nsn);
+    
+    let new_refracted_ray_props = *(args.ray_props);
+    let new_ray = Ray {
+        p1: *intersect,
+        p2: intersect + vrefract
+    };
+
+    args.new_rays.push((new_ray, new_refracted_ray_props));
+    num_new_rays += 1;
+
     num_new_rays
-}*/
+}
 
 pub struct RayTraceState<'a> {
     tracing_properties: &'a TracingProperties,
