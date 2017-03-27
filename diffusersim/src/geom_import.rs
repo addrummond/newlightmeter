@@ -159,40 +159,53 @@ fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
     }
 }
 
-fn skip_space(st: &mut ParseState) -> Option<char> {
+fn skip_space_wc(st: &mut ParseState, include_nl: bool) -> (Option<char>, usize) {
     let mut cc: Option<char> = None;
+    let mut in_comment = false;
+    let mut count = 0;
+
     go(st, |c| {
-        if !char::is_whitespace(c) || c == '\n' {
-            cc = Some(c);
-            return Decision::End;
+        if c == '\n' {
+            in_comment = false;
+            return if include_nl { Decision::Continue } else { Decision::End };
         }
-        else {
+        else if char::is_whitespace(c) {
+            count += 1;
             return Decision::Continue;
         }
+        else if c == '#' {
+            count += 1;
+            in_comment = true;
+            return Decision::Continue;
+        }
+        else if in_comment {
+            count += 1;
+            return Decision::Continue;
+        }
+        else {
+            return Decision::End;
+        }
     });
-    return cc;
+
+    return (cc, count);
+}
+
+fn skip_space(st: &mut ParseState) -> Option<char> {
+    skip_space_wc(st, false).0
 }
 
 fn skip_at_least_one_space(st: &mut ParseState) -> ParseResult<Option<char>> {
-    let mut cc: Option<char> = None;
-    let mut gotone = false;
-    go(st, |c| {
-        if !char::is_whitespace(c) || c == '\n' {
-            cc = Some(c);
-            return Decision::End;
-        }
-        else {
-            gotone = true;
-            return Decision::Continue;
-        }
-    });
-
-    if gotone {
-        return Ok(cc);
+    let (r, c) = skip_space_wc(st, false);
+    if c > 0 {
+        return Ok(r);
     }
     else {
         return parse_error(st, "Expected whitespace");
     }
+}
+
+fn skip_space_inc_nl(st: &mut ParseState) -> Option<char> {
+    skip_space_wc(st, true).0
 }
 
 fn identifier(st: &mut ParseState) -> ParseResult<String> {
@@ -469,7 +482,7 @@ fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
     match sep_by(st, entry_sep, entry) {
         Err(e) => { Err(e) },
         Ok(r) => {
-            take_while(st, |c| { println!("TAKING: {}", c); char::is_whitespace(c) });
+            skip_space_inc_nl(st);
             if !st.eof {
                 return parse_error(st, "Junk at end of file");
             }
