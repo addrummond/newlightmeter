@@ -473,7 +473,7 @@ fn entry_sep(st: &mut ParseState) -> ParseResult<()> {
     skip_space(st);
     if let Err(_) = expect_str(st, "\n")
         { return parse_error(st, "Expecting newline separator"); }
-    drop_while(st, |c| char::is_whitespace(c));
+    skip_space_inc_nl(st);
     Ok(())
 }
 
