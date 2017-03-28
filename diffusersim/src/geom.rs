@@ -245,6 +245,64 @@ fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
     }
 }
 
+pub struct CollimatedBeamRayIterator {
+    p1: Point2,
+    x: Scalar,
+    y: Scalar,
+    normal: Vector2,
+    i: usize,
+    n_rays: usize
+}
+
+impl CollimatedBeamRayIterator {
+    pub fn new(p1: Point2, p2: Point2, shiny_side_is_left: bool, n_rays: usize)
+    -> CollimatedBeamRayIterator {
+        let x = p2.coords[0] - p1.coords[0];
+        let y = p2.coords[1] - p2.coords[1];
+
+        // The left normal (looking "along" the line)
+        let mut nx = -x;
+        let mut ny = y;
+
+        if !shiny_side_is_left {
+            nx = -nx;
+            ny = -ny;
+        }
+
+        let n_rays_s = n_rays as Scalar;
+
+        CollimatedBeamRayIterator {
+            p1: p1,
+            x: x / n_rays_s,
+            y: y / n_rays_s,
+            normal: Vector2::new(nx, ny),
+            i: 0,
+            n_rays: n_rays
+        }
+    }
+}
+
+impl Iterator for CollimatedBeamRayIterator {
+    type Item = (Point2, Point2);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i >= self.n_rays
+            { return None; }
+        
+        let ii = self.i as Scalar;
+
+        let mut origin = self.p1;
+        origin.coords[0] += ii * self.x;
+        origin.coords[1] += ii * self.y;
+
+        let dest = origin + self.normal;
+
+        self.i += 1;
+
+        Some((origin, dest))
+    }
+}
+
 pub struct QTreeRayTraceIterator<'a, 'b, SI>
 where SI: 'a + Copy {
     ray: &'b Ray,
