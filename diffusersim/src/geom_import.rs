@@ -8,6 +8,15 @@ use std::io::BufReader;
 use std::io::prelude::*;
 
 #[derive(Debug)]
+pub enum Beam {
+    Collimated {
+        from: g::Point2,
+        to: g::Point2,
+        shiny_side_is_left: bool
+    }
+}
+
+#[derive(Debug)]
 pub struct ImportedGeometry {
     pub segments: Vec<g::Segment>,
     pub materials: Vec<g::MaterialProperties>,
@@ -29,7 +38,8 @@ impl <T,U> Parser<T> for U where U: FnMut (&mut ParseState) -> ParseResult<T> { 
 #[derive(Debug)]
 enum Entry {
     Segment(String, String, g::Segment),
-    Material(String, g::MaterialProperties)
+    Material(String, g::MaterialProperties),
+    Beam(Beam)
 }
 
 pub struct ParseState<'a> {
@@ -82,6 +92,7 @@ where F: FnMut (char) -> Decision {
     }
 }
 
+#[allow(unused)]
 fn drop_while<F>(st: &mut ParseState, filter: F)
 where F: Fn(char) -> bool {
     go(st, |c| {
@@ -165,6 +176,8 @@ fn skip_space_wc(st: &mut ParseState, include_nl: bool) -> (Option<char>, usize)
     let mut count = 0;
 
     go(st, |c| {
+        cc = Some(c);
+
         if c == '\n' {
             in_comment = false;
             return if include_nl { Decision::Continue } else { Decision::End };
@@ -264,6 +277,30 @@ where F: Parser<R> {
     sep_by(st, skip_at_least_one_space, parser)
 }
 
+fn is_digit(c: char) -> bool {
+    c == '0' || c == '1' || c == '2' || c == '3' || c == '4' ||
+    c == '5' || c == '6' || c == '7' || c == '8' || c == '9'
+}
+
+fn integer_constant(st: &mut ParseState) -> ParseResult<i32> {
+    let chars = take_while(st, is_digit);
+
+    if chars.len() == 0 {
+        return parse_error(st, "Expecting integer constant");
+    }
+    else {
+        let s: String = chars.into_iter().collect();
+        match s.as_str().parse::<i32>() {
+            Err(_) => {
+                return parse_error(st, "Error in integer constant syntax");
+            },
+            Ok(v) => {
+                return Ok(v);
+            }
+        }
+    }
+}
+
 fn numeric_constant(st: &mut ParseState) -> ParseResult<g::Scalar> {
     let chars = take_while(st, |c| {
         c == '0' || c == '1' || c == '2' || c == '3' || c == '4' ||
@@ -299,6 +336,9 @@ fn entry(st: &mut ParseState) -> ParseResult<Entry> {
             }
             else if ident == "material" {
                 return material_entry(st);
+            }
+            else if ident == "colbeam" {
+                return colbeam_entry(st);
             }
             else {
                 return parse_error(st, "Unrecognized entry type");
@@ -467,6 +507,59 @@ fn material_entry(st: &mut ParseState) -> ParseResult<Entry> {
             }
         }
     }
+}
+
+fn colbeam_entry(st: &mut ParseState) -> ParseResult<Entry> {
+    if let Err(e) = integer_constant(st)
+        { return Err(e); }
+    
+    skip_space(st);
+    
+    let mut i = 0;
+    let mut first_was_dash = false;
+    let mut err = false;
+    go(st, |c| {
+        if i > 1
+            { return Decision::End; }
+
+        if c == '-' {
+            if i == 0
+                { first_was_dash = true; }
+        }
+        else if c != '|' {
+            err = true;
+            return Decision::End;
+        }
+
+        i += 1;
+        return Decision::Continue;
+    });
+
+    if err
+        { return parse_error(st, "Expecting |- or -|"); }
+
+    let mut coords: [g::Scalar; 4] = [0.0; 4];
+    for i in 0..4 {
+        if i != 0 {
+            if let Err(e) = skip_at_least_one_space(st)
+                { return Err(e); }
+        }
+
+        match numeric_constant(st) {
+            Err(e) => { return Err(e); },
+            Ok(n) => {
+                coords[i] = n;
+            }
+        }
+    }
+
+    let beam = Beam::Collimated {
+        from: g::Point2::new(coords[0], coords[1]),
+        to:   g::Point2::new(coords[2], coords[3]),
+        shiny_side_is_left: first_was_dash
+    };
+
+    Ok(Entry::Beam(beam))
 }
 
 fn entry_sep(st: &mut ParseState) -> ParseResult<()> {

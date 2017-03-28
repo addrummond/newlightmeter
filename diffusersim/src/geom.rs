@@ -10,7 +10,6 @@ use nalgebra::Point2 as Point2_;
 use nalgebra;
 use std::f64::consts;
 use std::mem;
-use std::num;
 
 pub type Scalar = f64;
 pub type Vector2 = Vector2_<Scalar>;
@@ -675,8 +674,8 @@ where R: Rng { // Returns number of new rays traced.
                 surface_normal = -surface_normal;
             }
 
-            let mut into_matprops_i;
-            let mut from_matprops_i;
+            let into_matprops_i;
+            let from_matprops_i;
             if side == -1 {
                 into_matprops_i = args.right_matprops_indices[segi];
                 from_matprops_i = args.left_matprops_indices[segi];
@@ -691,7 +690,7 @@ where R: Rng { // Returns number of new rays traced.
 
             // We need to calculate the extent to which the ray's intensity has been attenuated
             // by traveling through the relevant material for whatever distance.
-            let traveled = intersect - args.ray.p1;
+            //let traveled = intersect - args.ray.p1;
             let distance2 = nalgebra::distance_squared(&intersect, &(args.ray.p1));
             let att = from_matprops.attenuation_coeff * distance2;
             let new_intensity = args.ray_props.intensity - att;
@@ -727,17 +726,14 @@ fn add_diffuse<R>(
 where R: Rng {
     //print!("DIFFMAT {:?} {:?}", matprops, segline);
     let mut num_new_rays = 0;
-
-    let total_diffuse_reflect_intensity =
-        new_intensity * matprops.diffuse_reflect_fraction;
             
     // If the intensity of the reflected ray is above the thresholed,
     // then cast it in a randomly chosen direction.
-    if total_diffuse_reflect_intensity > args.tp.intensity_threshold {
+    if new_intensity > args.tp.intensity_threshold {
         num_new_rays += 1;
 
         let mut new_diffuse_ray_props = *(args.ray_props);
-        new_diffuse_ray_props.intensity = total_diffuse_reflect_intensity;
+        new_diffuse_ray_props.intensity = new_intensity;
                 
         let angle = (args.rng.next_f64() as Scalar) * consts::PI;
 
@@ -770,15 +766,12 @@ fn add_specular<R>(
 where R: Rng {
     //print!("SPECMAT {:?} {:?}", matprops, surface_normal);
     let mut num_new_rays = 0;
-
-    let total_specular_reflect_intensity =
-        new_intensity * matprops.specular_reflect_fraction;
             
-    if total_specular_reflect_intensity > args.tp.intensity_threshold {
+    if new_intensity > args.tp.intensity_threshold {
         num_new_rays += 1;
 
         let mut new_specular_ray_props = *(args.ray_props);
-        new_specular_ray_props.intensity = total_specular_reflect_intensity;
+        new_specular_ray_props.intensity = new_intensity;
         // Get a normalized normal vector and ray vector.
         let surface_normal_n = surface_normal.normalize();
         let ray_n = rayline.normalize();
@@ -815,42 +808,46 @@ where R: Rng {
 
     let mut num_new_rays = 0;
 
-    // Calculate the refractive index for each material given
-    // the wavelength and the material properties.
-    let mut from_ri = from_matprops.cauchy_coeffs[0];
-    let mut pow: i32 = 2;
-    for c in from_matprops.cauchy_coeffs.iter().skip(1) {
-        from_ri += c / args.ray_props.wavelength.powi(pow);
-        pow += 2;
-    }
-    let mut into_ri = into_matprops.cauchy_coeffs[0];
-    for c in into_matprops.cauchy_coeffs.iter().skip(1) {
-        into_ri += c / args.ray_props.wavelength.powi(pow);
-        pow += 2;
-    }
+    if new_intensity > args.tp.intensity_threshold {
+        num_new_rays += 1;
 
-    let ri = (from_ri / into_ri);
+        // Calculate the refractive index for each material given
+        // the wavelength and the material properties.
+        let mut from_ri = from_matprops.cauchy_coeffs[0];
+        let mut pow: i32 = 2;
+        for c in from_matprops.cauchy_coeffs.iter().skip(1) {
+            from_ri += c / args.ray_props.wavelength.powi(pow);
+            pow += 2;
+        }
+        let mut into_ri = into_matprops.cauchy_coeffs[0];
+        for c in into_matprops.cauchy_coeffs.iter().skip(1) {
+            into_ri += c / args.ray_props.wavelength.powi(pow);
+            pow += 2;
+        }
 
-    let nsn = nalgebra::normalize(surface_normal);
-    let rayline = nalgebra::normalize(rayline);
-    let n_1 = -nsn;
-    let c = nalgebra::dot(&n_1, &rayline);  
-    assert!(c >= 0.0);
+        let ri = from_ri / into_ri;
 
-    let vrefract =
-        (ri * rayline) +
-        (((ri * c) -
-          (1.0 - ri*ri*(1.0 - c*c)).sqrt())
-         *nsn);
+        let nsn = surface_normal.normalize();
+        let rayline = rayline.normalize();
+        let n_1 = -nsn;
+        let c = nalgebra::dot(&n_1, &rayline);  
+        assert!(c >= 0.0);
+
+        let vrefract =
+            (ri * rayline) +
+            (((ri * c) -
+              (1.0 - ri*ri*(1.0 - c*c)).sqrt())
+             *nsn);
     
-    let new_refracted_ray_props = *(args.ray_props);
-    let new_ray = Ray {
-        p1: *intersect,
-        p2: intersect + vrefract
-    };
+        let mut new_refracted_ray_props = *(args.ray_props);
+        new_refracted_ray_props.intensity = new_intensity;
+        let new_ray = Ray {
+            p1: *intersect,
+            p2: intersect + vrefract
+        };
 
-    args.new_rays.push((new_ray, new_refracted_ray_props));
-    num_new_rays += 1;
+        args.new_rays.push((new_ray, new_refracted_ray_props));
+    }
 
     num_new_rays
 }
