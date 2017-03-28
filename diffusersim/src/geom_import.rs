@@ -12,6 +12,7 @@ pub enum Beam {
     Collimated {
         from: g::Point2,
         to: g::Point2,
+        n_rays: usize,
         shiny_side_is_left: bool
     }
 }
@@ -510,8 +511,15 @@ fn material_entry(st: &mut ParseState) -> ParseResult<Entry> {
 }
 
 fn colbeam_entry(st: &mut ParseState) -> ParseResult<Entry> {
-    if let Err(e) = integer_constant(st)
-        { return Err(e); }
+    let n_rays: usize;
+    match integer_constant(st) {
+        Err(e) => { return Err(e); },
+        Ok(i) => {
+            if i <= 0
+                { return parse_error(st, "Number of rays must be > 0 for colbeam"); }
+            n_rays = i as usize;
+        }
+    }
     
     skip_space(st);
     
@@ -556,6 +564,7 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Entry> {
     let beam = Beam::Collimated {
         from: g::Point2::new(coords[0], coords[1]),
         to:   g::Point2::new(coords[2], coords[3]),
+        n_rays: n_rays,
         shiny_side_is_left: first_was_dash
     };
 
