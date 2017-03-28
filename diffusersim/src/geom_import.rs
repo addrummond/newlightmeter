@@ -546,6 +546,8 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Entry> {
     if err
         { return parse_error(st, "Expecting |- or -|"); }
 
+    skip_space(st);
+
     let mut coords: [g::Scalar; 4] = [0.0; 4];
     for i in 0..4 {
         if i != 0 {

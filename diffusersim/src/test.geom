@@ -15,4 +15,4 @@ line a/p 20 -20 20 20
 line a/p -40 -40 -40 40
 line a/p 40 40 40 -40
 
-#light (20) 
+colbeam 20 |- -30 -30 -30 30
