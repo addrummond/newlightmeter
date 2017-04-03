@@ -80,9 +80,7 @@ where SI: 'a + Copy {
 #[derive(Debug)]
 pub struct QTree<'a, SI>
 where SI: 'a + Copy {
-    root: Box<QTreeNode<'a, SI>>,
-    n_nodes: usize,
-    n_nonempty_nodes: usize
+    root: Box<QTreeNode<'a, SI>>
 }
 
 fn get_point_quad(p: Point2, c: Point2) -> i32 {
@@ -405,13 +403,8 @@ where SI: 'a + Copy {
         };
         return QTree {
             root: Box::new(root),
-            n_nodes: 0,
-            n_nonempty_nodes: 0
         };
     }
-
-    pub fn get_n_nodes(&self) -> usize { self.n_nodes }
-    pub fn get_n_nonempty_nodes(&self) -> usize { self.n_nonempty_nodes }
 
     pub fn in_order_iter(&self) -> QTreeInOrderIterator<SI> {
         QTreeInOrderIterator { stack: vec![(0, &*self.root)] }
@@ -451,9 +444,6 @@ where SI: 'a + Copy {
             }
             else if r.segments.len() < QTREE_BIN_SIZE {
                 r.segments.push((s, info));
-                if r.segments.len() == 1 {
-                    self.n_nonempty_nodes += 1;
-                }
             }
             else {
                 // Given the sorting order for the points of a segment,
@@ -491,9 +481,6 @@ where SI: 'a + Copy {
                         if mask == (1 << i) {
                             new_children[i].segments.push((seg, info));
                             to_delete.insert(segi);
-                            if new_children[i].segments.len() == 1 {
-                                self.n_nonempty_nodes += 1;
-                            }
                         }
                     }
                     segi += 1;
@@ -514,7 +501,6 @@ where SI: 'a + Copy {
                     center: s.p2
                 };
                 r.child_info = Some(new_child_info);
-                self.n_nodes += 4;
             }
         }
     }
