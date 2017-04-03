@@ -748,7 +748,6 @@ where R: Rng { // Returns number of new rays traced.
 
             // We need to calculate the extent to which the ray's intensity has been attenuated
             // by traveling through the relevant material for whatever distance.
-            //let traveled = intersect - args.ray.p1;
             let distance2 = nalgebra::distance_squared(&intersect, &(args.ray.p1));
             let att = from_matprops.attenuation_coeff * distance2;
             let new_intensity = args.ray_props.intensity - att;
