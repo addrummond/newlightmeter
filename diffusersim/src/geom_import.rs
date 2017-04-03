@@ -7,13 +7,15 @@ use std::io;
 use std::io::BufReader;
 use std::io::prelude::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Beam {
     Collimated {
         from: g::Point2,
         to: g::Point2,
         n_rays: usize,
-        shiny_side_is_left: bool
+        shiny_side_is_left: bool,
+        wavelength: g::Scalar,
+        intensity: g::Scalar
     }
 }
 
@@ -21,6 +23,7 @@ pub enum Beam {
 pub struct ImportedGeometry {
     pub segments: Vec<g::Segment>,
     pub materials: Vec<g::MaterialProperties>,
+    pub beams: Vec<Beam>,
     pub left_material_properties: Vec<u8>,
     pub right_material_properties: Vec<u8>,
 }
@@ -242,7 +245,7 @@ fn identifier(st: &mut ParseState) -> ParseResult<String> {
     }
 }
 
-fn sep_by<R1,R2,F1,F2>(st: &mut ParseState, mut sep: F1, mut parser: F2) -> ParseResult<Vec<R2>>
+fn sep_by<R1,R2,F1,F2>(st: &mut ParseState, mut sep: F1, mut parser: F2) -> (Vec<R2>, ParseError)
 where F1: Parser<R1>,
       F2: Parser<R2> {
     let mut rs: Vec<R2> = Vec::new();
@@ -254,52 +257,23 @@ where F1: Parser<R1>,
             }
             Err(e) => {
                 if rs.len() == 0 {
-                    return Err(e);
+                    return (rs, e);
                 }
                 else {
-                    return Ok(rs);
+                    return (rs, e);
                 }
             }
         }
 
         if let Err(e) = sep(st) {
-            if rs.len() == 0 {
-                return Err(e);
-            }
-            else {
-                return Ok(rs);
-            }
+            return (rs, e);
         }
     }
 }
 
-fn space_separated<R,F>(st: &mut ParseState, parser: F) -> ParseResult<Vec<R>>
+fn space_separated<R,F>(st: &mut ParseState, parser: F) -> (Vec<R>, ParseError)
 where F: Parser<R> {
     sep_by(st, skip_at_least_one_space, parser)
-}
-
-fn is_digit(c: char) -> bool {
-    c == '0' || c == '1' || c == '2' || c == '3' || c == '4' ||
-    c == '5' || c == '6' || c == '7' || c == '8' || c == '9'
-}
-
-fn integer_constant(st: &mut ParseState) -> ParseResult<i32> {
-    let chars = take_while(st, is_digit);
-
-    if chars.len() == 0 {
-        return parse_error(st, "Expecting integer constant");
-    }
-    else {
-        let s: String = chars.into_iter().collect();
-        match s.as_str().parse::<i32>() {
-            Err(_) => {
-                return parse_error(st, "Error in integer constant syntax");
-            },
-            Ok(v) => {
-                return Ok(v);
-            }
-        }
-    }
 }
 
 fn numeric_constant(st: &mut ParseState) -> ParseResult<g::Scalar> {
@@ -425,6 +399,24 @@ fn assignment(st: &mut ParseState) -> ParseResult<(String,g::Scalar)> {
     }
 }
 
+fn assignment_hash(st: &mut ParseState) -> ParseResult<HashMap<String, g::Scalar>> {
+    let (assignments, e) = space_separated(st, assignment);
+    if assignments.len() == 0 {
+        return Err(e);
+    }
+
+    let mut m: HashMap<String, g::Scalar> = HashMap::new();
+    for (n, v) in assignments {
+        if m.contains_key(&n) {
+            return parse_error(st, "Duplicate name in assignments");
+        }
+
+        m.insert(n, v);
+    }
+            
+    Ok(m)
+}
+
 fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(String, g::Scalar)>) -> ParseResult<g::MaterialProperties> {
     let mut m = g::MaterialProperties::default();
     let mut coeffs: HashMap<usize, g::Scalar> = HashMap::new();
@@ -497,27 +489,50 @@ fn material_entry(st: &mut ParseState) -> ParseResult<Entry> {
             if let Err(e) = skip_at_least_one_space(st)
                 { return Err(e); }
 
-            match space_separated(st, assignment) {
+            let (assignments, e) = space_separated(st, assignment);
+            if assignments.len() == 0
+                { return Err(e); }
+            
+            match material_properties_from_assignments(st, &assignments) {
                 Err(e) => { Err(e) },
-                Ok(assignments) => {
-                    match material_properties_from_assignments(st, &assignments) {
-                        Err(e) => { Err(e) },
-                        Ok(props) => { Ok(Entry::Material(name, props)) }
-                    }
-                }
+                Ok(props) => { Ok(Entry::Material(name, props)) }
             }
         }
     }
 }
 
 fn colbeam_entry(st: &mut ParseState) -> ParseResult<Entry> {
-    let n_rays: usize;
-    match integer_constant(st) {
+    let mut n_rays: usize = 0;
+    let mut wavelength: g::Scalar = 0.0;
+    let mut intensity: g::Scalar = 0.0;
+
+    match assignment_hash(st) {
         Err(e) => { return Err(e); },
-        Ok(i) => {
-            if i <= 0
-                { return parse_error(st, "Number of rays must be > 0 for colbeam"); }
-            n_rays = i as usize;
+        Ok(assignments) => {
+            let mut i = 0;
+            for (k, v) in assignments {
+                if k == "n" {
+                    if v.floor() != v
+                        { return parse_error(st, "Number of rays must be an integer"); }
+
+                    i += 1;
+                    n_rays = v as usize;
+                }
+                else if k == "l" {
+                    i += 1;
+                    wavelength = v;
+                }
+                else if k == "i" {
+                    i += 1;
+                    intensity = v;
+                }
+                else {
+                    return parse_error(st, "Unrecognized ray property");
+                }
+            }
+            if i < 3 {
+                return parse_error(st, "Ray must be specified for 'rays' (number of rays), 'l' (wavelength) and 'i' (intensity)");
+            }
         }
     }
     
@@ -567,7 +582,9 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Entry> {
         from: g::Point2::new(coords[0], coords[1]),
         to:   g::Point2::new(coords[2], coords[3]),
         n_rays: n_rays,
-        shiny_side_is_left: first_was_dash
+        shiny_side_is_left: first_was_dash,
+        wavelength: wavelength,
+        intensity: intensity
     };
 
     Ok(Entry::Beam(beam))
@@ -583,22 +600,20 @@ fn entry_sep(st: &mut ParseState) -> ParseResult<()> {
 
 fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
     skip_space(st);
-    match sep_by(st, entry_sep, entry) {
-        Err(e) => { Err(e) },
-        Ok(r) => {
-            skip_space_inc_nl(st);
-            if !st.eof {
-                return parse_error(st, "Junk at end of file");
-            }
-
-            entries_to_imported_geometry(st, &r)
-        }
+    let (r, e) = sep_by(st, entry_sep, entry);
+        
+    skip_space_inc_nl(st);
+    if !st.eof {
+        return Err(e);
     }
+
+    entries_to_imported_geometry(st, &r)
 }
 
 fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Entry>) -> ParseResult<ImportedGeometry> {
     let mut material_lookup: HashMap<&str, u8> = HashMap::new();
     let mut materials: Vec<g::MaterialProperties> = Vec::new();
+    let mut beams: Vec<Beam> = Vec::new();
 
     let mut mi = 0;
     for e in entries {
@@ -633,11 +648,15 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Entry>) -> Pa
                 }
             }
         }
+        else if let Entry::Beam(ref beam) = *e {
+            beams.push(beam.clone());
+        }
     }
 
     Ok(ImportedGeometry {
         segments: segs,
         materials: materials,
+        beams: beams,
         left_material_properties: lmat,
         right_material_properties: rmat
     })

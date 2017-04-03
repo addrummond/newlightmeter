@@ -258,11 +258,11 @@ impl CollimatedBeamRayIterator {
     pub fn new(p1: Point2, p2: Point2, shiny_side_is_left: bool, n_rays: usize)
     -> CollimatedBeamRayIterator {
         let x = p2.coords[0] - p1.coords[0];
-        let y = p2.coords[1] - p2.coords[1];
+        let y = p2.coords[1] - p1.coords[1];
 
         // The left normal (looking "along" the line)
-        let mut nx = -x;
-        let mut ny = y;
+        let mut nx = -y;
+        let mut ny = x;
 
         if !shiny_side_is_left {
             nx = -nx;

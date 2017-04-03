@@ -36,17 +36,22 @@ fn test1() {
                 Ok(geom) => {
                     println!("{:#?}", geom);
 
-                    let bare_rays = vec![
-                        //g::ray(-30.0, -3.0, 30.0, -7.0),
-                        //g::ray(-10.0, 30.0, -10.0, -30.0)
-                        g::ray(0.5, 0.0, 3.0, 2.0),
-                        //g::ray(0.0, 0.0, -1.0, 0.0),
-                        //g::ray(0.0, 0.0, 0.0, 1.0)
-                        //g::ray(18.0, 10.0, 16.0, -5.0)
-                    ];
-                    let mut rays: Vec<(g::Ray, g::RayProperties)> = bare_rays.into_iter().map(|r| {
-                        (r, g::RayProperties { wavelength: 1.0, intensity: 1.0 })
-                    }).collect();
+                    let mut rays: Vec<(g::Ray, g::RayProperties)> = Vec::new();
+                    for b in &geom.beams {
+                        let gi::Beam::Collimated { from, to, shiny_side_is_left, n_rays, wavelength, intensity } = *b;
+                        let it = g::CollimatedBeamRayIterator::new(from, to, shiny_side_is_left, n_rays);
+                        for (p1, p2) in it {
+                            let new_ray = g::Ray {
+                                p1: p1,
+                                p2: p2
+                            };
+                            let props = g::RayProperties {
+                                wavelength: wavelength,
+                                intensity: intensity
+                            };
+                            rays.push((new_ray, props));
+                        }
+                    }
 
                     let mut qtree: g::QTree<g::RayTraceSegmentInfo> = g::QTree::make_empty_qtree();
                     qtree.insert_segments(&geom.segments, |i| i);
