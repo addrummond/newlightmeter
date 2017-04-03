@@ -276,10 +276,15 @@ where F: Parser<R> {
     sep_by(st, skip_at_least_one_space, parser)
 }
 
+// Rust's standard lib seems a bit underdeveloped w.r.t. character classes.
+fn is_digit(c: char) -> bool {
+    c == '0' || c == '1' || c == '2' || c == '3' || c == '4' ||
+    c == '5' || c == '6' || c == '7' || c == '8' || c == '9'
+}
+
 fn numeric_constant(st: &mut ParseState) -> ParseResult<g::Scalar> {
     let chars = take_while(st, |c| {
-        c == '0' || c == '1' || c == '2' || c == '3' || c == '4' ||
-        c == '5' || c == '6' || c == '7' || c == '8' || c == '9' ||
+        is_digit(c) ||
         c == 'e' || c == '+' || c == '-' || c == '.'
     });
 
@@ -445,9 +450,7 @@ fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(
                 let mut ncs: Vec<char> = Vec::new();
                 let mut i = 0;
                 for cc in it {
-                    if !(cc == '0' || cc == '1' || cc == '2' || cc == '3' || cc == '4' ||
-                         cc == '5' || cc == '6' || cc == '7' || cc == '8' || cc == '9' ||
-                         cc == '0') {
+                    if !is_digit(cc) {
                         return parse_error(st, "Not digit following 'c' in attribute name");
                     }
                     if i > 3
