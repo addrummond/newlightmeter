@@ -18,7 +18,7 @@ pub type Point2 = Point2_<Scalar>;
 const EPSILON: Scalar = 0.0001;
 
 //
-// QTrees
+// Basic geometric primitive.
 //
 
 #[derive(Copy, Clone, Debug)]
@@ -27,6 +27,49 @@ pub struct Segment {
     pub p1: Point2,
     pub p2: Point2
 }
+
+//
+// Utilities for constructing sequences of segments that approximate various
+// bits of geometry. Note that these do not need to be particularly efficient
+// as they are just used for constructing geometry, and are not called during
+// ray tracing.
+//
+
+pub fn arc_to_segments(center: Point2, start: Point2, end: Point2, n_segs: usize)
+-> Vec<Segment> {
+    assert!(n_segs > 0);
+
+    let l1 = (start - center).normalize();
+    let l2 = (end - center).normalize();
+
+    let rad = nalgebra::distance(&center, &start);
+
+    let dot = nalgebra::dot(&l1, &l2);
+    let angle = dot.cos();
+    let dot2 = nalgebra::dot(&Vector2::new(0.0, 1.0), &l1);
+    let angle_offset = dot2.cos();
+
+    let length = angle * rad;
+
+    let nsf = n_segs as Scalar;
+    let mut segments: Vec<Segment> = Vec::new();
+    let mut current_point = Point2::new(angle_offset.sin() * rad, angle_offset.cos() * rad);
+    for i in 1_usize..(n_segs+1) {
+        let nf = i as Scalar;
+        let a = ((angle / nsf) * nf) + angle_offset;
+        let y = a.cos() * rad;
+        let x = a.sin() * rad;
+        let to = Point2::new(x, y);
+        segments.push(Segment { p1: current_point, p2: to });
+        current_point = to;
+    }
+
+    segments
+}
+
+//
+// QTrees
+//
 
 #[derive(Debug, Copy, Clone)]
 pub struct Ray {
@@ -221,13 +264,13 @@ fn ray_intersects_segment(ray: &Ray, segment: &Segment) -> Option<Point2> {
 
     // Is the intersection point on the ray?
     if ray_slope_num > 0.0 && y < ray.p1.coords[1]
-        { return None }
+        { return None; }
     else if ray_slope_num < 0.0 && y > ray.p1.coords[1]
-        { return None }
+        { return None; }
     if ray_slope_denom > 0.0 && x < ray.p1.coords[0]
-        { return None }
+        { return None; }
     else if ray_slope_denom < 0.0 && x > ray.p1.coords[0]
-        { return None }
+        { return None; }
     
     // It's on the ray. Is it on the segment?
     // Because of the ordering of segment points, we know that

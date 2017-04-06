@@ -304,7 +304,7 @@ fn numeric_constant(st: &mut ParseState) -> ParseResult<g::Scalar> {
     }
 }
 
-fn entry(st: &mut ParseState) -> ParseResult<Entry> {
+fn entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     match identifier(st) {
         Err(e) => { return Err(e) },
         Ok(ident) => {
@@ -313,6 +313,9 @@ fn entry(st: &mut ParseState) -> ParseResult<Entry> {
 
             if ident == "line" {
                 return line_entry(st);
+            }
+            if ident == "arc" {
+                return arc_entry(st);
             }
             else if ident == "material" {
                 return material_entry(st);
@@ -327,62 +330,92 @@ fn entry(st: &mut ParseState) -> ParseResult<Entry> {
     }
 }
 
-fn line_entry(st: &mut ParseState) -> ParseResult<Entry> {
-    match identifier(st) {
-        Err(e) => { return Err(e); },
-        Ok(i1) => {
-            skip_space(st);
-            if let Err(e) = expect_str(st, "/")
-                { return Err(e); }
-            skip_space(st);
-            
-            match identifier(st) {
-                Err(e) => { return Err(e); },
-                Ok(i2) => {
-                    let mut coords: [g::Scalar; 4] = [0.0; 4];
+fn material_pair(st: &mut ParseState) -> ParseResult<(String, String)> {
+    let i1 = identifier(st)?;
+    skip_space(st);
+    expect_str(st, "/")?;
+    skip_space(st);
+    let i2 = identifier(st)?;
+    Ok((i1, i2))
+}
 
-                    for i in 0..4 {
-                        if let Err(e) = skip_at_least_one_space(st)
-                            { return Err(e); }
-                        
-                        match numeric_constant(st) {
-                            Err(e) => { return Err(e); },
-                            Ok(n) => {
-                                coords[i] = n;
-                            }
-                        }
-                    }
+fn line_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
+    let (i1, i2) = material_pair(st)?;
+    let mut coords: [g::Scalar; 4] = [0.0; 4];
 
-                    // We expect possible whitespace followed by newline
-                    // or EOF.
-                    let term = skip_space(st);
-                    if !st.eof && term.is_some() && term.unwrap() != '\n' {
-                        return parse_error(st, "Junk at end of 'line' def");
-                    }
-
-                    let newseg = g::seg(coords[0], coords[1], coords[2], coords[3]);
-                    // If the points were reordered by the 'seg' constructor, then
-                    // we also want to swap i1 and i2.
-                    let ii1;
-                    let ii2;
-                    if  newseg.p1.coords[0] == coords[0] && newseg.p1.coords[1] == coords[1] {
-                        ii1 = i1;
-                        ii2 = i2;
-                    }
-                    else {
-                        ii1 = i2;
-                        ii2 = i1;
-                    }
-
-                    Ok(Entry::Segment(
-                        ii1,
-                        ii2,
-                        newseg
-                    ))
-                }
-            }
-        }
+    for i in 0..4 {
+        skip_at_least_one_space(st)?;
+        let n = numeric_constant(st)?;
+        coords[i] = n;
     }
+
+    // We expect possible whitespace followed by newline
+    // or EOF.
+    let term = skip_space(st);
+    if !st.eof && term.is_some() && term.unwrap() != '\n' {
+        return parse_error(st, "Junk at end of 'line' def");
+    }
+
+    let newseg = g::seg(coords[0], coords[1], coords[2], coords[3]);
+    // If the points were reordered by the 'seg' constructor, then
+    // we also want to swap i1 and i2.
+    let ii1;
+    let ii2;
+    if  newseg.p1.coords[0] == coords[0] && newseg.p1.coords[1] == coords[1] {
+        ii1 = i1;
+        ii2 = i2;
+    }
+    else {
+        ii1 = i2;
+        ii2 = i1;
+    }
+
+    Ok(vec![Entry::Segment(
+        ii1,
+        ii2,
+        newseg
+    )])
+}
+
+fn arc_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
+    let (i1, i2) = material_pair(st)?;
+
+    skip_space(st);
+
+    expect_str(st, "(")?;
+    skip_space(st);
+    let n_segs_f = numeric_constant(st)?;
+    if (n_segs_f < 1.0 || n_segs_f != n_segs_f.floor())
+        { return parse_error(st, "Number of segments must be a positive integer"); }
+    let n_segs = n_segs_f as usize;
+    skip_space(st);
+    expect_str(st, ")")?;
+
+    skip_space(st);
+
+    let mut coords: [g::Scalar; 6] = [0.0; 6];
+    for i in 0..6 {
+        if i != 0
+            { skip_at_least_one_space(st)?; }
+        let n = numeric_constant(st)?;
+        coords[i] = n;
+    }
+
+    let segs = g::arc_to_segments(
+        g::Point2::new(coords[0], coords[1]),
+        g::Point2::new(coords[2], coords[3]),
+        g::Point2::new(coords[4], coords[5]),
+        n_segs
+    );
+
+    let entries: Vec<Entry> = segs.iter().map(|&s| {
+        Entry::Segment(
+            i1.clone(), i2.clone(),
+            s
+        )
+    }).collect();
+
+    Ok(entries)
 }
 
 fn assignment(st: &mut ParseState) -> ParseResult<(String,g::Scalar)> {
@@ -485,7 +518,7 @@ fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(
     Ok(m)
 }
 
-fn material_entry(st: &mut ParseState) -> ParseResult<Entry> {
+fn material_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     match identifier(st) {
         Err(e) => { Err(e) },
         Ok(name) => {
@@ -498,13 +531,13 @@ fn material_entry(st: &mut ParseState) -> ParseResult<Entry> {
             
             match material_properties_from_assignments(st, &assignments) {
                 Err(e) => { Err(e) },
-                Ok(props) => { Ok(Entry::Material(name, props)) }
+                Ok(props) => { Ok(vec![Entry::Material(name, props)]) }
             }
         }
     }
 }
 
-fn colbeam_entry(st: &mut ParseState) -> ParseResult<Entry> {
+fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     let mut n_rays: usize = 0;
     let mut wavelength: g::Scalar = 0.0;
     let mut intensity: g::Scalar = 0.0;
@@ -590,7 +623,7 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Entry> {
         intensity: intensity
     };
 
-    Ok(Entry::Beam(beam))
+    Ok(vec![Entry::Beam(beam)])
 }
 
 fn entry_sep(st: &mut ParseState) -> ParseResult<()> {
@@ -604,7 +637,7 @@ fn entry_sep(st: &mut ParseState) -> ParseResult<()> {
 fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
     skip_space(st);
     let (r, e) = sep_by(st, entry_sep, entry);
-        
+
     skip_space_inc_nl(st);
     if !st.eof {
         return Err(e);
@@ -613,21 +646,23 @@ fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
     entries_to_imported_geometry(st, &r)
 }
 
-fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Entry>) -> ParseResult<ImportedGeometry> {
+fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) -> ParseResult<ImportedGeometry> {
     let mut material_lookup: HashMap<&str, u8> = HashMap::new();
     let mut materials: Vec<g::MaterialProperties> = Vec::new();
     let mut beams: Vec<Beam> = Vec::new();
 
     let mut mi = 0;
-    for e in entries {
-        if let Entry::Material(ref name, ref props) = *e {
-            if materials.len() >= 255 {
-                return parse_error(st, "Cannot have more than 255 materials.");
-            }
+    for v in entries {
+        for e in v {
+            if let Entry::Material(ref name, ref props) = *e {
+                if materials.len() >= 255 {
+                    return parse_error(st, "Cannot have more than 255 materials.");
+                }
 
-            materials.push(props.clone());
-            material_lookup.insert(name, mi);
-            mi += 1;
+                materials.push(props.clone());
+                material_lookup.insert(name, mi);
+                mi += 1;
+            }
         }
     }
 
@@ -635,24 +670,26 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Entry>) -> Pa
     let mut lmat: Vec<u8> = Vec::new();
     let mut rmat: Vec<u8> = Vec::new();
 
-    for e in entries {
-        if let Entry::Segment(ref ml, ref mr, ref seg) = *e {
-            match material_lookup.get(ml.as_str()) {
-                None => { return parse_error(st, "Unknown material"); },
-                Some (pl) => {
-                    match material_lookup.get(mr.as_str()) {
-                        None => { return parse_error(st, "Unknown material"); },
-                        Some (pr) => {
-                            segs.push(seg.clone());
-                            lmat.push(*pl);
-                            rmat.push(*pr);
+    for v in entries {
+        for e in v {
+            if let Entry::Segment(ref ml, ref mr, ref seg) = *e {
+                match material_lookup.get(ml.as_str()) {
+                    None => { return parse_error(st, "Unknown material"); },
+                    Some (pl) => {
+                        match material_lookup.get(mr.as_str()) {
+                            None => { return parse_error(st, "Unknown material"); },
+                            Some (pr) => {
+                                segs.push(seg.clone());
+                                lmat.push(*pl);
+                                rmat.push(*pr);
+                            }
                         }
                     }
                 }
             }
-        }
-        else if let Entry::Beam(ref beam) = *e {
-            beams.push(beam.clone());
+            else if let Entry::Beam(ref beam) = *e {
+                beams.push(beam.clone());
+            }
         }
     }
 
