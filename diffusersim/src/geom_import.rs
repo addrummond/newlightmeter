@@ -339,6 +339,19 @@ fn material_pair(st: &mut ParseState) -> ParseResult<(String, String)> {
     Ok((i1, i2))
 }
 
+fn make_segment_entry(x1: g::Scalar, y1: g::Scalar, x2: g::Scalar, y2: g::Scalar, mat1: String, mat2: String)
+-> Entry {
+    let newseg = g::seg(x1, y1, x2, y2);
+    // If the points were reordered by the 'seg' constructor, then
+    // we also want to swap mat1 and mat2.
+    if newseg.p1.coords[0] == x1 && newseg.p1.coords[1] == y1 {
+        Entry::Segment(mat1, mat2, newseg)
+    }
+    else {
+        Entry::Segment(mat2, mat1, newseg)
+    }
+}
+
 fn line_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     let (i1, i2) = material_pair(st)?;
     let mut coords: [g::Scalar; 4] = [0.0; 4];
@@ -356,24 +369,9 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
         return parse_error(st, "Junk at end of 'line' def");
     }
 
-    let newseg = g::seg(coords[0], coords[1], coords[2], coords[3]);
-    // If the points were reordered by the 'seg' constructor, then
-    // we also want to swap i1 and i2.
-    let ii1;
-    let ii2;
-    if  newseg.p1.coords[0] == coords[0] && newseg.p1.coords[1] == coords[1] {
-        ii1 = i1;
-        ii2 = i2;
-    }
-    else {
-        ii1 = i2;
-        ii2 = i1;
-    }
-
-    Ok(vec![Entry::Segment(
-        ii1,
-        ii2,
-        newseg
+    Ok(vec![make_segment_entry(
+        coords[0], coords[1], coords[2], coords[3],
+        i1, i2
     )])
 }
 
@@ -409,10 +407,7 @@ fn arc_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     );
 
     let entries: Vec<Entry> = segs.iter().map(|&s| {
-        Entry::Segment(
-            i1.clone(), i2.clone(),
-            s
-        )
+        make_segment_entry(s.p1.coords[0], s.p1.coords[1], s.p2.coords[0], s.p2.coords[1], i1.clone(), i2.clone())
     }).collect();
 
     Ok(entries)
