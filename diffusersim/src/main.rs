@@ -9,6 +9,7 @@ pub mod render;
 
 use std::fs::File;
 use std::io::{Write, BufWriter};
+use std::env;
 
 use geom as g;
 use geom_import as gi;
@@ -24,7 +25,14 @@ fn spit_out_svg(svg: &simplesvg::Svg) {
 
 #[allow(dead_code)]
 fn test1() {
-    match gi::parse_geometry_file("src/test.geom") {
+    let args: Vec<_> = env::args().collect();
+    if args.len() != 2 {
+        println!("Bad usage");
+        return;
+    }
+    let geom_filename = args[1].clone();
+
+    match gi::parse_geometry_file(geom_filename.as_str()) {
         Err(e) => {
             println!("Error: {:?}", e);
         },
