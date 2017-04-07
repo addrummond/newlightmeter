@@ -26,6 +26,7 @@ pub struct ImportedGeometry {
     pub beams: Vec<Beam>,
     pub left_material_properties: Vec<u8>,
     pub right_material_properties: Vec<u8>,
+    pub seg_index_to_name: HashMap<usize, String>
 }
 
 #[derive(Debug)]
@@ -101,6 +102,15 @@ where F: FnMut (char) -> Decision {
     }
 }
 
+fn peek(st: &mut ParseState) -> Option<char> {
+    let mut c: Option<char> = None;
+    go(st, |c2| {
+        c = Some(c2);
+        Decision::End
+    });
+    c
+}
+
 #[allow(unused)]
 fn drop_while<F>(st: &mut ParseState, filter: F)
 where F: Fn(char) -> bool {
@@ -174,7 +184,7 @@ fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
             }
         },
         Some(_) => {
-            return parse_error(st, "Unexpected EOF")
+            return parse_error_string(st, ("Expected: ".to_string() + expected));
         }
     }
 }
@@ -233,7 +243,7 @@ fn skip_space_inc_nl(st: &mut ParseState) -> Option<char> {
 fn identifier(st: &mut ParseState) -> ParseResult<String> {
     let mut current_str: Vec<char> = Vec::new();
     go(st, |c| {
-        if char::is_alphanumeric(c) {
+        if char::is_alphanumeric(c) || c == '_' {
             current_str.push(c);
             return Decision::Continue;
         }
@@ -344,16 +354,32 @@ fn material_pair(st: &mut ParseState) -> ParseResult<(String, String)> {
     Ok((i1, i2))
 }
 
-fn make_segment_entry(x1: g::Scalar, y1: g::Scalar, x2: g::Scalar, y2: g::Scalar, mat1: String, mat2: String)
+fn make_segment_entry(x1: g::Scalar, y1: g::Scalar, x2: g::Scalar, y2: g::Scalar, name: Option<String>, mat1: String, mat2: String)
 -> Entry {
     let newseg = g::seg(x1, y1, x2, y2);
     // If the points were reordered by the 'seg' constructor, then
     // we also want to swap mat1 and mat2.
     if newseg.p1.coords[0] == x1 && newseg.p1.coords[1] == y1 {
-        Entry::Segment { name: None, left_material: mat1, right_material: mat2, segment: newseg }
+        Entry::Segment { name: name, left_material: mat1, right_material: mat2, segment: newseg }
     }
     else {
-        Entry::Segment { name: None, left_material: mat2, right_material: mat1, segment: newseg }
+        Entry::Segment { name: name, left_material: mat2, right_material: mat1, segment: newseg }
+    }
+}
+
+fn optional_name(st: &mut ParseState) -> ParseResult<Option<String>> {
+    match peek(st) {
+        None => { return Ok(None) },
+        Some(c) => {
+            if c == '\n'
+                { return Ok(None); }
+            else if c != 'n'
+                { return parse_error(st, "Expected end of segment/arc definition or optional name"); }
+            expect_str(st, "named")?;
+            skip_at_least_one_space(st)?;
+            let name = identifier(st)?;
+            Ok(Some(name))
+        }
     }
 }
 
@@ -367,6 +393,9 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
         coords[i] = n;
     }
 
+    skip_space(st);
+    let name = optional_name(st)?;
+
     // We expect possible whitespace followed by newline
     // or EOF.
     let term = skip_space(st);
@@ -376,6 +405,7 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
 
     Ok(vec![make_segment_entry(
         coords[0], coords[1], coords[2], coords[3],
+        name,
         i1, i2
     )])
 }
@@ -404,6 +434,9 @@ fn arc_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
         coords[i] = n;
     }
 
+    skip_space(st);
+    let name = optional_name(st)?;
+
     let segs = g::arc_to_segments(
         g::Point2::new(coords[0], coords[1]),
         g::Point2::new(coords[2], coords[3]),
@@ -411,8 +444,21 @@ fn arc_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
         n_segs
     );
 
+    let mut i: usize = 1;
     let entries: Vec<Entry> = segs.iter().map(|&s| {
-        make_segment_entry(s.p1.coords[0], s.p1.coords[1], s.p2.coords[0], s.p2.coords[1], i1.clone(), i2.clone())
+        let segname;
+        match name {
+            None => { segname = None; },
+            Some(ref n) => {
+                segname = Some(format!("{}_{}", n, i));
+            }
+        }
+        i += 1;
+        make_segment_entry(
+            s.p1.coords[0], s.p1.coords[1], s.p2.coords[0], s.p2.coords[1],
+            segname,
+            i1.clone(), i2.clone()
+        )
     }).collect();
 
     Ok(entries)
@@ -698,7 +744,8 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
         materials: materials,
         beams: beams,
         left_material_properties: lmat,
-        right_material_properties: rmat
+        right_material_properties: rmat,
+        seg_index_to_name: HashMap::new()
     })
 }
 
