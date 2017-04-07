@@ -484,7 +484,7 @@ fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(
                 let mut i = 0;
                 for cc in it {
                     if !is_digit(cc) {
-                        return parse_error(st, "Not digit following 'c' in attribute name");
+                        return parse_error(st, "No digit following 'c' in attribute name");
                     }
                     if i > 3
                         { return parse_error(st, "Coefficient number has too many digits"); }
@@ -548,8 +548,8 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
             let mut i = 0;
             for (k, v) in assignments {
                 if k == "n" {
-                    if v.floor() != v
-                        { return parse_error(st, "Number of rays must be an integer"); }
+                    if v < 1.0 || v.floor() != v
+                        { return parse_error(st, "Number of rays must be a positive integer"); }
 
                     i += 1;
                     n_rays = v as usize;
