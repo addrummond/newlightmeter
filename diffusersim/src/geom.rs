@@ -45,9 +45,12 @@ pub fn arc_to_segments(center: Point2, start: Point2, end: Point2, n_segs: usize
     let rad = nalgebra::distance(&center, &start);
 
     let dot = nalgebra::dot(&l1, &l2);
-    let angle = dot.cos();
+    let angle = dot.acos();
     let dot2 = nalgebra::dot(&Vector2::new(0.0, 1.0), &l1);
-    let angle_offset = dot2.cos();
+    let angle_offset = dot2.acos();
+
+    let ad = (angle/consts::PI)*180.0;
+    let aod = (angle_offset/consts::PI)*180.0;
 
     let nsf = n_segs as Scalar;
     let mut segments: Vec<Segment> = Vec::new();
