@@ -116,10 +116,10 @@ fn drop_while<F>(st: &mut ParseState, filter: F)
 where F: Fn(char) -> bool {
     go(st, |c| {
         if filter(c) {
-            return Decision::Continue;
+            Decision::Continue
         }
         else {
-            return Decision::End;
+            Decision::End
         }
     });
 }
@@ -131,10 +131,10 @@ where F: Fn(char) -> bool {
     go(st, |c| {
         if filter(c) {
             r.push(c);
-            return Decision::Continue;
+            Decision::Continue
         }
         else {
-            return Decision::End;
+            Decision::End
         }
     });
 
@@ -160,15 +160,15 @@ fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
     go(st, |c| {
         match it.next() {
             None => {
-                return Decision::End;
+                Decision::End
             },
             Some(cc) => {
                 if c != cc {
                     error = true;
-                    return Decision::End;
+                    Decision::End
                 }
                 else {
-                    return Decision::Continue;
+                    Decision::Continue
                 }
             }
         }
@@ -177,14 +177,14 @@ fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
     match it.next() {
         None => {
             if error {
-                return parse_error_string(st, ("Expected: ".to_string() + expected));
+                parse_error_string(st, ("Expected: ".to_string() + expected))
             }
             else {
-                return Ok(());
+                Ok(())
             }
         },
         Some(_) => {
-            return parse_error_string(st, ("Expected: ".to_string() + expected));
+            parse_error_string(st, ("Expected: ".to_string() + expected))
         }
     }
 }
@@ -199,23 +199,23 @@ fn skip_space_wc(st: &mut ParseState, include_nl: bool) -> (Option<char>, usize)
 
         if c == '\n' {
             in_comment = false;
-            return if include_nl { Decision::Continue } else { Decision::End };
+            if include_nl { Decision::Continue } else { Decision::End }
         }
         else if char::is_whitespace(c) {
             count += 1;
-            return Decision::Continue;
+            Decision::Continue
         }
         else if c == '#' {
             count += 1;
             in_comment = true;
-            return Decision::Continue;
+            Decision::Continue
         }
         else if in_comment {
             count += 1;
-            return Decision::Continue;
+            Decision::Continue
         }
         else {
-            return Decision::End;
+            Decision::End
         }
     });
 
@@ -229,10 +229,10 @@ fn skip_space(st: &mut ParseState) -> Option<char> {
 fn skip_at_least_one_space(st: &mut ParseState) -> ParseResult<Option<char>> {
     let (r, c) = skip_space_wc(st, false);
     if c > 0 {
-        return Ok(r);
+        Ok(r)
     }
     else {
-        return parse_error(st, "Expected whitespace");
+        parse_error(st, "Expected whitespace")
     }
 }
 
@@ -245,18 +245,18 @@ fn identifier(st: &mut ParseState) -> ParseResult<String> {
     go(st, |c| {
         if char::is_alphanumeric(c) || c == '_' {
             current_str.push(c);
-            return Decision::Continue;
+            Decision::Continue
         }
         else {
-            return Decision::End;
+            Decision::End
         }
     });
 
     if current_str.len() == 0 {
-        return parse_error(st, "Expected identifier");
+        parse_error(st, "Expected identifier")
     }
     else {
-        return Ok(current_str.into_iter().collect());
+        Ok(current_str.into_iter().collect())
     }
 }
 
@@ -304,16 +304,16 @@ fn numeric_constant(st: &mut ParseState) -> ParseResult<g::Scalar> {
     });
 
     if chars.len() == 0 {
-        return parse_error(st, "Expecting numeric constant");
+        parse_error(st, "Expecting numeric constant")
     }
     else {
         let s: String = chars.into_iter().collect();
         match s.as_str().parse::<g::Scalar>() {
             Err(_) => {
-                return parse_error(st, "Error in numeric constant syntax");
+                parse_error(st, "Error in numeric constant syntax")
             },
             Ok(v) => {
-                return Ok(v);
+                Ok(v)
             }
         }
     }
@@ -321,25 +321,25 @@ fn numeric_constant(st: &mut ParseState) -> ParseResult<g::Scalar> {
 
 fn entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     match identifier(st) {
-        Err(e) => { return Err(e) },
+        Err(e) => { Err(e) },
         Ok(ident) => {
             if let Err(e) = skip_at_least_one_space(st)
                 { return Err(e); }
 
             if ident == "line" {
-                return line_entry(st);
+                line_entry(st)
             }
-            if ident == "arc" {
-                return arc_entry(st);
+            else if ident == "arc" {
+                arc_entry(st)
             }
             else if ident == "material" {
-                return material_entry(st);
+                material_entry(st)
             }
             else if ident == "colbeam" {
-                return colbeam_entry(st);
+                colbeam_entry(st)
             }
             else {
-                return parse_error(st, "Unrecognized entry type");
+                parse_error(st, "Unrecognized entry type")
             }
         }
     }
