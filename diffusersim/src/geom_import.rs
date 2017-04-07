@@ -567,7 +567,7 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
                 }
             }
             if i < 3 {
-                return parse_error(st, "Ray must be specified for 'rays' (number of rays), 'l' (wavelength) and 'i' (intensity)");
+                return parse_error(st, "Collimated beam must be specified for 'rays' (number of rays), 'l' (wavelength) and 'i' (intensity)");
             }
         }
     }
