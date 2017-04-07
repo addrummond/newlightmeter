@@ -1,4 +1,5 @@
 use geom as g;
+use trace as t;
 use std::str;
 use std::collections::HashMap;
 use std::iter;
@@ -22,7 +23,7 @@ pub enum Beam {
 #[derive(Debug)]
 pub struct ImportedGeometry {
     pub segments: Vec<g::Segment>,
-    pub materials: Vec<g::MaterialProperties>,
+    pub materials: Vec<t::MaterialProperties>,
     pub beams: Vec<Beam>,
     pub left_material_properties: Vec<u8>,
     pub right_material_properties: Vec<u8>,
@@ -48,7 +49,7 @@ enum Entry {
         right_material: String,
         segment: g::Segment
     },
-    Material(String, g::MaterialProperties),
+    Material(String, t::MaterialProperties),
     Beam(Beam)
 }
 
@@ -501,8 +502,8 @@ fn assignment_hash(st: &mut ParseState) -> ParseResult<HashMap<String, g::Scalar
     Ok(m)
 }
 
-fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(String, g::Scalar)>) -> ParseResult<g::MaterialProperties> {
-    let mut m = g::MaterialProperties::default();
+fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(String, g::Scalar)>) -> ParseResult<t::MaterialProperties> {
+    let mut m = t::MaterialProperties::default();
     let mut coeffs: HashMap<usize, g::Scalar> = HashMap::new();
     let mut max_coeff_n = 0;
     
@@ -694,7 +695,7 @@ fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
 
 fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) -> ParseResult<ImportedGeometry> {
     let mut material_lookup: HashMap<&str, u8> = HashMap::new();
-    let mut materials: Vec<g::MaterialProperties> = Vec::new();
+    let mut materials: Vec<t::MaterialProperties> = Vec::new();
     let mut beams: Vec<Beam> = Vec::new();
 
     let mut mi = 0;

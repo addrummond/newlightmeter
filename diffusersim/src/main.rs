@@ -5,6 +5,7 @@ extern crate rand;
 
 pub mod geom;
 pub mod geom_import;
+pub mod trace;
 pub mod render;
 
 use std::fs::File;
@@ -12,6 +13,7 @@ use std::io::{Write, BufWriter};
 use std::env;
 
 use geom as g;
+use trace as t;
 use geom_import as gi;
 
 const WIDTH: u32 = 640;
@@ -44,7 +46,7 @@ fn test1() {
                 Ok(geom) => {
                     println!("{:#?}", geom);
 
-                    let mut rays: Vec<(g::Ray, g::RayProperties)> = Vec::new();
+                    let mut rays: Vec<(g::Ray, t::LightProperties)> = Vec::new();
                     for b in &geom.beams {
                         let gi::Beam::Collimated { from, to, shiny_side_is_left, n_rays, wavelength, intensity } = *b;
                         let it = g::CollimatedBeamRayIterator::new(from, to, shiny_side_is_left, n_rays);
@@ -53,7 +55,7 @@ fn test1() {
                                 p1: p1,
                                 p2: p2
                             };
-                            let props = g::RayProperties {
+                            let props = t::LightProperties {
                                 wavelength: wavelength,
                                 intensity: intensity
                             };
@@ -61,16 +63,16 @@ fn test1() {
                         }
                     }
 
-                    let mut qtree: g::QTree<g::RayTraceSegmentInfo> = g::QTree::make_empty_qtree();
+                    let mut qtree: g::QTree<t::RayTraceSegmentInfo> = g::QTree::make_empty_qtree();
                     qtree.insert_segments(&geom.segments, |i| i);
 
-                    let mut new_rays: Vec<(g::Ray, g::RayProperties)> = Vec::new();
-                    let tracing_props = g::TracingProperties {
+                    let mut new_rays: Vec<(g::Ray, t::LightProperties)> = Vec::new();
+                    let tracing_props = t::TracingProperties {
                         random_seed: [1],
                         intensity_threshold: 0.01
                     };
 
-                    let mut st = g::RayTraceState::initial(
+                    let mut st = t::RayTraceState::initial(
                         &tracing_props,
                         &qtree,
                         &(geom.materials),
@@ -101,7 +103,7 @@ fn test1() {
                         figs.push(render::render_segments(&geom.segments, &t, [0.0, 1.0, 0.0]));
                         figs.push(render::render_rays(st.get_rays(), &t, [1.0, 0.0, 0.0]));
                         count += 1;
-                        if g::ray_trace_step(&mut st)
+                        if t::ray_trace_step(&mut st)
                             { break; }
                     }
 

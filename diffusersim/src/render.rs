@@ -1,4 +1,5 @@
 use geom as g;
+use trace as t;
 use nalgebra as n;
 use simplesvg;
 
@@ -24,7 +25,7 @@ pub struct DisplayTransformArgs {
 
 pub fn get_display_transform(
     segments: &Vec<g::Segment>,
-    rays: &Vec<(g::Ray, g::RayProperties)>,
+    rays: &Vec<(g::Ray, t::LightProperties)>,
     args: DisplayTransformArgs)
 -> DisplayTransform {
     assert!(args.scale_factor > 0.0 && args.scale_factor <= 1.0);
@@ -251,7 +252,7 @@ pub fn render_segments(segments: &Vec<g::Segment>, t: &DisplayTransform, color: 
     simplesvg::Fig::Multiple(segs)
 }
 
-pub fn render_rays(rays: &Vec<(g::Ray, g::RayProperties)>, t: &DisplayTransform, color: [f32; 3])
+pub fn render_rays(rays: &Vec<(g::Ray, t::LightProperties)>, t: &DisplayTransform, color: [f32; 3])
 -> simplesvg::Fig {
     let mut figs: Vec<simplesvg::Fig> = Vec::new();
     for &(ref r, props) in rays {
