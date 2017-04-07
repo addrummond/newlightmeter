@@ -715,10 +715,12 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
     let mut segs: Vec<g::Segment> = Vec::new();
     let mut lmat: Vec<u8> = Vec::new();
     let mut rmat: Vec<u8> = Vec::new();
+    let mut seg_index_to_name: HashMap<usize, String> = HashMap::new();
 
+    let mut seg_i = 0;
     for v in entries {
         for e in v {
-            if let Entry::Segment { name: _, left_material: ref ml, right_material: ref mr, segment: ref seg } = *e {
+            if let Entry::Segment { ref name, left_material: ref ml, right_material: ref mr, segment: ref seg } = *e {
                 match material_lookup.get(ml.as_str()) {
                     None => { return parse_error(st, "Unknown material"); },
                     Some (pl) => {
@@ -728,6 +730,12 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
                                 segs.push(seg.clone());
                                 lmat.push(*pl);
                                 rmat.push(*pr);
+
+                                if let Some(ref n) = *name {
+                                    seg_index_to_name.insert(seg_i, n.clone());
+                                }
+
+                                seg_i += 1;
                             }
                         }
                     }
@@ -745,7 +753,7 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
         beams: beams,
         left_material_properties: lmat,
         right_material_properties: rmat,
-        seg_index_to_name: HashMap::new()
+        seg_index_to_name: seg_index_to_name
     })
 }
 
