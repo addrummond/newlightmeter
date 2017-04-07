@@ -12,42 +12,63 @@ pub struct DisplayTransform {
     pub min_y: g::Scalar
 }
 
+pub struct DisplayTransformArgs {
+    pub width: u32,
+    pub height: u32,
+    pub border: u32,
+    pub offset_x: g::Scalar,
+    pub offset_y: g::Scalar,
+    pub scale_factor: g::Scalar,
+    pub keep_aspect_ratio: bool
+}
+
 pub fn get_display_transform(
     segments: &Vec<g::Segment>,
-    width: u32,
-    height: u32,
-    border_factor: g::Scalar,
-    offset_x: g::Scalar,
-    offset_y: g::Scalar)
+    rays: &Vec<(g::Ray, g::RayProperties)>,
+    args: DisplayTransformArgs)
 -> DisplayTransform {
-    let w = width as g::Scalar;
-    let h = height as g::Scalar;
+    assert!(args.scale_factor > 0.0 && args.scale_factor <= 1.0);
 
-    let mut min_x : Option<g::Scalar> = None;
-    let mut max_x : Option<g::Scalar> = None;
-    let mut min_y : Option<g::Scalar> = None;
-    let mut max_y : Option<g::Scalar> = None;
+    let orig_w = args.width as g::Scalar;
+    let orig_h = args.height as g::Scalar;
+    let bf = args.border as g::Scalar;
+    let w = orig_w - bf;
+    let h = orig_h - bf;
 
-    for s in segments {
-        for x in &[s.p1.coords[0], s.p2.coords[0]] {
-            match min_x {
-                None => { min_x = Some(*x) },
-                Some(x2) => { if *x < x2 { min_x = Some(*x) } }
+    let mut min_x: Option<g::Scalar> = None;
+    let mut max_x: Option<g::Scalar> = None;
+    let mut min_y: Option<g::Scalar> = None;
+    let mut max_y: Option<g::Scalar> = None;
+
+    {
+        let mut fnc = |x1: g::Scalar, y1: g::Scalar, x2: g::Scalar, y2: g::Scalar| {
+            for x in &[x1, x2] {
+                match min_x {
+                    None => { min_x = Some(*x) },
+                    Some(xm) => { if *x < xm { min_x = Some(*x) } }
+                }
+                match max_x {
+                    None => { max_x = Some(*x) }
+                    Some (xm) => { if *x > xm { max_x = Some(*x) } }
+                }
             }
-            match max_x {
-                None => { max_x = Some(*x) }
-                Some (x2) => { if *x > x2 { max_x = Some(*x) } }
+            for y in &[y1, y2] {
+                match min_y {
+                    None => { min_y = Some(*y) },
+                    Some(ym) => { if *y < ym { min_y = Some(*y) } }
+                }
+                match max_y {
+                    None => { max_y = Some(*y) }
+                    Some (ym) => { if *y > ym { max_y = Some(*y) } }
+                }
             }
+        };
+
+        for s in segments {
+            fnc(s.p1.coords[0], s.p1.coords[1], s.p2.coords[0], s.p2.coords[1]);
         }
-        for y in &[s.p1.coords[1], s.p2.coords[1]] {
-            match min_y {
-                None => { min_y = Some(*y) },
-                Some(y2) => { if *y < y2 { min_y = Some(*y) } }
-            }
-            match max_y {
-                None => { max_y = Some(*y) }
-                Some (y2) => { if *y > y2 { max_y = Some(*y) } }
-            }
+        for &(r, _) in rays {
+            fnc(r.p1.coords[0], r.p1.coords[1], r.p2.coords[0], r.p2.coords[1]);
         }
     }
 
@@ -57,21 +78,31 @@ pub fn get_display_transform(
         let min_x = min_x.unwrap();
         let min_y = min_y.unwrap();
 
-        let mut ww = max_x - min_x;
-        let mut hh = max_y - min_y;
+        let mut ww = max_x - min_x;// - (bf * 2.0);
+        let mut hh = max_y - min_y;//- (bf * 2.0);
         if ww == 0.0 { ww = 1.0 }
         if hh == 0.0 { hh = 1.0 }
 
-        let xscale = (1.0-border_factor)*(w/ww);
-        let yscale = (1.0-border_factor)*(h/hh);
+        let mut xscale = (w/ww) * args.scale_factor;
+        let mut yscale = (h/hh) * args.scale_factor;
 
-        let ox = offset_x + ((border_factor)*ww)/2.0;
-        let oy = offset_y + ((border_factor)*hh)/2.0;
+        if args.keep_aspect_ratio {
+            if xscale < yscale
+                { yscale = xscale; }
+            else
+                { xscale = yscale; }
+        }
+
+        let w_extra = w * (1.0 - args.scale_factor);
+        let h_extra = h * (1.0 - args.scale_factor);
+
+        let ox = (-min_x * xscale) + args.offset_x + bf + (w_extra * 0.5);
+        let oy = (max_y * yscale) + args.offset_y + bf + (h_extra * 0.5);
 
         DisplayTransform {
             matrix: n::Matrix3::new(
-                xscale, 0.0,     (-min_x*xscale) + ox,
-                0.0,    -yscale, (-min_y*yscale) + oy,
+                xscale, 0.0,     ox,
+                0.0,    -yscale, oy,
                 0.0,    0.0,     1.0
             ),
             width: ww,
@@ -189,7 +220,6 @@ pub fn lighten_color(color: [f32; 3], amount: f32) -> [f32; 3] {
 
     new
 }
-
 
 pub fn render_segments(segments: &Vec<g::Segment>, t: &DisplayTransform, color: [f32; 3])
 -> simplesvg::Fig {

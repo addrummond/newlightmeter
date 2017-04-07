@@ -41,7 +41,12 @@ impl <T,U> Parser<T> for U where U: FnMut (&mut ParseState) -> ParseResult<T> { 
 
 #[derive(Debug)]
 enum Entry {
-    Segment(String, String, g::Segment),
+    Segment {
+        name: Option<String>,
+        left_material: String,
+        right_material: String,
+        segment: g::Segment
+    },
     Material(String, g::MaterialProperties),
     Beam(Beam)
 }
@@ -345,10 +350,10 @@ fn make_segment_entry(x1: g::Scalar, y1: g::Scalar, x2: g::Scalar, y2: g::Scalar
     // If the points were reordered by the 'seg' constructor, then
     // we also want to swap mat1 and mat2.
     if newseg.p1.coords[0] == x1 && newseg.p1.coords[1] == y1 {
-        Entry::Segment(mat1, mat2, newseg)
+        Entry::Segment { name: None, left_material: mat1, right_material: mat2, segment: newseg }
     }
     else {
-        Entry::Segment(mat2, mat1, newseg)
+        Entry::Segment { name: None, left_material: mat2, right_material: mat1, segment: newseg }
     }
 }
 
@@ -667,7 +672,7 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
 
     for v in entries {
         for e in v {
-            if let Entry::Segment(ref ml, ref mr, ref seg) = *e {
+            if let Entry::Segment { name: _, left_material: ref ml, right_material: ref mr, segment: ref seg } = *e {
                 match material_lookup.get(ml.as_str()) {
                     None => { return parse_error(st, "Unknown material"); },
                     Some (pl) => {

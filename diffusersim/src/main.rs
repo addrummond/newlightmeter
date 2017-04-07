@@ -85,7 +85,19 @@ fn test1() {
                     let mut figs: Vec<simplesvg::Fig> = Vec::new();
                     let mut count = 0;
                     loop {
-                        let t = render::get_display_transform(&geom.segments, WIDTH, HEIGHT, 0.05, 0.0, (count*HEIGHT) as g::Scalar);
+                        let t = render::get_display_transform(
+                            &geom.segments,
+                            &(st.old_rays),
+                            render::DisplayTransformArgs {
+                                width: WIDTH,
+                                height: HEIGHT,
+                                border: 40,
+                                offset_x: 0.0,
+                                offset_y: (count * HEIGHT) as g::Scalar,
+                                scale_factor: 1.0,
+                                keep_aspect_ratio: true
+                            }
+                        );
                         figs.push(render::render_segments(&geom.segments, &t, [0.0, 1.0, 0.0]));
                         figs.push(render::render_rays(st.get_rays(), &t, [1.0, 0.0, 0.0]));
                         count += 1;
