@@ -30,9 +30,9 @@ pub struct Segment {
 
 //
 // Utilities for constructing sequences of segments that approximate various
-// bits of geometry. Note that these do not need to be particularly efficient
-// as they are just used for constructing geometry, and are not called during
-// ray tracing.
+// bits of geometry. Note that these functions do not need to be particularly
+// efficient as they are just used for constructing geometry, and are not
+// called during ray tracing.
 //
 
 pub fn arc_to_segments(center: Point2, start: Point2, end: Point2, n_segs: usize)
