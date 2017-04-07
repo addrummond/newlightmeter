@@ -49,8 +49,6 @@ pub fn arc_to_segments(center: Point2, start: Point2, end: Point2, n_segs: usize
     let dot2 = nalgebra::dot(&Vector2::new(0.0, 1.0), &l1);
     let angle_offset = dot2.cos();
 
-    let length = angle * rad;
-
     let nsf = n_segs as Scalar;
     let mut segments: Vec<Segment> = Vec::new();
     let mut current_point = Point2::new(angle_offset.sin() * rad, angle_offset.cos() * rad);
@@ -810,6 +808,8 @@ fn add_diffuse<R>(
 )
 -> usize
 where R: Rng {
+    let _ = matprops; // Not used currently; suppress compiler warning.
+
     //print!("DIFFMAT {:?} {:?}", matprops, segline);
     let mut num_new_rays = 0;
             
@@ -850,6 +850,8 @@ fn add_specular<R>(
 )
 -> usize
 where R: Rng {
+    let _ = matprops; // Not used currently; suppress compiler warning.
+
     //print!("SPECMAT {:?} {:?}", matprops, surface_normal);
     let mut num_new_rays = 0;
             

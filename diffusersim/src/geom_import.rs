@@ -385,7 +385,7 @@ fn arc_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     expect_str(st, "(")?;
     skip_space(st);
     let n_segs_f = numeric_constant(st)?;
-    if (n_segs_f < 1.0 || n_segs_f != n_segs_f.floor())
+    if n_segs_f < 1.0 || n_segs_f != n_segs_f.floor()
         { return parse_error(st, "Number of segments must be a positive integer"); }
     let n_segs = n_segs_f as usize;
     skip_space(st);
