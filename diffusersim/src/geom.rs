@@ -400,11 +400,11 @@ pub fn point_side_of_line_segment(lp1: Point2, lp2: Point2, p: Point2) -> i32 {
     let determinant = (bx - ax)*(cy - ay) - (by - ay)*(cx - ax);
 
     if determinant > 0.0
-        { return -1 }
+        { -1 }
     else if determinant < 0.0
-        { return 1 }
+        { 1 }
     else
-        { return 0 }
+        { 0 }
 }
 
 impl<'a, SI> QTree<'a, SI>
