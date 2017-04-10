@@ -1,13 +1,12 @@
 use std::collections::HashSet;
-
-//
-// Basic types.
-//
-
 use nalgebra::Vector2 as Vector2_;
 use nalgebra::Point2 as Point2_;
 use nalgebra;
 use std::f64::consts;
+
+//
+// Basic types.
+//
 
 pub type Scalar = f64;
 pub type Vector2 = Vector2_<Scalar>;
@@ -81,12 +80,6 @@ pub struct Ray {
     pub p2: Point2
 }
 
-#[derive(Copy, Clone)]
-pub struct RayProperties {
-    pub wavelength: Scalar, // um
-    pub intensity: Scalar
-}
-
 pub fn seg(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar) -> Segment {
     let p1: Point2;
     let p2: Point2;
@@ -137,58 +130,27 @@ where SI: 'a + Copy {
 
 fn get_point_quad(p: Point2, c: Point2) -> i32 {
     if p.coords[0] <= c.coords[0] {
-        if p.coords[1] <= c.coords[1] {
-            return 3;
-        }
-        else {
-            return 0;
-        }
+        if p.coords[1] <= c.coords[1]
+            { 3 }
+        else
+            { 0 }
     }
     else {
-        if p.coords[1] <= c.coords[1] {
-            return 2;
-        }
-        else {
-            return 1;
-        }
+        if p.coords[1] <= c.coords[1]
+            { 2 }
+        else
+            { 1 }
     }
 }
 
-fn get_segment_quad_mask(segment: &Segment, c: Point2) -> i32
-{
+fn get_segment_quad(segment: &Segment, c: Point2) -> i32 {
     let q1 = get_point_quad(segment.p1, c);
     let q2 = get_point_quad(segment.p2, c);
-
-    if q1 == q2 {
-        return 1 << q1;
+    if q1 != q2 {
+        -1
     }
     else {
-        let m = (1 << q1) | (1 << q2);
-        if m == 0b0101 || m == 0b1010 {
-            // The diagonal case. We now need to determine whether
-            // or not the line passes above or below the origin.
-            let slope = (segment.p2.coords[1] - segment.p1.coords[1]) /
-                        (segment.p2.coords[0] - segment.p1.coords[0]);
-            let py = slope * segment.p1.coords[0];
-            let c = segment.p1.coords[1] - py;
-            if c < 0.0 {
-                // If the line starts in NW and ends in SE, then it also passes
-                // through SW. If the line starts in SW and ends in NE, then it
-                // also passes through SE. So we can just add both SW and SE to
-                // the mask.
-                return m | 0b1100;
-            }
-            else {
-                // If the line starts in NW and ends in SE, then it also passes
-                // through NE. If the line starts in SW and ends in NE, then it
-                // also passes through NW. So we can just add both NW and NE to
-                // the mask.
-                return m | 0b0011;
-            }
-        }
-        else {
-            return m;
-        }
+        q1
     }
 }
 
@@ -475,86 +437,68 @@ where SI: 'a + Copy {
         }
     }
 
+    fn split_node(r: &mut QTreeNode<'a, SI>, new_center: Point2) {
+        if r.segments.len() <= QTREE_BIN_SIZE
+            { return; }
+
+        // Not possible to initialize an array in Rust using a loop in safe code.
+        fn mk<'a, SI: Copy>() -> Box<QTreeNode<'a, SI>> { Box::new(QTreeNode { segments: vec![ ], child_info: None }) }
+        let mut new_children: [Box<QTreeNode<'a,SI>>; 4] = [
+            mk(), mk(), mk(), mk()
+        ];
+        
+        // Move segments downstairs if they're contained in only
+        // one quad.s
+        let mut to_delete: HashSet<usize> = HashSet::new();
+        let mut segi = 0;
+        for &(seg, info) in &r.segments {
+            let quad = get_segment_quad(seg, new_center);
+            if quad != -1 {
+                new_children[quad as usize].segments.push((seg, info));
+                to_delete.insert(segi);
+            }
+            segi += 1;
+        }
+
+        if to_delete.len() > 0 {
+            r.segments =
+                r.segments
+                .iter()
+                .enumerate()
+                .filter(|&(i,_)| !to_delete.contains(&i))
+                .map(|(_,x)| *x)
+                .collect();
+        }
+
+        r.child_info = Some(QTreeChildInfo {
+            children: new_children,
+            center: new_center
+        });
+    }
+
     pub fn insert_segment(&mut self, s: &'a Segment, info: SI)
     {
-        let mut stack : Vec<&mut QTreeNode<'a,SI>> = Vec::new();
-        stack.push(&mut*self.root);
+        let mut r: &mut QTreeNode<'a, SI> = &mut *self.root;
 
-        while let Some(r) = stack.pop() {
+        loop {
             if r.child_info.is_some() {
-                let child_info = r.child_info.as_mut().unwrap();
-                let mask = get_segment_quad_mask(s, child_info.center);
-
-                let mut i = 1;
-                for child in child_info.children.as_mut() {
-                    if mask & i != 0 {
-                        stack.push(child);
-                    }
-
-                    i <<= 1;
+                let quad = get_segment_quad(s, r.child_info.as_mut().unwrap().center);
+                if quad == -1 {
+                    r.segments.push((s, info));
+                    break;
                 }
-            }
-            else if r.segments.len() < QTREE_BIN_SIZE {
-                r.segments.push((s, info));
+                else {
+                    let child_info = {r}.child_info.as_mut().unwrap();
+                    r = child_info.children.as_mut()[quad as usize].as_mut();
+                }
             }
             else {
-                // Given the sorting order for the points of a segment,
-                // if we choose p2 as our new center point, the segment
-                // will either be in NW or in SW.
-                let new_center = s.p2;
-                let in_nw = s.p1.coords[1] >= new_center.coords[0];
-
-                let mut new_children = [
-                    Box::new(QTreeNode {
-                        child_info: None,
-                        segments: if in_nw { vec![(s, info)] } else { vec![] }
-                    }),
-                    Box::new(QTreeNode {
-                        child_info: None,
-                        segments: vec![]
-                    }),
-                    Box::new(QTreeNode {
-                        child_info: None,
-                        segments: vec![]
-                    }),
-                    Box::new(QTreeNode {
-                        child_info: None,
-                        segments: if !in_nw { vec![(s, info)] } else { vec![] }
-                    }),
-                ];
-
-                // Move segments downstairs if they're contained in only
-                // one quad.
-                let mut to_delete: HashSet<usize> = HashSet::new();
-                let mut segi = 0;
-                for &(seg, info) in &r.segments {
-                    let mask = get_segment_quad_mask(seg, new_center);
-                    for i in 1..4 {
-                        if mask == (1 << i) {
-                            new_children[i].segments.push((seg, info));
-                            to_delete.insert(segi);
-                        }
-                    }
-                    segi += 1;
-                }
-
-                if to_delete.len() > 0 {
-                    r.segments =
-                        r.segments
-                        .iter()
-                        .enumerate()
-                        .filter(|&(i,_)| !to_delete.contains(&i))
-                        .map(|(_,x)| *x)
-                        .collect();
-                }
-
-                let new_child_info = QTreeChildInfo {
-                    children: new_children,
-                    center: s.p2
-                };
-                r.child_info = Some(new_child_info);
+                r.segments.push((s, info));
+                break;
             }
         }
+
+        QTree::split_node(r, s.p2);
     }
 
     pub fn insert_segments<F>(&mut self, segments: &'a Vec<Segment>, get_info: F) 
