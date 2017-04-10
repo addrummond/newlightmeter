@@ -448,7 +448,7 @@ where SI: 'a + Copy {
         ];
         
         // Move segments downstairs if they're contained in only
-        // one quad.s
+        // one quad.
         let mut to_delete: HashSet<usize> = HashSet::new();
         let mut segi = 0;
         for &(seg, info) in &r.segments {
