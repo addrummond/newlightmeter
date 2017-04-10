@@ -13,7 +13,7 @@ line a/p -20 -20 -20 20
 line a/p 20 -20 20 20
 
 line a/p -40 -40 -40 40
-line a/p 40 40 40 -40
+line p/a 40 40 40 -40
 
 line a/p 50 50 50 -50
 
