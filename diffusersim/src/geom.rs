@@ -478,9 +478,12 @@ where SI: 'a + Copy {
 
     pub fn insert_segment(&mut self, s: &'a Segment, info: SI)
     {
-        let mut r: &mut QTreeNode<'a, SI> = &mut *self.root;
+        let mut r: &mut QTreeNode<'a, SI> = &mut*self.root;
 
         loop {
+            // The issue here is that pattern matching on the 'child_info' option
+            // would cause 'r' to be borrowed within the scope of the conditional,
+            // so that we could not subequently assign to 'r'.
             if r.child_info.is_some() {
                 let quad = get_segment_quad(s, r.child_info.as_mut().unwrap().center);
                 if quad == -1 {
@@ -488,6 +491,11 @@ where SI: 'a + Copy {
                     break;
                 }
                 else {
+                    // 1) Move out of r using {r} trick.
+                    // 2) Get reference to child_info within the struct referenced
+                    //    by the temporary reference. This does not cause 'r' to
+                    //    be borrowed.
+                    // 3) Update value of r.
                     let child_info = {r}.child_info.as_mut().unwrap();
                     r = child_info.children.as_mut()[quad as usize].as_mut();
                 }
