@@ -482,8 +482,8 @@ where SI: 'a + Copy {
 
         loop {
             // The issue here is that pattern matching on the 'child_info' option
-            // would cause 'r' to be borrowed within the scope of the conditional,
-            // so that we could not subequently assign to 'r'.
+            // would cause 'r' to be borrowed within the scope of the 'if',
+            // so that we could not subequently assign to 'r' within the 'if'.
             if r.child_info.is_some() {
                 let quad = get_segment_quad(s, r.child_info.as_mut().unwrap().center);
                 if quad == -1 {
