@@ -491,7 +491,7 @@ where SI: 'a + Copy {
                     break;
                 }
                 else {
-                    // 1) Move out of r using {r} trick.
+                    // 1) Move out of r using the {r} trick.
                     // 2) Get reference to child_info within the struct referenced
                     //    by the temporary reference. This does not cause 'r' to
                     //    be borrowed.
