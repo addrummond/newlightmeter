@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use nalgebra::Vector2 as Vector2_;
 use nalgebra::Point2 as Point2_;
 use nalgebra;
+use std::f64;
 use std::f64::consts;
 
 //
@@ -407,6 +408,37 @@ pub fn point_side_of_line_segment(lp1: Point2, lp2: Point2, p: Point2) -> i32 {
         { 0 }
 }
 
+fn choose_new_center<'a, I>(segments: I, new_segment: &Segment) -> Point2
+where I: Iterator<Item=&'a Segment> {
+    let mut min_x = f64::NEG_INFINITY as Scalar;
+    let mut min_y = f64::NEG_INFINITY as Scalar;
+    let mut max_x = f64::INFINITY as Scalar;
+    let mut max_y = f64::INFINITY as Scalar;
+
+    let mut looped = false;
+    for s in segments {
+        looped = true;
+        min_x = f64::min(s.p1.coords[0], min_x);
+        max_x = f64::max(s.p1.coords[0], max_x);
+        min_y = f64::min(s.p1.coords[1], min_y);
+        max_y = f64::max(s.p1.coords[1], max_y);
+    }
+    if !looped
+        { return Point2::new(0.0,0.0); }
+
+    if new_segment.p2.coords[0] < min_x || new_segment.p1.coords[1] < min_y {
+        new_segment.p2
+    }
+    else if new_segment.p1.coords[0] > max_x || new_segment.p1.coords[1] > max_y {
+        new_segment.p1
+    }
+    else {
+        let x = (min_x + max_x) / 2.0;
+        let y = (min_y + max_y) / 2.0;
+        Point2::new(x, y)
+    }
+}
+
 impl<'a, SI> QTree<'a, SI>
 where SI: 'a + Copy {
     pub fn make_empty_qtree() -> QTree<'a,SI>
@@ -437,7 +469,7 @@ where SI: 'a + Copy {
         }
     }
 
-    fn split_node(r: &mut QTreeNode<'a, SI>, new_center: Point2) {
+    fn split_node(r: &mut QTreeNode<'a, SI>, new_segment: &Segment) {
         if r.segments.len() <= QTREE_BIN_SIZE
             { return; }
 
@@ -446,6 +478,8 @@ where SI: 'a + Copy {
         let mut new_children: [Box<QTreeNode<'a,SI>>; 4] = [
             mk(), mk(), mk(), mk()
         ];
+
+        let new_center = choose_new_center(r.segments.iter().map(|&(s,_)| s), new_segment);
         
         // Move segments downstairs if they're contained in only
         // one quad.
@@ -506,7 +540,7 @@ where SI: 'a + Copy {
             }
         }
 
-        QTree::split_node(r, s.p2);
+        QTree::split_node(r, s);
     }
 
     pub fn insert_segments<F>(&mut self, segments: &'a Vec<Segment>, get_info: F) 
