@@ -331,7 +331,10 @@ fn entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
                 line_entry(st)
             }
             else if ident == "arc" {
-                arc_entry(st)
+                arc_entry(st, false)
+            }
+            else if ident == "circle" {
+                arc_entry(st, true)
             }
             else if ident == "material" {
                 material_entry(st)
@@ -411,7 +414,7 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     )])
 }
 
-fn arc_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
+fn arc_entry(st: &mut ParseState, is_circle: bool) -> ParseResult<Vec<Entry>> {
     let (i1, i2) = material_pair(st)?;
 
     skip_space(st);
@@ -426,13 +429,17 @@ fn arc_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     expect_str(st, ")")?;
 
     skip_space(st);
-
+    let n_coords = if is_circle { 4 } else { 6 };
     let mut coords: [g::Scalar; 6] = [0.0; 6];
-    for i in 0..6 {
+    for i in 0..n_coords {
         if i != 0
             { skip_at_least_one_space(st)?; }
         let n = numeric_constant(st)?;
         coords[i] = n;
+    }
+    if is_circle {
+        coords[4] = coords[2];
+        coords[5] = coords[3];
     }
 
     skip_space(st);
