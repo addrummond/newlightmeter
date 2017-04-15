@@ -19,6 +19,14 @@ pub struct TracingProperties {
     pub intensity_threshold: Scalar
 }
 
+pub enum Event<'a> {
+    Hit {
+        segment: &'a g::Segment,
+        segment_name: String,
+        point: Point2
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MaterialProperties {
     pub diffuse_reflect_fraction: Scalar,
@@ -55,36 +63,9 @@ where R: Rng + 'a {
     rng: &'a mut R
 }
 
-pub fn trace_ray<R>(
-    ray: &Ray,
-    ray_props: &LightProperties,
-    tp: &TracingProperties,
-    qtree: &g::QTree<RayTraceSegmentInfo>,
-    materials: &Vec<MaterialProperties>,
-    left_matprops_indices: &Vec<u8>,
-    right_matprops_indices: &Vec<u8>,
-    new_rays: &mut Vec<(Ray, LightProperties)>,
-    rng: &mut R
-)
--> usize
+fn trace_ray<R>(args: &mut TraceRayArgs<R>)
+-> usize // Returns number of new rays traced
 where R: Rng {
-
-    trace_ray_args(&mut TraceRayArgs {
-        ray: ray,
-        ray_props: ray_props,
-        tp: tp,
-        qtree: qtree,
-        materials: materials,
-        left_matprops_indices: left_matprops_indices,
-        right_matprops_indices: right_matprops_indices,
-        new_rays: new_rays,
-        rng: rng
-    })
-}
-
-fn trace_ray_args<R>(args: &mut TraceRayArgs<R>)
--> usize
-where R: Rng { // Returns number of new rays traced.
 
     let rayline = args.ray.p2 - args.ray.p1;
 
@@ -348,16 +329,17 @@ pub fn ray_trace_step(st: &mut RayTraceState) -> bool {
     }
 
     for &(ref ray, ref ray_props) in st.old_rays.iter() {
-        let n_new_rays = trace_ray(
-            ray, ray_props,
-            st.tracing_properties,
-            st.qtree,
-            st.materials,
-            st.left_matprops_indices,
-            st.right_matprops_indices,
-            st.new_rays,
-            &mut st.rng
-        );
+        let n_new_rays = trace_ray(&mut TraceRayArgs {
+            ray: ray,
+            ray_props: ray_props,
+            tp: st.tracing_properties,
+            qtree: st.qtree,
+            materials: st.materials,
+            left_matprops_indices: st.left_matprops_indices,
+            right_matprops_indices: st.right_matprops_indices,
+            new_rays: st.new_rays,
+            rng: &mut st.rng
+        });
         st.ray_count += n_new_rays;
     }
     st.old_rays.clear();
