@@ -69,6 +69,10 @@ impl<'a> ParseState<'a> {
             eof: false
         }
     }
+
+    pub fn save_position(&self) -> (usize, usize, bool) {
+        (self.line, self.col, self.eof)
+    }
 }
 
 enum Decision {
@@ -85,9 +89,8 @@ where F: FnMut (char) -> Decision {
                 return;
             }
             Some(cref) => {
-                if let Decision::End = action(*cref) {
-                    return;
-                }
+                if let Decision::End = action(*cref)
+                    { return; }
 
                 if *cref == '\n' {
                     st.line += 1;
@@ -112,6 +115,15 @@ fn peek(st: &mut ParseState) -> Option<char> {
     c
 }
 
+fn skip_nchars(st: &mut ParseState, mut n: usize) -> () {
+    assert!(n >= 1);
+    n += 1;
+    go(st, |_| {
+        n -= 1;
+        if n > 0 { Decision::Continue } else { Decision::End }
+    });
+}
+
 #[allow(unused)]
 fn drop_while<F>(st: &mut ParseState, filter: F)
 where F: Fn(char) -> bool {
@@ -125,8 +137,8 @@ where F: Fn(char) -> bool {
     });
 }
 
-fn take_while<F>(st: &mut ParseState, filter: F) -> Vec<char>
-where F: Fn(char) -> bool {
+fn take_while<F>(st: &mut ParseState, mut filter: F) -> Vec<char>
+where F: FnMut(char) -> bool {
     let mut r: Vec<char> = Vec::new();
 
     go(st, |c| {
@@ -261,33 +273,32 @@ fn identifier(st: &mut ParseState) -> ParseResult<String> {
     }
 }
 
-fn sep_by<R1,R2,F1,F2>(st: &mut ParseState, mut sep: F1, mut parser: F2) -> (Vec<R2>, ParseError)
+fn sep_by<R1,R2,F1,F2>(st: &mut ParseState, mut sep: F1, mut parser: F2) -> (Vec<R2>, ParseError, bool)
 where F1: Parser<R1>,
       F2: Parser<R2> {
+
     let mut rs: Vec<R2> = Vec::new();
+    let mut pos = st.save_position();
 
     loop {
         match parser(st) {
             Ok(r) => {
                 rs.push(r);
+                pos = st.save_position();
             }
             Err(e) => {
-                if rs.len() == 0 {
-                    return (rs, e);
-                }
-                else {
-                    return (rs, e);
-                }
+                return (rs, e, pos != st.save_position());
             }
         }
 
-        if let Err(e) = sep(st) {
-            return (rs, e);
-        }
+        if let Err(e) = sep(st)
+            { return (rs, e, !st.eof && pos != st.save_position()); }
+
+        pos = st.save_position();
     }
 }
 
-fn space_separated<R,F>(st: &mut ParseState, parser: F) -> (Vec<R>, ParseError)
+fn space_separated<R,F>(st: &mut ParseState, parser: F) -> (Vec<R>, ParseError, bool)
 where F: Parser<R> {
     sep_by(st, skip_at_least_one_space, parser)
 }
@@ -299,9 +310,11 @@ fn is_digit(c: char) -> bool {
 }
 
 fn numeric_constant(st: &mut ParseState) -> ParseResult<g::Scalar> {
+    let mut n = 0;
     let chars = take_while(st, |c| {
+        n += 1;
         is_digit(c) ||
-        c == 'e' || c == '+' || c == '-' || c == '.'
+        c == 'e' || c == '+' || (n == 1 && c == '-') || c == '.'
     });
 
     if chars.len() == 0 {
@@ -420,12 +433,37 @@ fn arc_entry(st: &mut ParseState, is_circle: bool) -> ParseResult<Vec<Entry>> {
     skip_space(st);
 
     expect_str(st, "(")?;
+
     skip_space(st);
     let n_segs_f = numeric_constant(st)?;
     if n_segs_f < 1.0 || n_segs_f != n_segs_f.floor()
         { return parse_error(st, "Number of segments must be a positive integer"); }
     let n_segs = n_segs_f as usize;
     skip_space(st);
+
+    let mut from = -1.0;
+    let mut to = -1.0;
+
+    match peek(st) {
+        None => { return parse_error(st, "Unexpected end of file in middle of arc/circle definition"); },
+        Some(c) => {
+            if c == ':' {
+                skip_nchars(st, 1);
+                skip_space(st);
+                from = numeric_constant(st)?;
+                if from < 0.0 || from != from.floor()
+                    { return parse_error(st, "Beginning of segment range must be integer >= 0"); }
+                skip_space(st);
+                expect_str(st, "-")?;
+                skip_space(st);
+                to = numeric_constant(st)?;
+                if to < 1.0 || to != to.floor() || to > n_segs as f64
+                    { return parse_error(st, "End of segment range must be integer >= 1.0 and <= number of segments"); }
+                skip_space(st);
+            }
+        }
+    }
+
     expect_str(st, ")")?;
 
     skip_space(st);
@@ -449,7 +487,9 @@ fn arc_entry(st: &mut ParseState, is_circle: bool) -> ParseResult<Vec<Entry>> {
         g::Point2::new(coords[0], coords[1]),
         g::Point2::new(coords[2], coords[3]),
         g::Point2::new(coords[4], coords[5]),
-        n_segs
+        n_segs,
+        from as i32,
+        to as i32
     );
 
     let mut i: usize = 1;
@@ -492,10 +532,9 @@ fn assignment(st: &mut ParseState) -> ParseResult<(String,g::Scalar)> {
 }
 
 fn assignment_hash(st: &mut ParseState) -> ParseResult<HashMap<String, g::Scalar>> {
-    let (assignments, e) = space_separated(st, assignment);
-    if assignments.len() == 0 {
-        return Err(e);
-    }
+    let (assignments, e, deep_fail) = space_separated(st, assignment);
+    if deep_fail || assignments.len() == 0
+        { return Err(e); }
 
     let mut m: HashMap<String, g::Scalar> = HashMap::new();
     for (n, v) in assignments {
@@ -579,8 +618,8 @@ fn material_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
             if let Err(e) = skip_at_least_one_space(st)
                 { return Err(e); }
 
-            let (assignments, e) = space_separated(st, assignment);
-            if assignments.len() == 0
+            let (assignments, e, deep_fail) = space_separated(st, assignment);
+            if deep_fail|| assignments.len() == 0
                 { return Err(e); }
             
             match material_properties_from_assignments(st, &assignments) {
@@ -690,7 +729,9 @@ fn entry_sep(st: &mut ParseState) -> ParseResult<()> {
 
 fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
     skip_space(st);
-    let (r, e) = sep_by(st, entry_sep, entry);
+    let (r, e, deep_fail) = sep_by(st, entry_sep, entry);
+    if deep_fail
+        { return Err(e); }
 
     skip_space_inc_nl(st);
     if !st.eof {

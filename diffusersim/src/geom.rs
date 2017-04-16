@@ -37,9 +37,9 @@ fn ang(v: &Vector2) -> Scalar {
     v.data[1].atan2(v.data[0])
 }
 
-pub fn arc_to_segments(center: Point2, start: Point2, end: Point2, n_segs: usize)
+pub fn arc_to_segments(center: Point2, start: Point2, end: Point2, n_segs: usize, from: i32, to: i32)
 -> Vec<Segment> {
-    assert!(n_segs > 0);
+    assert!(n_segs > 0 && to <= n_segs as i32);
 
     let l1 = start - center;
     let l2 = end - center;
@@ -57,7 +57,9 @@ pub fn arc_to_segments(center: Point2, start: Point2, end: Point2, n_segs: usize
     let ai = angle / nsf;
     let mut segments: Vec<Segment> = Vec::new();
     let mut current_point = Point2::new(a1.cos() * rad, a1.sin() * rad);
-    for i in 1_usize..(n_segs+1) {
+    let f = if from < 0 { 1 } else { from as usize };
+    let t = if to < 0 { n_segs + 1 } else { to as usize };
+    for i in f..(t+1) {
         let nf = i as Scalar;
         let a = a1 - (ai * nf);
         let y = a.sin() * rad;
