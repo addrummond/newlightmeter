@@ -44,7 +44,7 @@ fn test1() {
                     println!("Error: {:?}", e);
                 }
                 Ok(geom) => {
-                    println!("{:#?}", geom);
+                    //println!("{:#?}", geom);
 
                     let mut rays: Vec<(g::Ray, t::LightProperties)> = Vec::new();
                     for b in &geom.beams {
