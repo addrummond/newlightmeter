@@ -540,7 +540,8 @@ fn assignment_hash(st: &mut ParseState) -> ParseResult<HashMap<String, g::Scalar
     Ok(m)
 }
 
-fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(String, g::Scalar)>) -> ParseResult<t::MaterialProperties> {
+fn material_properties_from_assignments(st: &mut ParseState, assignments: &Vec<(String, g::Scalar)>)
+-> ParseResult<t::MaterialProperties> {
     let mut m = t::MaterialProperties::default();
     let mut coeffs: HashMap<usize, g::Scalar> = HashMap::new();
     let mut max_coeff_n = 0;
