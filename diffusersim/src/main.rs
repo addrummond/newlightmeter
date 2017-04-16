@@ -107,7 +107,14 @@ fn test1() {
                         figs.push(render::render_segments(&geom.segments, &t, [0.0, 1.0, 0.0]));
                         figs.push(render::render_rays(rayb.get_rays(), &t, [1.0, 0.0, 0.0]));
                         count += 1;
-                        if t::ray_trace_step(&mut st, &mut rayb, |_: &t::Event| -> () { })
+                        let finished = t::ray_trace_step(&mut st, &mut rayb, |e: &t::Event| -> () { 
+                            match *e {
+                                t::Event::Hit { ref segment_index, ref segment_name, ref point } => {
+                                    println!("HIT {} {} ({}, {})", segment_index, segment_name, point.coords[0], point.coords[1]);
+                                }
+                            }
+                        });
+                        if finished
                             { break; }
                     }
 

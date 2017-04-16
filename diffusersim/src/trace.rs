@@ -21,10 +21,9 @@ pub struct TracingProperties {
 }
 
 pub enum Event<'a> {
-    Dummy,
     Hit {
-        segment: &'a g::Segment,
-        segment_name: String,
+        segment_index: usize,
+        segment_name: &'a str,
         point: Point2
     }
 }
@@ -124,12 +123,13 @@ where F: EventHandler {
     let mut num_new_rays = 0;
     if let Some((segs_with_info, intersect, _)) = st.qtree.get_segments_touched_by_ray(args.ray) {
         for (seg, segi) in segs_with_info {
-            // Raise an event if this is a named segment.
-            //args.handle_event(Event::Hit {
-
-            //});
-
-            (args.handle_event)(&Event::Dummy);
+            if let Some(ref name) = st.segment_names.get(&segi) {
+                (args.handle_event)(&Event::Hit {
+                    segment_index: segi,
+                    segment_name: name.as_str(),
+                    point: intersect
+                });
+            }
 
             // Is the ray hitting the left surface or the right surface of
             // the segment?
