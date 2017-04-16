@@ -33,35 +33,35 @@ pub struct Segment {
 // called during ray tracing.
 //
 
+fn ang(v: &Vector2) -> Scalar {
+    v.data[1].atan2(v.data[0])
+}
+
 pub fn arc_to_segments(center: Point2, start: Point2, end: Point2, n_segs: usize)
 -> Vec<Segment> {
     assert!(n_segs > 0);
 
-    let l1 = (start - center).normalize();
-    let l2 = (end - center).normalize();
+    let l1 = start - center;
+    let l2 = end - center;
 
     let rad = nalgebra::distance(&center, &start);
 
-    let dot = nalgebra::dot(&l1, &l2);
-    let ac = dot.acos();
-    let angle;
-    if ac == 0.0 {
-        angle = 2.0*consts::PI;
-    }
-    else {
-        angle = ac;
-    }
-    let dot2 = nalgebra::dot(&Vector2::new(0.0, 1.0), &l1);
-    let angle_offset = dot2.acos();
+    let a1 = ang(&l1);
+    let a2 = ang(&l2);
+    let mut angle = a2 - a1;
+    if angle < 0.0
+        { angle = 2.0*consts::PI + angle; }
+    angle = 2.0*consts::PI - angle;
 
     let nsf = n_segs as Scalar;
+    let ai = angle / nsf;
     let mut segments: Vec<Segment> = Vec::new();
-    let mut current_point = Point2::new(angle_offset.sin() * rad, angle_offset.cos() * rad);
+    let mut current_point = Point2::new(a1.cos() * rad, a1.sin() * rad);
     for i in 1_usize..(n_segs+1) {
         let nf = i as Scalar;
-        let a = ((angle / nsf) * nf) + angle_offset;
-        let y = a.cos() * rad;
-        let x = a.sin() * rad;
+        let a = a1 - (ai * nf);
+        let y = a.sin() * rad;
+        let x = a.cos() * rad;
         let to = Point2::new(x, y);
         segments.push(Segment { p1: current_point, p2: to });
         current_point = to;
