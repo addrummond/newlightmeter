@@ -552,6 +552,9 @@ where SI: 'a + Copy {
         // by |p1|^2 + |p2|^2, where |p| is the distance of a point
         // p from the center.
 
+        if segments.len() == 0
+            { return; }
+
         let mut avg_x: Scalar = 0.0;
         let mut avg_y: Scalar = 0.0;
         for s in segments {
