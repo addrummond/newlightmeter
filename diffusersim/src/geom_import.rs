@@ -127,14 +127,7 @@ fn skip_nchars(st: &mut ParseState, mut n: usize) -> () {
 #[allow(unused)]
 fn drop_while<F>(st: &mut ParseState, filter: F)
 where F: Fn(char) -> bool {
-    go(st, |c| {
-        if filter(c) {
-            Decision::Continue
-        }
-        else {
-            Decision::End
-        }
-    });
+    go(st, |c| if filter (c) { Decision::Continue } else { Decision::End });
 }
 
 fn take_while<F>(st: &mut ParseState, mut filter: F) -> Vec<char>
@@ -273,7 +266,7 @@ fn identifier(st: &mut ParseState) -> ParseResult<String> {
     }
 }
 
-fn sep_by<R1,R2,F1,F2>(st: &mut ParseState, mut sep: F1, mut parser: F2) -> (Vec<R2>, ParseError, bool)
+fn sep_by<R1,R2,F1,F2>(st: &mut ParseState, mut sep: F1, mut parser: F2) -> ParseResult<(Vec<R2>, ParseError)>
 where F1: Parser<R1>,
       F2: Parser<R2> {
 
@@ -287,18 +280,25 @@ where F1: Parser<R1>,
                 pos = st.save_position();
             }
             Err(e) => {
-                return (rs, e, pos != st.save_position());
+                if pos != st.save_position()
+                    { return Err(e); }
+                else
+                    { return Ok((rs, e)); }
             }
         }
 
-        if let Err(e) = sep(st)
-            { return (rs, e, !st.eof && pos != st.save_position()); }
+        if let Err(e) = sep(st) {
+            if pos != st.save_position()
+                { return Err(e); }
+            else
+                { return Ok((rs, e)); }
+        }
 
         pos = st.save_position();
     }
 }
 
-fn space_separated<R,F>(st: &mut ParseState, parser: F) -> (Vec<R>, ParseError, bool)
+fn space_separated<R,F>(st: &mut ParseState, parser: F) -> ParseResult<(Vec<R>, ParseError)>
 where F: Parser<R> {
     sep_by(st, skip_at_least_one_space, parser)
 }
@@ -532,9 +532,7 @@ fn assignment(st: &mut ParseState) -> ParseResult<(String,g::Scalar)> {
 }
 
 fn assignment_hash(st: &mut ParseState) -> ParseResult<HashMap<String, g::Scalar>> {
-    let (assignments, e, deep_fail) = space_separated(st, assignment);
-    if deep_fail || assignments.len() == 0
-        { return Err(e); }
+    let (assignments, _) = space_separated(st, assignment)?;
 
     let mut m: HashMap<String, g::Scalar> = HashMap::new();
     for (n, v) in assignments {
@@ -618,9 +616,7 @@ fn material_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
             if let Err(e) = skip_at_least_one_space(st)
                 { return Err(e); }
 
-            let (assignments, e, deep_fail) = space_separated(st, assignment);
-            if deep_fail|| assignments.len() == 0
-                { return Err(e); }
+            let (assignments, _) = space_separated(st, assignment)?;
             
             match material_properties_from_assignments(st, &assignments) {
                 Err(e) => { Err(e) },
@@ -729,9 +725,7 @@ fn entry_sep(st: &mut ParseState) -> ParseResult<()> {
 
 fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
     skip_space(st);
-    let (r, e, deep_fail) = sep_by(st, entry_sep, entry);
-    if deep_fail
-        { return Err(e); }
+    let (r, e) = sep_by(st, entry_sep, entry)?;
 
     skip_space_inc_nl(st);
     if !st.eof {
