@@ -27,7 +27,7 @@ pub struct ImportedGeometry {
     pub beams: Vec<Beam>,
     pub left_material_properties: Vec<u8>,
     pub right_material_properties: Vec<u8>,
-    pub seg_index_to_name: HashMap<usize, String>
+    pub segment_names: HashMap<usize, String>
 }
 
 #[derive(Debug)]
@@ -723,7 +723,7 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
     let mut segs: Vec<g::Segment> = Vec::new();
     let mut lmat: Vec<u8> = Vec::new();
     let mut rmat: Vec<u8> = Vec::new();
-    let mut seg_index_to_name: HashMap<usize, String> = HashMap::new();
+    let mut segment_names: HashMap<usize, String> = HashMap::new();
 
     let mut seg_i = 0;
     for v in entries {
@@ -740,7 +740,7 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
                                 rmat.push(*pr);
 
                                 if let Some(ref n) = *name {
-                                    seg_index_to_name.insert(seg_i, n.clone());
+                                    segment_names.insert(seg_i, n.clone());
                                 }
 
                                 seg_i += 1;
@@ -761,7 +761,7 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
         beams: beams,
         left_material_properties: lmat,
         right_material_properties: rmat,
-        seg_index_to_name: seg_index_to_name
+        segment_names: segment_names
     })
 }
 

@@ -1,6 +1,7 @@
 use std::f64::consts;
 use rand::{Rng, SeedableRng, StdRng};
 use std::mem;
+use std::collections::HashMap;
 
 use geom::{Ray,Scalar,Point2,Vector2};
 use geom as g;
@@ -20,12 +21,16 @@ pub struct TracingProperties {
 }
 
 pub enum Event<'a> {
+    Dummy,
     Hit {
         segment: &'a g::Segment,
         segment_name: String,
         point: Point2
     }
 }
+
+pub trait EventHandler where Self: Fn (&Event) -> () { }
+impl<'a,F> EventHandler for F where F: Fn(&Event) -> () { }
 
 #[derive(Debug, Clone)]
 pub struct MaterialProperties {
@@ -50,28 +55,82 @@ impl MaterialProperties {
 
 pub type RayTraceSegmentInfo = usize;
 
-struct TraceRayArgs<'a, R>
-where R: Rng + 'a {
-    ray: &'a Ray,
-    ray_props: &'a LightProperties,
-    tp: &'a TracingProperties,
+pub struct RayBuffer<'a> {
+    pub old_rays: &'a mut Vec<(Ray, LightProperties)>,
+    pub new_rays: &'a mut Vec<(Ray, LightProperties)>
+}
+
+impl<'a> RayBuffer<'a> {
+    pub fn get_rays(&'a self) -> &'a Vec<(Ray, LightProperties)> {
+        assert!(self.old_rays.len() == 0 || self.new_rays.len() == 0);
+        if self.old_rays.len() == 0 { self.new_rays } else { self.old_rays }
+    }
+}
+
+pub struct RayTraceState<'a> {
+    tracing_properties: &'a TracingProperties,
     qtree: &'a g::QTree<'a, RayTraceSegmentInfo>,
+    segment_names: &'a HashMap<usize, String>,
     materials: &'a Vec<MaterialProperties>,
     left_matprops_indices: &'a Vec<u8>,
     right_matprops_indices: &'a Vec<u8>,
-    new_rays: &'a mut Vec<(Ray, LightProperties)>,
-    rng: &'a mut R
+    recursion_limit: usize,
+    ray_limit: usize,
+    ray_count: usize,
+    recursion_level: usize,
+    rng: StdRng
 }
 
-fn trace_ray<R>(args: &mut TraceRayArgs<R>)
+impl<'a> RayTraceState<'a> {
+    pub fn initial(
+        tracing_properties: &'a TracingProperties,
+        qtree: &'a g::QTree<RayTraceSegmentInfo>,
+        segment_names: &'a HashMap<usize, String>,
+        materials: &'a Vec<MaterialProperties>,
+        left_matprops_indices: &'a Vec<u8>,
+        right_matprops_indices: &'a Vec<u8>,
+        recursion_limit: usize,
+        ray_limit: usize
+    ) -> RayTraceState<'a> {
+        RayTraceState {
+            tracing_properties: tracing_properties,
+            qtree: qtree,
+            segment_names: segment_names,
+            materials: materials,
+            left_matprops_indices: left_matprops_indices,
+            right_matprops_indices: right_matprops_indices,
+            recursion_limit: recursion_limit,
+            ray_limit: ray_limit,
+            ray_count: 0,
+            recursion_level: 0,
+            rng: SeedableRng::from_seed(&(tracing_properties.random_seed)[..])
+        }
+    }
+}
+
+struct TraceRayArgs<'a,'b:'a,F> where F: 'b + EventHandler {
+    ray: &'a Ray,
+    ray_props: &'a LightProperties,
+    new_rays: &'a mut Vec<(Ray,LightProperties)>,
+    handle_event: &'b F
+}
+
+fn trace_ray<F>(st: &mut RayTraceState, args: &mut TraceRayArgs<F>)
 -> usize // Returns number of new rays traced
-where R: Rng {
+where F: EventHandler {
 
     let rayline = args.ray.p2 - args.ray.p1;
 
     let mut num_new_rays = 0;
-    if let Some((segs_with_info, intersect, _)) = args.qtree.get_segments_touched_by_ray(args.ray) {
+    if let Some((segs_with_info, intersect, _)) = st.qtree.get_segments_touched_by_ray(args.ray) {
         for (seg, segi) in segs_with_info {
+            // Raise an event if this is a named segment.
+            //args.handle_event(Event::Hit {
+
+            //});
+
+            (args.handle_event)(&Event::Dummy);
+
             // Is the ray hitting the left surface or the right surface of
             // the segment?
             let side = g::point_side_of_line_segment(seg.p1, seg.p2, args.ray.p1);
@@ -94,16 +153,16 @@ where R: Rng {
             let into_matprops_i;
             let from_matprops_i;
             if side == -1 {
-                into_matprops_i = args.right_matprops_indices[segi];
-                from_matprops_i = args.left_matprops_indices[segi];
+                into_matprops_i = st.right_matprops_indices[segi];
+                from_matprops_i = st.left_matprops_indices[segi];
             }
             else {
-                into_matprops_i = args.left_matprops_indices[segi];
-                from_matprops_i = args.right_matprops_indices[segi];
+                into_matprops_i = st.left_matprops_indices[segi];
+                from_matprops_i = st.right_matprops_indices[segi];
             }
 
-            let ref into_matprops = args.materials[into_matprops_i as usize];
-            let ref from_matprops = args.materials[from_matprops_i as usize];
+            let ref into_matprops = st.materials[into_matprops_i as usize];
+            let ref from_matprops = st.materials[from_matprops_i as usize];
 
             // We need to calculate the extent to which the ray's intensity has been attenuated
             // by traveling through the relevant material for whatever distance.
@@ -114,15 +173,15 @@ where R: Rng {
             // Decide whether we're going to do diffuse reflection, specular reflection,
             // or refraction, based on the relative amount of intensity they preserve.
             let tot = into_matprops.diffuse_reflect_fraction + into_matprops.specular_reflect_fraction;
-            let rnd = args.rng.next_f64() * tot;
+            let rnd = st.rng.next_f64() * tot;
             if rnd < into_matprops.diffuse_reflect_fraction {
-                num_new_rays += add_diffuse(args, new_intensity, &segline, &into_matprops, &intersect, &surface_normal);
+                num_new_rays += add_diffuse(st, args, new_intensity, &segline, &into_matprops, &intersect, &surface_normal);
             }
             else if rnd < into_matprops.diffuse_reflect_fraction + into_matprops.specular_reflect_fraction {
-                num_new_rays += add_specular(args, new_intensity, &rayline, &into_matprops, &intersect, &surface_normal);
+                num_new_rays += add_specular(st, args, new_intensity, &rayline, &into_matprops, &intersect, &surface_normal);
             }
             else if rnd < into_matprops.diffuse_reflect_fraction + into_matprops.specular_reflect_fraction + into_matprops.refraction_fraction {
-                num_new_rays += add_refraction(args, new_intensity, &rayline, &from_matprops, &into_matprops, &intersect, &surface_normal, side);
+                num_new_rays += add_refraction(st, args, new_intensity, &rayline, &from_matprops, &into_matprops, &intersect, &surface_normal, side);
             }
         }
     }
@@ -130,8 +189,9 @@ where R: Rng {
     num_new_rays
 }
 
-fn add_diffuse<R>(
-    args: &mut TraceRayArgs<R>,
+fn add_diffuse<F>(
+    st: &mut RayTraceState,
+    args: &mut TraceRayArgs<F>,
     new_intensity: Scalar,
     segline: &Vector2,
     matprops: &MaterialProperties,
@@ -139,7 +199,8 @@ fn add_diffuse<R>(
     surface_normal: &Vector2
 )
 -> usize
-where R: Rng {
+where F: EventHandler
+{
     let _ = matprops; // Not used currently; suppress compiler warning.
 
     //print!("DIFFMAT {:?} {:?}", matprops, segline);
@@ -147,13 +208,13 @@ where R: Rng {
             
     // If the intensity of the reflected ray is above the thresholed,
     // then cast it in a randomly chosen direction.
-    if new_intensity > args.tp.intensity_threshold {
+    if new_intensity > st.tracing_properties.intensity_threshold {
         num_new_rays += 1;
 
         let mut new_diffuse_ray_props = *(args.ray_props);
         new_diffuse_ray_props.intensity = new_intensity;
                 
-        let angle = (args.rng.next_f64() as Scalar) * consts::PI;
+        let angle = (st.rng.next_f64() as Scalar) * consts::PI;
 
         let along_seg = angle.cos();
         let normal_to_seg = angle.sin();
@@ -172,8 +233,9 @@ where R: Rng {
     num_new_rays
 }
 
-fn add_specular<R>(
-    args: &mut TraceRayArgs<R>,
+fn add_specular<F>(
+    st: &mut RayTraceState,
+    args: &mut TraceRayArgs<F>,
     new_intensity: Scalar,
     rayline: &Vector2,
     matprops: &MaterialProperties,
@@ -181,13 +243,14 @@ fn add_specular<R>(
     surface_normal: &Vector2
 )
 -> usize
-where R: Rng {
+where F: EventHandler
+{
     let _ = matprops; // Not used currently; suppress compiler warning.
 
     //print!("SPECMAT {:?} {:?}", matprops, surface_normal);
     let mut num_new_rays = 0;
             
-    if new_intensity > args.tp.intensity_threshold {
+    if new_intensity > st.tracing_properties.intensity_threshold {
         num_new_rays += 1;
 
         let mut new_specular_ray_props = *(args.ray_props);
@@ -210,8 +273,9 @@ where R: Rng {
     num_new_rays
 }
 
-fn add_refraction<R>(
-    args: &mut TraceRayArgs<R>,
+fn add_refraction<F>(
+    st: &mut RayTraceState,
+    args: &mut TraceRayArgs<F>,
     new_intensity: Scalar,
     rayline: &Vector2,
     from_matprops: &MaterialProperties,
@@ -221,14 +285,15 @@ fn add_refraction<R>(
     side: i32
 )
 -> usize
-where R: Rng {
+where F: EventHandler
+{
     assert!(side != 0);
     assert!(from_matprops.cauchy_coeffs.len() > 0);
     assert!(into_matprops.cauchy_coeffs.len() > 0);
 
     let mut num_new_rays = 0;
 
-    if new_intensity > args.tp.intensity_threshold {
+    if new_intensity > st.tracing_properties.intensity_threshold {
         num_new_rays += 1;
 
         // Calculate the refractive index for each material given
@@ -272,78 +337,28 @@ where R: Rng {
     num_new_rays
 }
 
-pub struct RayTraceState<'a> {
-    tracing_properties: &'a TracingProperties,
-    qtree: &'a g::QTree<'a, RayTraceSegmentInfo>,
-    materials: &'a Vec<MaterialProperties>,
-    left_matprops_indices: &'a Vec<u8>,
-    right_matprops_indices: &'a Vec<u8>,
-    pub old_rays: &'a mut Vec<(Ray, LightProperties)>,
-    pub new_rays: &'a mut Vec<(Ray, LightProperties)>,
-    recursion_limit: usize,
-    ray_limit: usize,
-    ray_count: usize,
-    recursion_level: usize,
-    rng: StdRng
-}
-
-impl<'a> RayTraceState<'a> {
-    pub fn initial(
-        tp: &'a TracingProperties,
-        qtree: &'a g::QTree<RayTraceSegmentInfo>,
-        materials: &'a Vec<MaterialProperties>,
-        left_matprops_indices: &'a Vec<u8>,
-        right_matprops_indices: &'a Vec<u8>,
-        old_rays: &'a mut Vec<(Ray, LightProperties)>,
-        new_rays: &'a mut Vec<(Ray, LightProperties)>,
-        recursion_limit: usize,
-        ray_limit: usize
-    ) -> RayTraceState<'a> {
-        RayTraceState {
-            tracing_properties: tp,
-            qtree: qtree,
-            materials: materials,
-            left_matprops_indices: left_matprops_indices,
-            right_matprops_indices: right_matprops_indices,
-            old_rays: old_rays,
-            new_rays: new_rays,
-            recursion_limit: recursion_limit,
-            ray_limit: ray_limit,
-            ray_count: 0,
-            recursion_level: 0,
-            rng: SeedableRng::from_seed(&(tp.random_seed)[..])
-        }
-    }
-
-    pub fn get_rays(&'a self) -> &'a Vec<(Ray, LightProperties)> {
-        assert!(self.old_rays.len() == 0 || self.new_rays.len() == 0);
-        if self.old_rays.len() == 0 { self.new_rays } else { self.old_rays }
-    }
-}
-
-pub fn ray_trace_step(st: &mut RayTraceState) -> bool {
+pub fn ray_trace_step<F>(st: &mut RayTraceState, rayb: &mut RayBuffer, handle_event: F) -> bool
+where F: EventHandler {
     if (st.ray_limit != 0 && st.ray_count >= st.ray_limit) ||
        (st.recursion_limit != 0 && st.recursion_level >= st.recursion_limit) ||
-       (st.old_rays.len() == 0) {
+       (rayb.old_rays.len() == 0) {
         return true;
     }
 
-    for &(ref ray, ref ray_props) in st.old_rays.iter() {
-        let n_new_rays = trace_ray(&mut TraceRayArgs {
-            ray: ray,
-            ray_props: ray_props,
-            tp: st.tracing_properties,
-            qtree: st.qtree,
-            materials: st.materials,
-            left_matprops_indices: st.left_matprops_indices,
-            right_matprops_indices: st.right_matprops_indices,
-            new_rays: st.new_rays,
-            rng: &mut st.rng
-        });
+    for &(ref ray, ref ray_props) in rayb.old_rays.iter() {
+        let n_new_rays = trace_ray(
+            st,
+            &mut TraceRayArgs {
+                ray: ray,
+                ray_props: ray_props,
+                handle_event: &handle_event,
+                new_rays: rayb.new_rays
+            }
+        );
         st.ray_count += n_new_rays;
     }
-    st.old_rays.clear();
-    mem::swap(&mut (st.old_rays), &mut (st.new_rays));
+    rayb.old_rays.clear();
+    mem::swap(&mut (rayb.old_rays), &mut (rayb.new_rays));
     st.recursion_level += 1;
 
     false

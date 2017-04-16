@@ -75,21 +75,25 @@ fn test1() {
                     let mut st = t::RayTraceState::initial(
                         &tracing_props,
                         &qtree,
-                        &(geom.materials),
-                        &(geom.left_material_properties),
-                        &(geom.right_material_properties),
-                        &mut rays,
-                        &mut new_rays,
+                        &geom.segment_names,
+                        &geom.materials,
+                        &geom.left_material_properties,
+                        &geom.right_material_properties,
                         16,
                         0,
                     );
+
+                    let mut rayb = t::RayBuffer {
+                        old_rays: &mut rays,
+                        new_rays: &mut new_rays,
+                    };
       
                     let mut figs: Vec<simplesvg::Fig> = Vec::new();
                     let mut count = 0;
                     loop {
                         let t = render::get_display_transform(
                             &geom.segments,
-                            &(st.old_rays),
+                            &(rayb.old_rays),
                             render::DisplayTransformArgs {
                                 width: WIDTH,
                                 height: HEIGHT,
@@ -101,9 +105,9 @@ fn test1() {
                             }
                         );
                         figs.push(render::render_segments(&geom.segments, &t, [0.0, 1.0, 0.0]));
-                        figs.push(render::render_rays(st.get_rays(), &t, [1.0, 0.0, 0.0]));
+                        figs.push(render::render_rays(rayb.get_rays(), &t, [1.0, 0.0, 0.0]));
                         count += 1;
-                        if t::ray_trace_step(&mut st)
+                        if t::ray_trace_step(&mut st, &mut rayb, |_: &t::Event| -> () { })
                             { break; }
                     }
 
