@@ -53,25 +53,44 @@ enum Entry {
     Beam(Beam)
 }
 
+// 'next_code_point' isn't in stable yet. This will be a bit
+// more efficient once we can use it.
+fn get_next_utf8_codepoint_as_char(arr: &[u8]) -> Option<(char,usize)> {
+    // As non-ASCII chars will be rare in practice, try reading
+    // just one byte first, then two, then three, etc.
+    for i in 1..5 { // Max length of UTF-8 codepoint is 4 bytes.
+        let r = str::from_utf8(&arr[0..i]);
+        if let Ok(s) = r {
+            if let Some(c) = s.chars().next() {
+                return Some((c, i));
+            }
+        }
+    }
+    
+    None
+}
+
 pub struct ParseState<'a> {
-    it: iter::Peekable<str::Chars<'a>>,
+    input: &'a [u8],
+    i: usize,
     line: usize,
     col: usize,
     eof: bool
 }
 
 impl<'a> ParseState<'a> {
-    pub fn new(s: &str) -> ParseState {
+    pub fn new(input: &'a [u8]) -> ParseState {
         ParseState {
-            it: s.chars().peekable(),
+            input: input,
+            i: 0,
             line: 1,
             col: 0,
             eof: false
         }
     }
 
-    pub fn save_position(&self) -> (usize, usize, bool) {
-        (self.line, self.col, self.eof)
+    pub fn save_position(&self) -> (usize, bool) {
+        (self.i, self.eof)
     }
 }
 
@@ -83,26 +102,31 @@ enum Decision {
 fn go<F>(st: &mut ParseState, mut action: F)
 where F: FnMut (char) -> Decision {
     loop {
-        match st.it.peek() {
-            None => {
-                st.eof = true;
-                return;
-            }
-            Some(cref) => {
-                if let Decision::End = action(*cref)
-                    { return; }
-
-                if *cref == '\n' {
-                    st.line += 1;
-                    st.col = 0;
-                }
-                else {
-                    st.col += 1;
+        let sl = &st.input[st.i ..];
+        if sl.len() == 0 {
+            st.eof = true;
+            return;
+        }
+        else {
+            match get_next_utf8_codepoint_as_char(sl) {
+                None => {
+                    st.eof = true;
+                },
+                Some((c,n)) => {
+                    if let Decision::End = action(c)
+                        { return; }
+                    
+                    st.i += n;
+                    if c == '\n' {
+                        st.line += 1;
+                        st.col = 0;
+                    }
+                    else {
+                        st.col += 1;
+                    }
                 }
             }
         }
-
-        st.it.next();
     }
 }
 
@@ -430,8 +454,8 @@ fn arc_entry(st: &mut ParseState, is_circle: bool) -> ParseResult<Vec<Entry>> {
 
     skip_space(st);
     let n_segs_f = numeric_constant(st)?;
-    if n_segs_f < 1.0 || n_segs_f != n_segs_f.floor()
-        { return parse_error(st, "Number of segments must be a positive integer"); }
+    if n_segs_f < 3.0 || n_segs_f != n_segs_f.floor()
+        { return parse_error(st, "Number of segments must be an integer >= 3 for arc/circle"); }
     let n_segs = n_segs_f as usize;
     skip_space(st);
 
@@ -795,7 +819,7 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
     })
 }
 
-pub fn parse_geometry_str(input: &str) -> ParseResult<ImportedGeometry> {
+pub fn parse_geometry(input: &[u8]) -> ParseResult<ImportedGeometry> {
     let mut st = ParseState::new(input);
     document(&mut st)
 }
@@ -803,8 +827,8 @@ pub fn parse_geometry_str(input: &str) -> ParseResult<ImportedGeometry> {
 pub fn parse_geometry_file(filename: &str) -> io::Result<ParseResult<ImportedGeometry>> {
     let file = File::open(filename)?;
     let mut buf_reader = BufReader::new(file);
-    let mut contents = String::new();
-    buf_reader.read_to_string(&mut contents)?;
+    let mut contents: Vec<u8> = Vec::new();
+    buf_reader.read_to_end(&mut contents)?;
 
-    Ok(parse_geometry_str(contents.as_str()))
+    Ok(parse_geometry(contents.as_slice()))
 }
