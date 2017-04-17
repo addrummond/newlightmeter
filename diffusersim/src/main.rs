@@ -7,6 +7,7 @@ pub mod geom;
 pub mod geom_import;
 pub mod trace;
 pub mod render;
+pub mod parcombs;
 
 use std::fs::File;
 use std::io::{Write, BufWriter};
