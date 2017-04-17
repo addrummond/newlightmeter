@@ -115,7 +115,7 @@ where F: FnMut (char) -> Decision {
         else {
             match get_next_utf8_codepoint_as_char(sl) {
                 None => {
-                    return parse_error(st, "UTF-8 decode error");
+                    return parse_error_string(st, format!("UTF-8 decode error at byte {}", st.i));
                 },
                 Some((c,n)) => {
                     if let Decision::End = action(c)
@@ -208,14 +208,14 @@ fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
     match it.next() {
         None => {
             if error {
-                parse_error_string(st, ("Expected: ".to_string() + expected))
+                parse_error_string(st, format!("Expected '{}'", expected))
             }
             else {
                 Ok(())
             }
         },
         Some(_) => {
-            parse_error_string(st, ("Expected: ".to_string() + expected))
+            parse_error_string(st, format!("Expected '{}'", expected))
         }
     }
 }
@@ -263,7 +263,7 @@ fn skip_at_least_one_space(st: &mut ParseState) -> ParseResult<Option<char>> {
     if c > 0
         { Ok(r) }
     else
-        { parse_error(st, "Expected whitespace") }
+        { parse_error(st, "Expected whitespace, found '{}'") }
 }
 
 fn skip_space_inc_nl(st: &mut ParseState) -> ParseResult<Option<char>> {
@@ -342,7 +342,7 @@ fn numeric_constant(st: &mut ParseState) -> ParseResult<g::Scalar> {
         let s: String = chars.into_iter().collect();
         match s.as_str().parse::<g::Scalar>() {
             Err(_) => {
-                parse_error(st, "Error in numeric constant syntax")
+                parse_error_string(st, format!("Error in syntax of numeric constant '{}'", s))
             },
             Ok(v) => {
                 Ok(v)
@@ -358,27 +358,37 @@ fn entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
             if let Err(e) = skip_at_least_one_space(st)
                 { return Err(e); }
 
+            let r: ParseResult<Vec<Entry>>;
             if ident == "line" {
-                line_entry(st)
+                r = line_entry(st);
             }
             else if ident == "arc" {
-                arc_entry(st, false)
+                r = arc_entry(st, false);
             }
             else if ident == "circle" {
-                arc_entry(st, true)
+                r = arc_entry(st, true);
             }
             else if ident == "material" {
-                material_entry(st)
+                r = material_entry(st);
             }
             else if ident == "ray" {
-                ray_entry(st)
+                r = ray_entry(st);
             }
             else if ident == "colbeam" {
-                colbeam_entry(st)
+                r = colbeam_entry(st);
             }
             else {
-                parse_error(st, "Unrecognized entry type")
+                return parse_error_string(st, format!("Unrecognized entry type '{}'", ident));
             }
+
+            // We expect possible whitespace followed by newline
+            // or EOF.
+            let term = skip_space(st)?;
+            if !st.eof && term.is_some() && term.unwrap() != '\n' {
+                return parse_error_string(st, format!("Junk at end of '{}' def", ident));
+            }
+
+            r
         }
     }
 }
@@ -434,13 +444,6 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     skip_space(st)?;
     let name = optional_name(st)?;
 
-    // We expect possible whitespace followed by newline
-    // or EOF.
-    let term = skip_space(st)?;
-    if !st.eof && term.is_some() && term.unwrap() != '\n' {
-        return parse_error(st, "Junk at end of 'line' def");
-    }
-
     Ok(vec![make_segment_entry(
         coords[0], coords[1], coords[2], coords[3],
         name,
@@ -458,7 +461,7 @@ fn arc_entry(st: &mut ParseState, is_circle: bool) -> ParseResult<Vec<Entry>> {
     skip_space(st)?;
     let n_segs_f = numeric_constant(st)?;
     if n_segs_f < 3.0 || n_segs_f != n_segs_f.floor()
-        { return parse_error(st, "Number of segments must be an integer >= 3 for arc/circle"); }
+        { return parse_error_string(st, format!("Number of segments must be an integer >= 3 for arc/circle, not {}", n_segs_f)); }
     let n_segs = n_segs_f as usize;
     skip_space(st)?;
 
@@ -473,13 +476,13 @@ fn arc_entry(st: &mut ParseState, is_circle: bool) -> ParseResult<Vec<Entry>> {
                 skip_space(st)?;
                 from = numeric_constant(st)?;
                 if from < 0.0 || from != from.floor()
-                    { return parse_error(st, "Beginning of segment range must be integer >= 0"); }
+                    { return parse_error_string(st, format!("Beginning of segment range must be integer >= 0, not {}", from)); }
                 skip_space(st)?;
                 expect_str(st, "-")?;
                 skip_space(st)?;
                 to = numeric_constant(st)?;
                 if to < 1.0 || to != to.floor() || to > n_segs as f64
-                    { return parse_error(st, "End of segment range must be integer >= 1.0 and <= number of segments"); }
+                    { return parse_error_string(st, format!("End of segment range must be integer >= 1.0 and <= number of segments, not {}", to)); }
                 skip_space(st)?;
             }
         }
@@ -558,7 +561,7 @@ fn assignment_hash(st: &mut ParseState) -> ParseResult<HashMap<String, g::Scalar
     let mut m: HashMap<String, g::Scalar> = HashMap::new();
     for (n, v) in assignments {
         if m.contains_key(&n) {
-            return parse_error(st, "Duplicate name in assignments");
+            return parse_error_string(st, format!("Duplicate name '{}' in assignments", n));
         }
 
         m.insert(n, v);
@@ -653,11 +656,8 @@ fn ray_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     let mut intensity: g::Scalar = 0.0;
 
     let mut got: u32 = 0;
-    let mut n = 0;
     let assignments = assignment_hash(st)?;
     for (k, v) in assignments {
-        n += 1;
-
         if k == "l" {
             got |= 0b1;
             wavelength = v;
@@ -672,8 +672,6 @@ fn ray_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     }
     if got != 0b11
         { return parse_error(st, "Ray must be specified for 'l' (wavelength) and i (intensity)"); }
-    if n > 2
-        { return parse_error(st, "Duplicate ray properties"); }
     
     skip_space(st)?;
     expect_str(st, "|")?;
@@ -707,11 +705,8 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     let mut intensity: g::Scalar = 0.0;
 
     let mut got: u32 = 0;
-    let mut n = 0;
     let assignments = assignment_hash(st)?;
     for (k, v) in assignments {
-        n += 1;
-
         if k == "n" {
             if v < 1.0 || v.floor() != v
                 { return parse_error(st, "Number of rays must be a positive integer"); }
@@ -732,8 +727,6 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     }
     if got != 0b111
         { return parse_error(st, "Collimated beam must be specified for 'n' (number of rays), 'l' (wavelength) and 'i' (intensity)"); }
-    if n > 3
-        { return parse_error(st, "Duplicate beam properties"); }
     
     skip_space(st)?;
     
@@ -848,7 +841,7 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
 
                                 if let Some(ref n) = *name {
                                     if let Some(_) = existing_segment_names.insert(n.clone(), true) {
-                                        return parse_error(st, &format!("Duplicate segment name {}", n));
+                                        return parse_error_string(st, format!("Duplicate segment name {}", n));
                                     }
                                     segment_names.insert(seg_i, n.clone());
                                 }
