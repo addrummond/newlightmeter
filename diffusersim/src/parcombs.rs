@@ -12,7 +12,7 @@ pub trait Parser<T>: FnMut (&mut ParseState) -> ParseResult<T> { }
 impl <T,U> Parser<T> for U where U: FnMut (&mut ParseState) -> ParseResult<T> { }
 
 // The 'next_code_point' function isn't in stable yet. It should be possible
-// to implement this function a little more simply and efficiently once it
+// to implement the function below a little more simply and efficiently once it
 // is available.
 fn get_next_utf8_codepoint_as_char(arr: &[u8]) -> Option<(char,usize)> {
     // As non-ASCII chars will be rare in practice, try decoding
