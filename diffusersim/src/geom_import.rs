@@ -830,6 +830,7 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
     let mut lmat: Vec<u8> = Vec::new();
     let mut rmat: Vec<u8> = Vec::new();
     let mut segment_names: HashMap<usize, String> = HashMap::new();
+    let mut existing_segment_names: HashMap<String, bool> = HashMap::new();
 
     let mut seg_i = 0;
     for v in entries {
@@ -846,6 +847,9 @@ fn entries_to_imported_geometry(st: &mut ParseState, entries: &Vec<Vec<Entry>>) 
                                 rmat.push(*pr);
 
                                 if let Some(ref n) = *name {
+                                    if let Some(_) = existing_segment_names.insert(n.clone(), true) {
+                                        return parse_error(st, &format!("Duplicate segment name {}", n));
+                                    }
                                     segment_names.insert(seg_i, n.clone());
                                 }
 
