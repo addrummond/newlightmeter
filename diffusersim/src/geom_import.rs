@@ -53,17 +53,17 @@ enum Entry {
     Beam(Beam)
 }
 
-// 'next_code_point' isn't in stable yet. This will be a bit
-// more efficient once we can use it.
+// The 'next_code_point' function isn't in stable yet. It should be possible
+// to implement this function a little more simply and efficiently once it
+// is available.
 fn get_next_utf8_codepoint_as_char(arr: &[u8]) -> Option<(char,usize)> {
-    // As non-ASCII chars will be rare in practice, try reading
+    // As non-ASCII chars will be rare in practice, try decoding
     // just one byte first, then two, then three, etc.
     for i in 1..5 { // Max length of UTF-8 codepoint is 4 bytes.
         let r = str::from_utf8(&arr[0..i]);
         if let Ok(s) = r {
-            if let Some(c) = s.chars().next() {
-                return Some((c, i));
-            }
+            if let Some(c) = s.chars().next()
+                { return Some((c, i)); }
         }
     }
     
@@ -100,21 +100,22 @@ enum Decision {
 }
 
 fn go<F>(st: &mut ParseState, mut action: F)
+-> ParseResult<()>
 where F: FnMut (char) -> Decision {
     loop {
         let sl = &st.input[st.i ..];
         if sl.len() == 0 {
             st.eof = true;
-            return;
+            return Ok(());
         }
         else {
             match get_next_utf8_codepoint_as_char(sl) {
                 None => {
-                    st.eof = true;
+                    return parse_error(st, "UTF-8 decode error");
                 },
                 Some((c,n)) => {
                     if let Decision::End = action(c)
-                        { return; }
+                        { return Ok(()); }
                     
                     st.i += n;
                     if c == '\n' {
@@ -130,31 +131,27 @@ where F: FnMut (char) -> Decision {
     }
 }
 
-fn peek(st: &mut ParseState) -> Option<char> {
+fn peek(st: &mut ParseState) -> ParseResult<Option<char>> {
     let mut c: Option<char> = None;
     go(st, |c2| {
         c = Some(c2);
         Decision::End
-    });
-    c
+    })?;
+    Ok(c)
 }
 
-fn skip_nchars(st: &mut ParseState, mut n: usize) -> () {
+fn skip_nchars(st: &mut ParseState, mut n: usize) ->
+ParseResult<()> {
     assert!(n >= 1);
     n += 1;
     go(st, |_| {
         n -= 1;
         if n > 0 { Decision::Continue } else { Decision::End }
-    });
+    })
 }
 
-#[allow(unused)]
-fn drop_while<F>(st: &mut ParseState, filter: F)
-where F: Fn(char) -> bool {
-    go(st, |c| if filter (c) { Decision::Continue } else { Decision::End });
-}
-
-fn take_while<F>(st: &mut ParseState, mut filter: F) -> Vec<char>
+fn take_while<F>(st: &mut ParseState, mut filter: F) ->
+ParseResult<Vec<char>>
 where F: FnMut(char) -> bool {
     let mut r: Vec<char> = Vec::new();
 
@@ -166,9 +163,9 @@ where F: FnMut(char) -> bool {
         else {
             Decision::End
         }
-    });
+    })?;
 
-    r
+    Ok(r)
 }
 
 fn parse_error_string<X>(st: &ParseState, error_msg: String) -> ParseResult<X> {
@@ -202,7 +199,7 @@ fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
                 }
             }
         }
-    });
+    })?;
 
     match it.next() {
         None => {
@@ -219,7 +216,8 @@ fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
     }
 }
 
-fn skip_space_wc(st: &mut ParseState, include_nl: bool) -> (Option<char>, usize) {
+fn skip_space_wc(st: &mut ParseState, include_nl: bool) ->
+ParseResult<(Option<char>, usize)> {
     let mut cc: Option<char> = None;
     let mut in_comment = false;
     let mut count = 0;
@@ -247,27 +245,25 @@ fn skip_space_wc(st: &mut ParseState, include_nl: bool) -> (Option<char>, usize)
         else {
             Decision::End
         }
-    });
+    })?;
 
-    return (cc, count);
+    Ok((cc, count))
 }
 
-fn skip_space(st: &mut ParseState) -> Option<char> {
-    skip_space_wc(st, false).0
+fn skip_space(st: &mut ParseState) -> ParseResult<Option<char>> {
+    Ok(skip_space_wc(st, false)?.0)
 }
 
 fn skip_at_least_one_space(st: &mut ParseState) -> ParseResult<Option<char>> {
-    let (r, c) = skip_space_wc(st, false);
-    if c > 0 {
-        Ok(r)
-    }
-    else {
-        parse_error(st, "Expected whitespace")
-    }
+    let (r, c) = skip_space_wc(st, false)?;
+    if c > 0
+        { Ok(r) }
+    else
+        { parse_error(st, "Expected whitespace") }
 }
 
-fn skip_space_inc_nl(st: &mut ParseState) -> Option<char> {
-    skip_space_wc(st, true).0
+fn skip_space_inc_nl(st: &mut ParseState) -> ParseResult<Option<char>> {
+    Ok(skip_space_wc(st, true)?.0)
 }
 
 fn identifier(st: &mut ParseState) -> ParseResult<String> {
@@ -280,7 +276,7 @@ fn identifier(st: &mut ParseState) -> ParseResult<String> {
         else {
             Decision::End
         }
-    });
+    })?;
 
     if current_str.len() == 0 {
         parse_error(st, "Expected identifier")
@@ -333,7 +329,7 @@ fn numeric_constant(st: &mut ParseState) -> ParseResult<g::Scalar> {
         n += 1;
         char::is_digit(c, 10) ||
         c == 'e' || c == '+' || (n == 1 && c == '-') || c == '.'
-    });
+    })?;
 
     if chars.len() == 0 {
         parse_error(st, "Expecting numeric constant")
@@ -382,9 +378,9 @@ fn entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
 
 fn material_pair(st: &mut ParseState) -> ParseResult<(String, String)> {
     let i1 = identifier(st)?;
-    skip_space(st);
+    skip_space(st)?;
     expect_str(st, "/")?;
-    skip_space(st);
+    skip_space(st)?;
     let i2 = identifier(st)?;
     Ok((i1, i2))
 }
@@ -403,7 +399,7 @@ fn make_segment_entry(x1: g::Scalar, y1: g::Scalar, x2: g::Scalar, y2: g::Scalar
 }
 
 fn optional_name(st: &mut ParseState) -> ParseResult<Option<String>> {
-    match peek(st) {
+    match peek(st)? {
         None => { return Ok(None) },
         Some(c) => {
             if c == '\n'
@@ -428,12 +424,12 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
         coords[i] = n;
     }
 
-    skip_space(st);
+    skip_space(st)?;
     let name = optional_name(st)?;
 
     // We expect possible whitespace followed by newline
     // or EOF.
-    let term = skip_space(st);
+    let term = skip_space(st)?;
     if !st.eof && term.is_some() && term.unwrap() != '\n' {
         return parse_error(st, "Junk at end of 'line' def");
     }
@@ -448,43 +444,43 @@ fn line_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
 fn arc_entry(st: &mut ParseState, is_circle: bool) -> ParseResult<Vec<Entry>> {
     let (i1, i2) = material_pair(st)?;
 
-    skip_space(st);
+    skip_space(st)?;
 
     expect_str(st, "(")?;
 
-    skip_space(st);
+    skip_space(st)?;
     let n_segs_f = numeric_constant(st)?;
     if n_segs_f < 3.0 || n_segs_f != n_segs_f.floor()
         { return parse_error(st, "Number of segments must be an integer >= 3 for arc/circle"); }
     let n_segs = n_segs_f as usize;
-    skip_space(st);
+    skip_space(st)?;
 
     let mut from = -1.0;
     let mut to = -1.0;
 
-    match peek(st) {
+    match peek(st)? {
         None => { return parse_error(st, "Unexpected end of file in middle of arc/circle definition"); },
         Some(c) => {
             if c == ':' {
-                skip_nchars(st, 1);
-                skip_space(st);
+                skip_nchars(st, 1)?;
+                skip_space(st)?;
                 from = numeric_constant(st)?;
                 if from < 0.0 || from != from.floor()
                     { return parse_error(st, "Beginning of segment range must be integer >= 0"); }
-                skip_space(st);
+                skip_space(st)?;
                 expect_str(st, "-")?;
-                skip_space(st);
+                skip_space(st)?;
                 to = numeric_constant(st)?;
                 if to < 1.0 || to != to.floor() || to > n_segs as f64
                     { return parse_error(st, "End of segment range must be integer >= 1.0 and <= number of segments"); }
-                skip_space(st);
+                skip_space(st)?;
             }
         }
     }
 
     expect_str(st, ")")?;
 
-    skip_space(st);
+    skip_space(st)?;
     let n_coords = if is_circle { 4 } else { 6 };
     let mut coords: [g::Scalar; 6] = [0.0; 6];
     for i in 0..n_coords {
@@ -498,7 +494,7 @@ fn arc_entry(st: &mut ParseState, is_circle: bool) -> ParseResult<Vec<Entry>> {
         coords[5] = coords[3];
     }
 
-    skip_space(st);
+    skip_space(st)?;
     let name = optional_name(st)?;
 
     let segs = g::arc_to_segments(
@@ -534,10 +530,10 @@ fn assignment(st: &mut ParseState) -> ParseResult<(String,g::Scalar)> {
     match identifier(st) {
         Err(e) => { return Err(e); },
         Ok(ident) => {
-            skip_space(st);
+            skip_space(st)?;
             if let Err(e) = expect_str(st, "=")
                 { return Err(e); }
-            skip_space(st);
+            skip_space(st)?;
 
             match numeric_constant(st) {
                 Err(e) => { Err(e) }
@@ -680,7 +676,7 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
         }
     }
     
-    skip_space(st);
+    skip_space(st)?;
     
     let mut i = 0;
     let mut first_was_dash = false;
@@ -700,12 +696,12 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
 
         i += 1;
         return Decision::Continue;
-    });
+    })?;
 
     if err
         { return parse_error(st, "Expecting |- or -|"); }
 
-    skip_space(st);
+    skip_space(st)?;
 
     let mut coords: [g::Scalar; 4] = [0.0; 4];
     for i in 0..4 {
@@ -735,18 +731,18 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
 }
 
 fn entry_sep(st: &mut ParseState) -> ParseResult<()> {
-    skip_space(st);
+    skip_space(st)?;
     if let Err(_) = expect_str(st, "\n")
         { return parse_error(st, "Expecting newline separator"); }
-    skip_space_inc_nl(st);
+    skip_space_inc_nl(st)?;
     Ok(())
 }
 
 fn document(st: &mut ParseState) -> ParseResult<ImportedGeometry> {
-    skip_space(st);
+    skip_space(st)?;
     let (r, e) = sep_by(st, entry_sep, entry)?;
 
-    skip_space_inc_nl(st);
+    skip_space_inc_nl(st)?;
     if !st.eof {
         return Err(e);
     }
