@@ -71,8 +71,8 @@ pub struct RayTraceInitArgs<'a> {
     pub qtree: &'a g::QTree<'a, RayTraceSegmentInfo>,
     pub segment_names: &'a HashMap<usize, String>,
     pub materials: &'a Vec<MaterialProperties>,
-    pub left_matprops_indices: &'a Vec<u8>,
-    pub right_matprops_indices: &'a Vec<u8>,
+    pub left_material_properties: &'a Vec<u8>,
+    pub right_material_properties: &'a Vec<u8>,
     pub recursion_limit: usize,
     pub ray_limit: usize
 }
@@ -141,12 +141,12 @@ where F: EventHandler {
             let into_matprops_i;
             let from_matprops_i;
             if side == -1 {
-                into_matprops_i = st.args.right_matprops_indices[segi];
-                from_matprops_i = st.args.left_matprops_indices[segi];
+                into_matprops_i = st.args.right_material_properties[segi];
+                from_matprops_i = st.args.left_material_properties[segi];
             }
             else {
-                into_matprops_i = st.args.left_matprops_indices[segi];
-                from_matprops_i = st.args.right_matprops_indices[segi];
+                into_matprops_i = st.args.left_material_properties[segi];
+                from_matprops_i = st.args.right_material_properties[segi];
             }
 
             let ref into_matprops = st.args.materials[into_matprops_i as usize];

@@ -79,8 +79,8 @@ fn test1() {
                         qtree: &qtree,
                         segment_names: &geom.segment_names,
                         materials: &geom.materials,
-                        left_matprops_indices: &geom.left_material_properties,
-                        right_matprops_indices: &geom.right_material_properties,
+                        left_material_properties: &geom.left_material_properties,
+                        right_material_properties: &geom.right_material_properties,
                         recursion_limit: 16,
                         ray_limit: 0
                     };
