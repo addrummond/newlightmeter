@@ -66,43 +66,31 @@ impl<'a> RayBuffer<'a> {
     }
 }
 
+pub struct RayTraceInitArgs<'a> {
+    pub tracing_properties: &'a TracingProperties,
+    pub qtree: &'a g::QTree<'a, RayTraceSegmentInfo>,
+    pub segment_names: &'a HashMap<usize, String>,
+    pub materials: &'a Vec<MaterialProperties>,
+    pub left_matprops_indices: &'a Vec<u8>,
+    pub right_matprops_indices: &'a Vec<u8>,
+    pub recursion_limit: usize,
+    pub ray_limit: usize
+}
+
 pub struct RayTraceState<'a> {
-    tracing_properties: &'a TracingProperties,
-    qtree: &'a g::QTree<'a, RayTraceSegmentInfo>,
-    segment_names: &'a HashMap<usize, String>,
-    materials: &'a Vec<MaterialProperties>,
-    left_matprops_indices: &'a Vec<u8>,
-    right_matprops_indices: &'a Vec<u8>,
-    recursion_limit: usize,
-    ray_limit: usize,
+    args: &'a RayTraceInitArgs<'a>,
     ray_count: usize,
     recursion_level: usize,
     rng: StdRng
 }
 
 impl<'a> RayTraceState<'a> {
-    pub fn initial(
-        tracing_properties: &'a TracingProperties,
-        qtree: &'a g::QTree<RayTraceSegmentInfo>,
-        segment_names: &'a HashMap<usize, String>,
-        materials: &'a Vec<MaterialProperties>,
-        left_matprops_indices: &'a Vec<u8>,
-        right_matprops_indices: &'a Vec<u8>,
-        recursion_limit: usize,
-        ray_limit: usize
-    ) -> RayTraceState<'a> {
+    pub fn initial(args: &'a RayTraceInitArgs) -> RayTraceState<'a> {
         RayTraceState {
-            tracing_properties: tracing_properties,
-            qtree: qtree,
-            segment_names: segment_names,
-            materials: materials,
-            left_matprops_indices: left_matprops_indices,
-            right_matprops_indices: right_matprops_indices,
-            recursion_limit: recursion_limit,
-            ray_limit: ray_limit,
+            args: args,
             ray_count: 0,
             recursion_level: 0,
-            rng: SeedableRng::from_seed(&(tracing_properties.random_seed)[..])
+            rng: SeedableRng::from_seed(&(args.tracing_properties.random_seed)[..])
         }
     }
 }
@@ -121,9 +109,9 @@ where F: EventHandler {
     let rayline = args.ray.p2 - args.ray.p1;
 
     let mut num_new_rays = 0;
-    if let Some((segs_with_info, intersect, _)) = st.qtree.get_segments_touched_by_ray(args.ray) {
+    if let Some((segs_with_info, intersect, _)) = st.args.qtree.get_segments_touched_by_ray(args.ray) {
         for (seg, segi) in segs_with_info {
-            if let Some(ref name) = st.segment_names.get(&segi) {
+            if let Some(ref name) = st.args.segment_names.get(&segi) {
                 (args.handle_event)(&Event::Hit {
                     segment_index: segi,
                     segment_name: name.as_str(),
@@ -153,16 +141,16 @@ where F: EventHandler {
             let into_matprops_i;
             let from_matprops_i;
             if side == -1 {
-                into_matprops_i = st.right_matprops_indices[segi];
-                from_matprops_i = st.left_matprops_indices[segi];
+                into_matprops_i = st.args.right_matprops_indices[segi];
+                from_matprops_i = st.args.left_matprops_indices[segi];
             }
             else {
-                into_matprops_i = st.left_matprops_indices[segi];
-                from_matprops_i = st.right_matprops_indices[segi];
+                into_matprops_i = st.args.left_matprops_indices[segi];
+                from_matprops_i = st.args.right_matprops_indices[segi];
             }
 
-            let ref into_matprops = st.materials[into_matprops_i as usize];
-            let ref from_matprops = st.materials[from_matprops_i as usize];
+            let ref into_matprops = st.args.materials[into_matprops_i as usize];
+            let ref from_matprops = st.args.materials[from_matprops_i as usize];
 
             // We need to calculate the extent to which the ray's intensity has been attenuated
             // by traveling through the relevant material for whatever distance.
@@ -208,7 +196,7 @@ where F: EventHandler
             
     // If the intensity of the reflected ray is above the thresholed,
     // then cast it in a randomly chosen direction.
-    if new_intensity > st.tracing_properties.intensity_threshold {
+    if new_intensity > st.args.tracing_properties.intensity_threshold {
         num_new_rays += 1;
 
         let mut new_diffuse_ray_props = *(args.ray_props);
@@ -250,7 +238,7 @@ where F: EventHandler
     //print!("SPECMAT {:?} {:?}", matprops, surface_normal);
     let mut num_new_rays = 0;
             
-    if new_intensity > st.tracing_properties.intensity_threshold {
+    if new_intensity > st.args.tracing_properties.intensity_threshold {
         num_new_rays += 1;
 
         let mut new_specular_ray_props = *(args.ray_props);
@@ -293,7 +281,7 @@ where F: EventHandler
 
     let mut num_new_rays = 0;
 
-    if new_intensity > st.tracing_properties.intensity_threshold {
+    if new_intensity > st.args.tracing_properties.intensity_threshold {
         num_new_rays += 1;
 
         // Calculate the refractive index for each material given
@@ -339,8 +327,8 @@ where F: EventHandler
 
 pub fn ray_trace_step<F>(st: &mut RayTraceState, rayb: &mut RayBuffer, handle_event: F) -> bool
 where F: EventHandler {
-    if (st.ray_limit != 0 && st.ray_count >= st.ray_limit) ||
-       (st.recursion_limit != 0 && st.recursion_level >= st.recursion_limit) ||
+    if (st.args.ray_limit != 0 && st.ray_count >= st.args.ray_limit) ||
+       (st.args.recursion_limit != 0 && st.recursion_level >= st.args.recursion_limit) ||
        (rayb.old_rays.len() == 0) {
         return true;
     }

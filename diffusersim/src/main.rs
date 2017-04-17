@@ -74,16 +74,17 @@ fn test1() {
                         intensity_threshold: 0.01
                     };
 
-                    let mut st = t::RayTraceState::initial(
-                        &tracing_props,
-                        &qtree,
-                        &geom.segment_names,
-                        &geom.materials,
-                        &geom.left_material_properties,
-                        &geom.right_material_properties,
-                        16,
-                        0,
-                    );
+                    let rt_init = t::RayTraceInitArgs {
+                        tracing_properties: &tracing_props,
+                        qtree: &qtree,
+                        segment_names: &geom.segment_names,
+                        materials: &geom.materials,
+                        left_matprops_indices: &geom.left_material_properties,
+                        right_matprops_indices: &geom.right_material_properties,
+                        recursion_limit: 16,
+                        ray_limit: 0
+                    };
+                    let mut st = t::RayTraceState::initial(&rt_init);
 
                     let mut rayb = t::RayBuffer {
                         old_rays: &mut rays,
