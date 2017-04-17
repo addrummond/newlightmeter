@@ -15,8 +15,12 @@ pub enum Beam {
         to: g::Point2,
         n_rays: usize,
         shiny_side_is_left: bool,
-        wavelength: g::Scalar,
-        intensity: g::Scalar
+        light_properties: t::LightProperties
+    },
+    Ray {
+        from: g::Point2,
+        to: g::Point2,
+        light_properties: t::LightProperties
     }
 }
 
@@ -366,6 +370,9 @@ fn entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
             else if ident == "material" {
                 material_entry(st)
             }
+            else if ident == "ray" {
+                ray_entry(st)
+            }
             else if ident == "colbeam" {
                 colbeam_entry(st)
             }
@@ -641,40 +648,92 @@ fn material_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     }
 }
 
+fn ray_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
+    let mut wavelength: g::Scalar = 0.0;
+    let mut intensity: g::Scalar = 0.0;
+
+    let mut got: u32 = 0;
+    let mut n = 0;
+    let assignments = assignment_hash(st)?;
+    for (k, v) in assignments {
+        n += 1;
+
+        if k == "l" {
+            got |= 0b1;
+            wavelength = v;
+        }
+        else if k == "i" {
+            got |= 0b10;
+            intensity = v;
+        }
+        else {
+            return parse_error(st, "Unrecognized ray property");
+        }
+    }
+    if got != 0b11
+        { return parse_error(st, "Ray must be specified for 'l' (wavelength) and i (intensity)"); }
+    if n > 2
+        { return parse_error(st, "Duplicate ray properties"); }
+    
+    skip_space(st)?;
+    expect_str(st, "|")?;
+    skip_space(st)?;
+
+    let mut coords: [g::Scalar; 4] = [0.0; 4];
+    for i in 0..4 {
+        if i != 0 {
+            skip_at_least_one_space(st)?;
+        }
+
+        let n = numeric_constant(st)?;
+        coords[i] = n;
+    }
+
+    let ray = Beam::Ray {
+        from: g::Point2::new(coords[0], coords[1]),
+        to: g::Point2::new(coords[2], coords[3]),
+        light_properties: t::LightProperties {
+            wavelength: wavelength,
+            intensity: intensity
+        }
+    };
+
+    Ok(vec![Entry::Beam(ray)])
+}
+
 fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     let mut n_rays: usize = 0;
     let mut wavelength: g::Scalar = 0.0;
     let mut intensity: g::Scalar = 0.0;
 
-    match assignment_hash(st) {
-        Err(e) => { return Err(e); },
-        Ok(assignments) => {
-            let mut i = 0;
-            for (k, v) in assignments {
-                if k == "n" {
-                    if v < 1.0 || v.floor() != v
-                        { return parse_error(st, "Number of rays must be a positive integer"); }
+    let mut got: u32 = 0;
+    let mut n = 0;
+    let assignments = assignment_hash(st)?;
+    for (k, v) in assignments {
+        n += 1;
 
-                    i += 1;
-                    n_rays = v as usize;
-                }
-                else if k == "l" {
-                    i += 1;
-                    wavelength = v;
-                }
-                else if k == "i" {
-                    i += 1;
-                    intensity = v;
-                }
-                else {
-                    return parse_error(st, "Unrecognized ray property");
-                }
-            }
-            if i < 3 {
-                return parse_error(st, "Collimated beam must be specified for 'rays' (number of rays), 'l' (wavelength) and 'i' (intensity)");
-            }
+        if k == "n" {
+            if v < 1.0 || v.floor() != v
+                { return parse_error(st, "Number of rays must be a positive integer"); }
+             got |= 0b1;
+             n_rays = v as usize;
+        }
+        else if k == "l" {
+            got |= 0b10;
+            wavelength = v;
+        }
+        else if k == "i" {
+            got |= 0b100;
+            intensity = v;
+        }
+        else {
+            return parse_error(st, "Unrecognized beam property");
         }
     }
+    if got != 0b111
+        { return parse_error(st, "Collimated beam must be specified for 'n' (number of rays), 'l' (wavelength) and 'i' (intensity)"); }
+    if n > 3
+        { return parse_error(st, "Duplicate beam properties"); }
     
     skip_space(st)?;
     
@@ -706,16 +765,11 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     let mut coords: [g::Scalar; 4] = [0.0; 4];
     for i in 0..4 {
         if i != 0 {
-            if let Err(e) = skip_at_least_one_space(st)
-                { return Err(e); }
+            skip_at_least_one_space(st)?;
         }
 
-        match numeric_constant(st) {
-            Err(e) => { return Err(e); },
-            Ok(n) => {
-                coords[i] = n;
-            }
-        }
+        let n = numeric_constant(st)?;
+        coords[i] = n;
     }
 
     let beam = Beam::Collimated {
@@ -723,8 +777,10 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
         to:   g::Point2::new(coords[2], coords[3]),
         n_rays: n_rays,
         shiny_side_is_left: first_was_dash,
-        wavelength: wavelength,
-        intensity: intensity
+        light_properties: t::LightProperties {
+            wavelength: wavelength,
+            intensity: intensity
+        }
     };
 
     Ok(vec![Entry::Beam(beam)])

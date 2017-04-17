@@ -48,18 +48,20 @@ fn test1() {
 
                     let mut rays: Vec<(g::Ray, t::LightProperties)> = Vec::new();
                     for b in &geom.beams {
-                        let gi::Beam::Collimated { from, to, shiny_side_is_left, n_rays, wavelength, intensity } = *b;
-                        let it = g::CollimatedBeamRayIterator::new(from, to, shiny_side_is_left, n_rays);
-                        for (p1, p2) in it {
-                            let new_ray = g::Ray {
-                                p1: p1,
-                                p2: p2
-                            };
-                            let props = t::LightProperties {
-                                wavelength: wavelength,
-                                intensity: intensity
-                            };
-                            rays.push((new_ray, props));
+                        match *b {
+                            gi::Beam::Collimated { from, to, shiny_side_is_left, n_rays, light_properties } => {
+                                let it = g::CollimatedBeamRayIterator::new(from, to, shiny_side_is_left, n_rays);
+                                for (p1, p2) in it {
+                                    let new_ray = g::Ray {
+                                        p1: p1,
+                                        p2: p2
+                                    };
+                                    rays.push((new_ray, light_properties));
+                                }
+                            },
+                            gi::Beam::Ray { from, to, light_properties } => {
+                                rays.push((g::Ray { p1: from, p2: to }, light_properties));
+                            }
                         }
                     }
 

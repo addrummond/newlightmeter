@@ -7,7 +7,7 @@ use geom::{Ray,Scalar,Point2,Vector2};
 use geom as g;
 use nalgebra;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct LightProperties {
     pub wavelength: Scalar, // um
     pub intensity: Scalar
