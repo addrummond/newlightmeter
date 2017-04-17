@@ -113,7 +113,7 @@ fn make_segment_entry(x1: g::Scalar, y1: g::Scalar, x2: g::Scalar, y2: g::Scalar
 }
 
 fn optional_name(st: &mut p::ParseState) -> p::ParseResult<Option<String>> {
-    match p::peek(st)? {
+    match p::peek_char(st)? {
         None => { return Ok(None) },
         Some(c) => {
             if c == '\n'
@@ -165,7 +165,7 @@ fn arc_entry(st: &mut p::ParseState, is_circle: bool) -> p::ParseResult<Vec<Entr
     let mut from = -1.0;
     let mut to = -1.0;
 
-    match p::peek(st)? {
+    match p::peek_char(st)? {
         None => { return p::parse_error(st, "Unexpected end of file in middle of arc/circle definition"); },
         Some(c) => {
             if c == ':' {
@@ -426,9 +426,9 @@ fn colbeam_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     let mut i = 0;
     let mut first_was_dash = false;
     let mut err = false;
-    p::go(st, |c| {
+    while let Some(c) = p::peek_char(st)? {
         if i > 1
-            { return p::Decision::End; }
+            { break; }
 
         if c == '-' {
             if i == 0
@@ -436,12 +436,12 @@ fn colbeam_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
         }
         else if c != '|' {
             err = true;
-            return p::Decision::End;
+            break;
         }
 
+        p::skip_peeked(st, c);
         i += 1;
-        return p::Decision::Continue;
-    })?;
+    }
 
     if err
         { return p::parse_error(st, "Expecting |- or -|"); }

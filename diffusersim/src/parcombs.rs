@@ -33,7 +33,8 @@ pub struct ParseState<'a> {
     i: usize,
     line: usize,
     col: usize,
-    eof: bool
+    peek: usize,
+    i_at_last_peek: isize
 }
 
 impl<'a> ParseState<'a> {
@@ -43,15 +44,16 @@ impl<'a> ParseState<'a> {
             i: 0,
             line: 1,
             col: 0,
-            eof: false
+            peek: 0,
+            i_at_last_peek: -1
         }
     }
 
-    pub fn save_position(&self) -> (usize, bool) {
-        (self.i, self.eof)
+    pub fn save_position(&self) -> usize {
+        self.i
     }
 
-    pub fn at_eof(&self) -> bool { self.eof }
+    pub fn at_eof(&self) -> bool { self.i >= self.input.len() }
 }
 
 pub enum Decision {
@@ -59,55 +61,69 @@ pub enum Decision {
     End
 }
 
-pub fn go<F>(st: &mut ParseState, mut action: F)
--> ParseResult<()>
-where F: FnMut (char) -> Decision {
-    loop {
-        let sl = &st.input[st.i ..];
-        if sl.len() == 0 {
-            st.eof = true;
-            return Ok(());
-        }
-        else {
-            match get_next_utf8_codepoint_as_char(sl) {
-                None => {
-                    return parse_error_string(st, format!("UTF-8 decode error at byte {}", st.i));
-                },
-                Some((c,n)) => {
-                    if let Decision::End = action(c)
-                        { return Ok(()); }
-                    
-                    st.i += n;
-                    if c == '\n' {
-                        st.line += 1;
-                        st.col = 0;
-                    }
-                    else {
-                        st.col += 1;
-                    }
-                }
-            }
+pub fn peek_char(st: &mut ParseState) -> ParseResult<Option<char>> {
+    if st.i >= st.input.len()
+        { return Ok(None); }
+    
+    let sl = &st.input[st.i ..];
+    match get_next_utf8_codepoint_as_char(sl) {
+        None => { parse_error_string(st, format!("UTF-8 decode error at byte {}", st.i)) },
+        Some((c, n)) => {
+            st.peek = n;
+            st.i_at_last_peek = st.i as isize;
+            Ok(Some(c))
         }
     }
 }
 
-pub fn peek(st: &mut ParseState) -> ParseResult<Option<char>> {
-    let mut c: Option<char> = None;
-    go(st, |c2| {
-        c = Some(c2);
-        Decision::End
-    })?;
-    Ok(c)
+pub fn update_line_col(st: &mut ParseState, c: char) {
+    if c == '\n' {
+        st.line += 1;
+        st.col = 0;
+    }
+    else {
+        st.col += 1;
+    }
+}
+
+pub fn skip_peeked(st: &mut ParseState, c: char) {
+    // If this isn't true, then more was read since the last peek
+    // and we can't skip the last peek.
+    assert!((st.i_at_last_peek as usize) == st.i);
+
+    st.i += st.peek;
+    update_line_col(st, c);
+}
+
+pub fn next_char(st: &mut ParseState) -> ParseResult<Option<char>> {
+    if st.i >= st.input.len()
+        { return Ok(None); }
+    
+    let sl = &st.input[st.i ..];
+    match get_next_utf8_codepoint_as_char(sl) {
+        None => {
+            parse_error_string(st, format!("UTF-8 decode error at byte {}", st.i))
+        },
+        Some((c, n)) => {
+            st.i += n;
+            update_line_col(st, c);
+            Ok(Some(c))
+        }
+    }
 }
 
 pub fn skip_nchars(st: &mut ParseState, mut n: usize) ->
 ParseResult<()> {
     assert!(n >= 1);
+
     n += 1;
-    go(st, |_| {
+    while n > 0 {
+        if let None = next_char(st)?
+            { return parse_error(st, "Unexpected EOF"); }
         n -= 1;
-        if n > 0 { Decision::Continue } else { Decision::End }
-    })
+    }
+
+    Ok(())
 }
 
 pub fn take_while<F>(st: &mut ParseState, mut filter: F) ->
@@ -115,15 +131,15 @@ ParseResult<Vec<char>>
 where F: FnMut(char) -> bool {
     let mut r: Vec<char> = Vec::new();
 
-    go(st, |c| {
+    while let Some(c) = peek_char(st)? {
         if filter(c) {
+            skip_peeked(st, c);
             r.push(c);
-            Decision::Continue
         }
         else {
-            Decision::End
+            break;
         }
-    })?;
+    }
 
     Ok(r)
 }
@@ -144,22 +160,18 @@ pub fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
     let mut it = expected.chars();
     let mut error = false;
 
-    go(st, |c| {
+    while let Some(c) = peek_char(st)? {
         match it.next() {
-            None => {
-                Decision::End
-            },
+            None => { break; },
             Some(cc) => {
                 if c != cc {
                     error = true;
-                    Decision::End
+                    break;
                 }
-                else {
-                    Decision::Continue
-                }
+                skip_peeked(st, c);
             }
         }
-    })?;
+    }
 
     match it.next() {
         None => {
@@ -182,30 +194,31 @@ ParseResult<(Option<char>, usize)> {
     let mut in_comment = false;
     let mut count = 0;
 
-    go(st, |c| {
+    while let Some(c) = peek_char(st)? {
         cc = Some(c);
+        count += 1;
 
         if c == '\n' {
             in_comment = false;
-            if include_nl { Decision::Continue } else { Decision::End }
+            if !include_nl
+                { return Ok((cc, count)); }
+            skip_peeked(st, c);
         }
         else if char::is_whitespace(c) {
-            count += 1;
-            Decision::Continue
+            skip_peeked(st, c);
         }
         else if c == '#' {
-            count += 1;
             in_comment = true;
-            Decision::Continue
+            skip_peeked(st, c);
         }
         else if in_comment {
-            count += 1;
-            Decision::Continue
+            skip_peeked(st, c);
         }
         else {
-            Decision::End
+            count -= 1;
+            return Ok((cc, count));
         }
-    })?;
+    }
 
     Ok((cc, count))
 }
@@ -228,15 +241,15 @@ pub fn skip_space_inc_nl(st: &mut ParseState) -> ParseResult<Option<char>> {
 
 pub fn identifier(st: &mut ParseState) -> ParseResult<String> {
     let mut current_str: Vec<char> = Vec::new();
-    go(st, |c| {
+    while let Some(c) = peek_char(st)? {
         if char::is_alphanumeric(c) || c == '_' {
             current_str.push(c);
-            Decision::Continue
+            skip_peeked(st, c);
         }
         else {
-            Decision::End
+            break;
         }
-    })?;
+    }
 
     if current_str.len() == 0 {
         parse_error(st, "Expected identifier")
