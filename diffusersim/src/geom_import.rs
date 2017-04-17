@@ -655,22 +655,22 @@ fn ray_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     let mut wavelength: g::Scalar = 0.0;
     let mut intensity: g::Scalar = 0.0;
 
-    let mut got: u32 = 0;
+    let mut n = 0;
     let assignments = assignment_hash(st)?;
     for (k, v) in assignments {
         if k == "l" {
-            got |= 0b1;
+            n += 1;
             wavelength = v;
         }
         else if k == "i" {
-            got |= 0b10;
+            n += 1;
             intensity = v;
         }
         else {
             return parse_error(st, "Unrecognized ray property");
         }
     }
-    if got != 0b11
+    if n != 2
         { return parse_error(st, "Ray must be specified for 'l' (wavelength) and i (intensity)"); }
     
     skip_space(st)?;
@@ -704,28 +704,28 @@ fn colbeam_entry(st: &mut ParseState) -> ParseResult<Vec<Entry>> {
     let mut wavelength: g::Scalar = 0.0;
     let mut intensity: g::Scalar = 0.0;
 
-    let mut got: u32 = 0;
+    let mut n = 0;
     let assignments = assignment_hash(st)?;
     for (k, v) in assignments {
         if k == "n" {
             if v < 1.0 || v.floor() != v
                 { return parse_error(st, "Number of rays must be a positive integer"); }
-             got |= 0b1;
+             n += 1;
              n_rays = v as usize;
         }
         else if k == "l" {
-            got |= 0b10;
+            n += 1;
             wavelength = v;
         }
         else if k == "i" {
-            got |= 0b100;
+            n += 1;
             intensity = v;
         }
         else {
             return parse_error(st, "Unrecognized beam property");
         }
     }
-    if got != 0b111
+    if n != 3
         { return parse_error(st, "Collimated beam must be specified for 'n' (number of rays), 'l' (wavelength) and 'i' (intensity)"); }
     
     skip_space(st)?;
