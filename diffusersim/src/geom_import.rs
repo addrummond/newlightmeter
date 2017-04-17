@@ -81,7 +81,7 @@ fn entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
             // We expect possible whitespace followed by newline
             // or EOF.
             let term = p::skip_space(st)?;
-            if !st.at_eof() && term.is_some() && term.unwrap() != '\n' {
+            if !p::at_eof(st) && term.is_some() && term.unwrap() != '\n' {
                 return p::parse_error_string(st, format!("Junk at end of '{}' def", ident));
             }
 
@@ -485,7 +485,7 @@ fn document(st: &mut p::ParseState) -> p::ParseResult<ImportedGeometry> {
     let (r, e) = p::sep_by(st, entry_sep, entry)?;
 
     p::skip_space_inc_nl(st)?;
-    if !st.at_eof() {
+    if !p::at_eof(st) {
         return Err(e);
     }
 

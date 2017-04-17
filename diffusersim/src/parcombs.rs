@@ -48,17 +48,14 @@ impl<'a> ParseState<'a> {
             i_at_last_peek: -1
         }
     }
-
-    pub fn save_position(&self) -> usize {
-        self.i
-    }
-
-    pub fn at_eof(&self) -> bool { self.i >= self.input.len() }
 }
 
-pub enum Decision {
-    Continue,
-    End
+pub fn save_position(st: &mut ParseState) -> usize {
+    st.i
+}
+
+pub fn at_eof(st: &mut ParseState) -> bool {
+    st.i >= st.input.len()
 }
 
 pub fn peek_char(st: &mut ParseState) -> ParseResult<Option<char>> {
@@ -264,16 +261,16 @@ where F1: Parser<R1>,
       F2: Parser<R2> {
 
     let mut rs: Vec<R2> = Vec::new();
-    let mut pos = st.save_position();
+    let mut pos = save_position(st);
 
     loop {
         match parser(st) {
             Ok(r) => {
                 rs.push(r);
-                pos = st.save_position();
+                pos = save_position(st);
             }
             Err(e) => {
-                if pos != st.save_position()
+                if pos != save_position(st)
                     { return Err(e); }
                 else
                     { return Ok((rs, e)); }
@@ -281,13 +278,13 @@ where F1: Parser<R1>,
         }
 
         if let Err(e) = sep(st) {
-            if pos != st.save_position()
+            if pos != save_position(st)
                 { return Err(e); }
             else
                 { return Ok((rs, e)); }
         }
 
-        pos = st.save_position();
+        pos = save_position(st);
     }
 }
 
