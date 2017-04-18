@@ -48,6 +48,41 @@ pub struct ImportedGeometry {
     pub segment_names: HashMap<usize, String>
 }
 
+pub fn combine_imported_geometry(target: &mut ImportedGeometry, rest: &[&ImportedGeometry]) -> Result<(), String> {
+    for &g in rest {
+        // Check that there are no duplicate segment names.
+        // Not efficient, but this code doesn't need to be.
+        for n1 in g.segment_names.values() {
+            for n2 in target.segment_names.values() {
+                if *n1 == *n2
+                    { return Err(format!("Duplicate segment name '{}' in multiple geom files", n1)); }
+            }
+        }
+
+        let orig_n_segments = target.segments.len();
+        let orig_n_materials = target.materials.len();
+
+        target.segments.extend(g.segments.iter().cloned());
+        target.materials.extend(g.materials.iter().cloned());
+        if target.materials.len() > 255
+            { return Err(format!("More than 255 materials in total when combining multiple geom files")); }
+        target.beams.extend(g.beams.iter().cloned());
+
+        for i in target.left_material_properties.iter_mut().skip(orig_n_materials) {
+            *i += orig_n_materials as u8;
+        }
+        for i in target.right_material_properties.iter_mut().skip(orig_n_materials) {
+            *i += orig_n_materials as u8;
+        }
+
+        for (k, v) in &g.segment_names {
+            target.segment_names.insert(k + orig_n_segments, v.clone());
+        }
+    }
+
+    Ok(())
+}
+
 fn entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     match p::identifier(st) {
         Err(e) => { Err(e) },
