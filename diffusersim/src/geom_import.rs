@@ -2,6 +2,7 @@ use geom as g;
 use trace as t;
 use std::str;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::iter;
 use std::fs::File;
 use std::io;
@@ -49,14 +50,16 @@ pub struct ImportedGeometry {
 }
 
 pub fn combine_imported_geometry(target: &mut ImportedGeometry, rest: &[&ImportedGeometry]) -> Result<(), String> {
+    let mut attested_segnames: HashSet<String> = HashSet::new();
+
     for &g in rest {
-        // Check that there are no duplicate segment names.
         // Not efficient, but this code doesn't need to be.
-        for n1 in g.segment_names.values() {
-            for n2 in target.segment_names.values() {
-                if *n1 == *n2
-                    { return Err(format!("Duplicate segment name '{}' in multiple geom files", n1)); }
-            }
+        for n in g.segment_names.values() {
+            if attested_segnames.contains(n)
+                { return Err(format!("Duplicate segment name '{}' in multiple geom files", n)); }
+        }
+        for n in g.segment_names.values() {
+            attested_segnames.insert(n.clone());
         }
 
         let orig_n_segments = target.segments.len();
