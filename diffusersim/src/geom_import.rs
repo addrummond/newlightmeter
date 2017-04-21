@@ -4,7 +4,6 @@ use std::str;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter;
-use std::fs::File;
 use std::io;
 use std::io::BufReader;
 use std::io::prelude::*;
@@ -604,8 +603,7 @@ pub fn parse_geometry(input: &[u8]) -> p::ParseResult<ImportedGeometry> {
     document(&mut st)
 }
 
-pub fn parse_geometry_file(filename: &str) -> io::Result<p::ParseResult<ImportedGeometry>> {
-    let file = File::open(filename)?;
+pub fn parse_geometry_file(file: Box<io::Read>) -> io::Result<p::ParseResult<ImportedGeometry>> {
     let mut buf_reader = BufReader::new(file);
     let mut contents: Vec<u8> = Vec::new();
     buf_reader.read_to_end(&mut contents)?;

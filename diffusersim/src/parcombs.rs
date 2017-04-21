@@ -1,10 +1,27 @@
 use std::str;
+use std::error;
+use std::fmt;
 
 #[derive(Debug)]
 pub struct ParseError {
     pub line: usize,
     pub col: usize,
     pub err: String
+}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Line {} col {}: {}", self.line, self.col, self.err)
+    }
+}
+
+impl error::Error for ParseError {
+    fn description(&self) -> &str {
+        "Parse error"
+    }
+    fn cause(&self) -> Option<&error::Error> {
+        Some(self)
+    }
 }
 
 pub type ParseResult<T> = Result<T, ParseError>;
