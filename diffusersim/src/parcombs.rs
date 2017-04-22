@@ -35,6 +35,8 @@ fn get_next_utf8_codepoint_as_char(arr: &[u8]) -> Option<(char,usize)> {
     // As non-ASCII chars will be rare in practice, try decoding
     // just one byte first, then two, then three, etc.
     for i in 1..5 { // Max length of UTF-8 codepoint is 4 bytes.
+        if i > arr.len()
+            { return None }
         let r = str::from_utf8(&arr[0..i]);
         if let Ok(s) = r {
             if let Some(c) = s.chars().next()
