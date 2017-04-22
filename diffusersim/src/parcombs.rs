@@ -1,3 +1,18 @@
+//! This module provides utilities for implementing recursive
+//! descent parsers. It's offers a sort of halfway house between
+//! using a true parser combinator library and writing a recursive
+//! descent parser from scratch. It provides a standard type for
+//! parsers, `Parser<T>`, a few basic parsers such as parsers for
+//! identifiers, numeric constants, etc., and some higher order parsers.
+//!
+//! The utility functions are designed to make it difficult to
+//! accidentally write backtracking parsers. Recursive descent parsers
+//! are efficient only if they have limited backtracking.
+//!
+//! IMHO the parser combinator approach is a bit clunky in
+//! Rust, and of little benefit in an imperative language that already has
+//! state and sequencing as primitive concepts.
+
 use std::str;
 use std::error;
 use std::fmt;
@@ -31,7 +46,7 @@ pub trait Parser<T>: FnMut (&mut ParseState) -> ParseResult<T> { }
 impl <T,U> Parser<T> for U where U: FnMut (&mut ParseState) -> ParseResult<T> { }
 
 /// This function gets the next unicode code point given a slice of bytes.
-/// Once the 'next_code_point' function moves to stable yet, it should be possible
+/// Once the 'next_code_point' function moves to stable, it should be possible
 /// to implement the function below a little more simply and efficiently.
 fn get_next_utf8_codepoint_as_char(arr: &[u8]) -> Option<(char,usize)> {
     // As non-ASCII chars will be rare in practice, try decoding
@@ -172,8 +187,27 @@ ParseResult<()> {
     Ok(())
 }
 
+/// Skip code points until one is encountered that does not match the
+/// supplied predicate. Returns the number of code points skipped.
+pub fn skip_while<F>(st: &mut ParseState, mut filter: F) ->
+ParseResult<usize>
+where F: FnMut(char) -> bool {
+    let mut n: usize = 0;
+    while let Some(c) = peek_char(st)? {
+        if filter(c) {
+            n += 1;
+            skip_peeked(st, c);
+        }
+        else {
+            break;
+        }
+    }
+
+    Ok(n)
+}
+
 /// Read code points until one is encountered that does not match the
-/// supplied predicate.
+/// supplied predicate. Return a vector of the code points read.
 pub fn take_while<F>(st: &mut ParseState, mut filter: F) ->
 ParseResult<Vec<char>>
 where F: FnMut(char) -> bool {
@@ -240,11 +274,13 @@ pub fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
     }
 }
 
-/// A parser that skips whitespace chars, including '#' comments,
-/// and returns the last char skipped, if any, together with the number
-/// of chars skipped. The `include_nl` parameters determines whether
-/// or not newlines ('\n') count as whitespace.
-pub fn skip_space_wc(st: &mut ParseState, include_nl: bool) ->
+/// A parser that skips whitespace chars, including single-line comments
+/// initiated by the supplied comment char, and returns the last char
+/// skipped, if any, together with the number of chars skipped.
+/// The `include_nl` parameters determines whether or not newlines ('\n')
+/// count as whitespace. To skip whitespace without parsing comments
+/// use `skip_while` with a suitable predicate.
+pub fn skip_space_wc(st: &mut ParseState, comment_char: char, include_nl: bool) ->
 ParseResult<(Option<char>, usize)> {
     let mut cc: Option<char> = None;
     let mut in_comment = false;
@@ -264,7 +300,7 @@ ParseResult<(Option<char>, usize)> {
             cc = Some(c);
             skip_peeked(st, c);
         }
-        else if c == '#' {
+        else if c == comment_char {
             cc = Some(c);
             in_comment = true;
             skip_peeked(st, c);
@@ -282,28 +318,34 @@ ParseResult<(Option<char>, usize)> {
     Ok((cc, count))
 }
 
-/// Skips non-newline whitespace, including '#' comments,
-/// and returns the last char skipped, if any.
-pub fn skip_space(st: &mut ParseState) -> ParseResult<Option<char>> {
-    Ok(skip_space_wc(st, false)?.0)
+/// Skips non-newline whitespace, including single-line comments
+/// initiated by the supplied comment char,
+/// and returns the last char skipped, if any. To skip
+/// whitespace without parsing comments use `skip_while` with a suitable predicate.
+pub fn skip_space(st: &mut ParseState, comment_char: char) -> ParseResult<Option<char>> {
+    Ok(skip_space_wc(st, comment_char, false)?.0)
 }
 
-/// Skips non-newline whitespace, including '#' comments, and returns
+/// Skips non-newline whitespace, including single-line comments
+/// initiated by the supplied comment char, and returns
 /// the last char skipped. Fails if no whitespace characters
-/// are encountered.
-pub fn skip_at_least_one_space(st: &mut ParseState) -> ParseResult<char> {
-    let (r, c) = skip_space_wc(st, false)?;
+/// are encountered. To skip whitespace without parsing comments use
+/// `skip_while` with a suitable predicate.
+pub fn skip_at_least_one_space(st: &mut ParseState, comment_char: char) -> ParseResult<char> {
+    let (r, c) = skip_space_wc(st, comment_char, false)?;
     if c > 0
         { Ok(r.unwrap()) } // 'unwrap' guaranteed not to panic given that c > 0
     else
         { parse_error(st, "Expected whitespace, found '{}'") }
 }
 
-/// Skips whitespace, including newlines and '#' comments, and returns
+/// Skips whitespace, including newlines and single-line comments
+/// initiated by the supplied comment char, and returns
 /// the last char skipped. Fails if no whitespace characters
-/// are encountered.
-pub fn skip_space_inc_nl(st: &mut ParseState) -> ParseResult<Option<char>> {
-    Ok(skip_space_wc(st, true)?.0)
+/// are encountered. To skip whitespace without parsing comments use
+/// `skip_while` with a suitable predicate.
+pub fn skip_space_inc_nl(st: &mut ParseState, comment_char: char) -> ParseResult<Option<char>> {
+    Ok(skip_space_wc(st, comment_char, true)?.0)
 }
 
 /// Parses an identifier. I.e. an alpha char or '_' followed by 0 or more
@@ -369,9 +411,9 @@ where F1: Parser<R1>,
 }
 
 /// `space_separated(st, parser)` is equivalent to `sep_by(st, skip_at_least_one_space, parser)`.
-pub fn space_separated<R,F>(st: &mut ParseState, parser: F) -> ParseResult<(Vec<R>, ParseError)>
+pub fn space_separated<R,F>(st: &mut ParseState, comment_char: char, parser: F) -> ParseResult<(Vec<R>, ParseError)>
 where F: Parser<R> {
-    sep_by(st, skip_at_least_one_space, parser)
+    sep_by(st, |st: &mut ParseState| { skip_at_least_one_space(st, comment_char) }, parser)
 }
 
 /// Parses a floating point constant as an `f64`.

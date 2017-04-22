@@ -10,6 +10,8 @@ use std::io::prelude::*;
 
 use parcombs as p;
 
+const COMMENT_CHAR: char = '#';
+
 #[derive(Debug, Clone)]
 pub enum Beam {
     Collimated {
@@ -85,11 +87,21 @@ pub fn combine_imported_geometry(target: &mut ImportedGeometry, rest: &[Imported
     Ok(())
 }
 
+fn my_skip_space(st: &mut p::ParseState) -> p::ParseResult<Option<char>>  {
+    p::skip_space(st, COMMENT_CHAR)
+}
+fn my_skip_at_least_one_space(st: &mut p::ParseState) -> p::ParseResult<char> {
+    p::skip_at_least_one_space(st, COMMENT_CHAR)
+}
+fn my_skip_space_inc_nl(st: &mut p::ParseState) -> p::ParseResult<Option<char>> {
+    p::skip_space_inc_nl(st, COMMENT_CHAR)
+}
+
 fn entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     match p::identifier(st) {
         Err(e) => { Err(e) },
         Ok(ident) => {
-            if let Err(e) = p::skip_at_least_one_space(st)
+            if let Err(e) = my_skip_at_least_one_space(st)
                 { return Err(e); }
 
             let r: p::ParseResult<Vec<Entry>>;
@@ -117,7 +129,7 @@ fn entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
 
             // We expect possible whitespace followed by newline
             // or EOF.
-            let term = p::skip_space(st)?;
+            let term = my_skip_space(st)?;
             if !p::at_eof(st) && term.is_some() && term.unwrap() != '\n' {
                 return p::parse_error_string(st, format!("Junk at end of '{}' def", ident));
             }
@@ -129,9 +141,9 @@ fn entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
 
 fn material_pair(st: &mut p::ParseState) -> p::ParseResult<(String, String)> {
     let i1 = p::identifier(st)?;
-    p::skip_space(st)?;
+    my_skip_space(st)?;
     p::expect_str(st, "/")?;
-    p::skip_space(st)?;
+    my_skip_space(st)?;
     let i2 = p::identifier(st)?;
     Ok((i1, i2))
 }
@@ -158,7 +170,7 @@ fn optional_name(st: &mut p::ParseState) -> p::ParseResult<Option<String>> {
             else if c != 'n'
                 { return p::parse_error(st, "Expected end of segment/arc definition or optional name"); }
             p::expect_str(st, "named")?;
-            p::skip_at_least_one_space(st)?;
+            my_skip_at_least_one_space(st)?;
             let name = p::identifier(st)?;
             Ok(Some(name))
         }
@@ -170,12 +182,12 @@ fn line_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     let mut coords: [g::Scalar; 4] = [0.0; 4];
 
     for i in 0..4 {
-        p::skip_at_least_one_space(st)?;
+        my_skip_at_least_one_space(st)?;
         let n = p::numeric_constant(st)? as g::Scalar;
         coords[i] = n;
     }
 
-    p::skip_space(st)?;
+    my_skip_space(st)?;
     let name = optional_name(st)?;
 
     Ok(vec![make_segment_entry(
@@ -188,15 +200,15 @@ fn line_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
 fn arc_entry(st: &mut p::ParseState, is_circle: bool) -> p::ParseResult<Vec<Entry>> {
     let (i1, i2) = material_pair(st)?;
 
-    p::skip_space(st)?;
+    my_skip_space(st)?;
     p::expect_str(st, "(")?;
-    p::skip_space(st)?;
+    my_skip_space(st)?;
 
     let n_segs_f = p::numeric_constant(st)? as g::Scalar;
     if n_segs_f < 3.0 || n_segs_f != n_segs_f.floor()
         { return p::parse_error_string(st, format!("Number of segments must be an integer >= 3 for arc/circle, not {}", n_segs_f)); }
     let n_segs = n_segs_f as usize;
-    p::skip_space(st)?;
+    my_skip_space(st)?;
 
     let mut from = -1.0;
     let mut to = -1.0;
@@ -205,30 +217,30 @@ fn arc_entry(st: &mut p::ParseState, is_circle: bool) -> p::ParseResult<Vec<Entr
         None => { return p::parse_error(st, "Unexpected end of file in middle of arc/circle definition"); },
         Some(c) => {
             if c == ':' {
-                p::skip_nchars(st, 1)?;
-                p::skip_space(st)?;
+                p::skip_peeked(st, c);
+                my_skip_space(st)?;
                 from = p::numeric_constant(st)? as g::Scalar;
                 if from < 0.0 || from != from.floor()
                     { return p::parse_error_string(st, format!("Beginning of segment range must be integer >= 0, not {}", from)); }
-                p::skip_space(st)?;
+                my_skip_space(st)?;
                 p::expect_str(st, "-")?;
-                p::skip_space(st)?;
+                my_skip_space(st)?;
                 to = p::numeric_constant(st)? as g::Scalar;
                 if to < 1.0 || to != to.floor() || to > n_segs as f64
                     { return p::parse_error_string(st, format!("End of segment range must be integer >= 1.0 and <= number of segments, not {}", to)); }
-                p::skip_space(st)?;
+                my_skip_space(st)?;
             }
         }
     }
 
     p::expect_str(st, ")")?;
 
-    p::skip_space(st)?;
+    my_skip_space(st)?;
     let n_coords = if is_circle { 4 } else { 6 };
     let mut coords: [g::Scalar; 6] = [0.0; 6];
     for i in 0..n_coords {
         if i != 0
-            { p::skip_at_least_one_space(st)?; }
+            { my_skip_at_least_one_space(st)?; }
         let n = p::numeric_constant(st)?;
         coords[i] = n;
     }
@@ -237,7 +249,7 @@ fn arc_entry(st: &mut p::ParseState, is_circle: bool) -> p::ParseResult<Vec<Entr
         coords[5] = coords[3];
     }
 
-    p::skip_space(st)?;
+    my_skip_space(st)?;
     let name = optional_name(st)?;
 
     let segs = g::arc_to_segments(
@@ -273,10 +285,10 @@ fn assignment(st: &mut p::ParseState) -> p::ParseResult<(String,g::Scalar)> {
     match p::identifier(st) {
         Err(e) => { return Err(e); },
         Ok(ident) => {
-            p::skip_space(st)?;
+            my_skip_space(st)?;
             if let Err(e) = p::expect_str(st, "=")
                 { return Err(e); }
-            p::skip_space(st)?;
+            my_skip_space(st)?;
 
             let v = p::numeric_constant(st)? as g::Scalar;
             Ok((ident, v))
@@ -285,7 +297,7 @@ fn assignment(st: &mut p::ParseState) -> p::ParseResult<(String,g::Scalar)> {
 }
 
 fn assignment_hash(st: &mut p::ParseState) -> p::ParseResult<HashMap<String, g::Scalar>> {
-    let (assignments, _) = p::space_separated(st, assignment)?;
+    let (assignments, _) = p::space_separated(st, COMMENT_CHAR, assignment)?;
 
     let mut m: HashMap<String, g::Scalar> = HashMap::new();
     for (n, v) in assignments {
@@ -367,10 +379,10 @@ fn material_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     match p::identifier(st) {
         Err(e) => { Err(e) },
         Ok(name) => {
-            if let Err(e) = p::skip_at_least_one_space(st)
+            if let Err(e) = my_skip_at_least_one_space(st)
                 { return Err(e); }
 
-            let (assignments, _) = p::space_separated(st, assignment)?;
+            let (assignments, _) = p::space_separated(st, COMMENT_CHAR, assignment)?;
             
             match material_properties_from_assignments(st, &assignments) {
                 Err(e) => { Err(e) },
@@ -402,14 +414,14 @@ fn ray_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     if n != 2
         { return p::parse_error(st, "Ray must be specified for 'l' (wavelength) and i (intensity)"); }
     
-    p::skip_space(st)?;
+    my_skip_space(st)?;
     p::expect_str(st, "|")?;
-    p::skip_space(st)?;
+    my_skip_space(st)?;
 
     let mut coords: [g::Scalar; 4] = [0.0; 4];
     for i in 0..4 {
         if i != 0 {
-            p::skip_at_least_one_space(st)?;
+            my_skip_at_least_one_space(st)?;
         }
 
         let n = p::numeric_constant(st)? as g::Scalar;
@@ -457,7 +469,7 @@ fn colbeam_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     if n != 3
         { return p::parse_error(st, "Collimated beam must be specified for 'n' (number of rays), 'l' (wavelength) and 'i' (intensity)"); }
     
-    p::skip_space(st)?;
+    my_skip_space(st)?;
     
     let mut i = 0;
     let mut first_was_dash = false;
@@ -482,12 +494,12 @@ fn colbeam_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     if err
         { return p::parse_error(st, "Expecting |- or -|"); }
 
-    p::skip_space(st)?;
+    my_skip_space(st)?;
 
     let mut coords: [g::Scalar; 4] = [0.0; 4];
     for i in 0..4 {
         if i != 0 {
-            p::skip_at_least_one_space(st)?;
+            my_skip_at_least_one_space(st)?;
         }
 
         let n = p::numeric_constant(st)? as g::Scalar;
@@ -509,18 +521,18 @@ fn colbeam_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
 }
 
 fn entry_sep(st: &mut p::ParseState) -> p::ParseResult<()> {
-    p::skip_space(st)?;
+    my_skip_space(st)?;
     if let Err(_) = p::expect_str(st, "\n")
         { return p::parse_error(st, "Expecting newline separator"); }
-    p::skip_space_inc_nl(st)?;
+    my_skip_space_inc_nl(st)?;
     Ok(())
 }
 
 fn document(st: &mut p::ParseState) -> p::ParseResult<ImportedGeometry> {
-    p::skip_space(st)?;
+    my_skip_space(st)?;
     let (r, e) = p::sep_by(st, entry_sep, entry)?;
 
-    p::skip_space_inc_nl(st)?;
+    my_skip_space_inc_nl(st)?;
     if !p::at_eof(st) {
         return Err(e);
     }
