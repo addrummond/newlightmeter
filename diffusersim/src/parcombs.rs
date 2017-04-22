@@ -2,6 +2,7 @@ use std::str;
 use std::error;
 use std::fmt;
 
+/// This type should be used by all parsers to signal an error.
 #[derive(Debug)]
 pub struct ParseError {
     pub line: usize,
@@ -24,13 +25,14 @@ impl error::Error for ParseError {
     }
 }
 
+/// All parsers should return values of this type.
 pub type ParseResult<T> = Result<T, ParseError>;
 pub trait Parser<T>: FnMut (&mut ParseState) -> ParseResult<T> { }
 impl <T,U> Parser<T> for U where U: FnMut (&mut ParseState) -> ParseResult<T> { }
 
-// The 'next_code_point' function isn't in stable yet. It should be possible
-// to implement the function below a little more simply and efficiently once it
-// is available.
+/// This function gets the next unicode code point given a slice of bytes.
+/// Once the 'next_code_point' function moves to stable yet, it should be possible
+/// to implement the function below a little more simply and efficiently.
 fn get_next_utf8_codepoint_as_char(arr: &[u8]) -> Option<(char,usize)> {
     // As non-ASCII chars will be rare in practice, try decoding
     // just one byte first, then two, then three, etc.
@@ -47,8 +49,9 @@ fn get_next_utf8_codepoint_as_char(arr: &[u8]) -> Option<(char,usize)> {
     None
 }
 
-pub struct ParseState<'a> {
-    input: &'a [u8],
+#[derive(Copy, Clone, PartialEq)]
+/// Represents the position of the parser in the input stream.
+pub struct ParsePosition {
     i: usize,
     line: usize,
     col: usize,
@@ -56,78 +59,105 @@ pub struct ParseState<'a> {
     i_at_last_peek: isize
 }
 
+/// Packages together the input byte slice with a position.
+pub struct ParseState<'a> {
+    input: &'a [u8],
+    pos: ParsePosition
+}
+
 impl<'a> ParseState<'a> {
+    /// Given a byte slice, returns the `ParseState` required to
+    /// start parsing at the beginning.
     pub fn new(input: &'a [u8]) -> ParseState {
         ParseState {
             input: input,
-            i: 0,
-            line: 1,
-            col: 0,
-            peek: 0,
-            i_at_last_peek: -1
+            pos: ParsePosition {
+                i: 0,
+                line: 1,
+                col: 0,
+                peek: 0,
+                i_at_last_peek: -1
+            }
         }
     }
 }
 
-pub fn save_position(st: &mut ParseState) -> usize {
-    st.i
+/// Get the current position.
+pub fn get_position(st: &mut ParseState) -> ParsePosition {
+    st.pos
 }
 
+/// Restore a saved position.
+pub fn restore_position(st: &mut ParseState, pos: &ParsePosition) {
+    st.pos = *pos;
+}
+
+/// Returns true iff the end of the input stream has been reached.
 pub fn at_eof(st: &mut ParseState) -> bool {
-    st.i >= st.input.len()
+    st.pos.i >= st.input.len()
 }
 
+/// Decode the next UTF8 code point from the input stream without advancing
+/// the position of the parser.
 pub fn peek_char(st: &mut ParseState) -> ParseResult<Option<char>> {
-    if st.i >= st.input.len()
+    if st.pos.i >= st.input.len()
         { return Ok(None); }
     
-    let sl = &st.input[st.i ..];
+    let sl = &st.input[st.pos.i ..];
     match get_next_utf8_codepoint_as_char(sl) {
-        None => { parse_error_string(st, format!("UTF-8 decode error at byte {}", st.i)) },
+        None => { parse_error_string(st, format!("UTF-8 decode error at byte {}", st.pos.i)) },
         Some((c, n)) => {
-            st.peek = n;
-            st.i_at_last_peek = st.i as isize;
+            st.pos.peek = n;
+            st.pos.i_at_last_peek = st.pos.i as isize;
             Ok(Some(c))
         }
     }
 }
 
-pub fn update_line_col(st: &mut ParseState, c: char) {
+fn update_line_col(st: &mut ParseState, c: char) {
     if c == '\n' {
-        st.line += 1;
-        st.col = 0;
+        st.pos.line += 1;
+        st.pos.col = 0;
     }
     else {
-        st.col += 1;
+        st.pos.col += 1;
     }
 }
 
+/// Update the position of the parser following a call to `peek_char`.
+/// This should be passed the char returned by `peek_char`.
+/// In debug builds, an assertion will fail if the parser position
+/// has already advanced following the last call to `peek_char`, or
+/// if `peek_char` was never called.
 pub fn skip_peeked(st: &mut ParseState, c: char) {
     // If this isn't true, then more was read since the last peek
-    // and we can't skip the last peek.
-    assert!((st.i_at_last_peek as usize) == st.i);
+    // and we can't skip the last peek, or no peek ever occurred.
+    debug_assert!((st.pos.i_at_last_peek as usize) == st.pos.i);
 
-    st.i += st.peek;
+    st.pos.i += st.pos.peek;
     update_line_col(st, c);
 }
 
+/// Decode the next UTF8 code point from the input stream and update
+/// the parser's position accordingly.
 pub fn next_char(st: &mut ParseState) -> ParseResult<Option<char>> {
-    if st.i >= st.input.len()
+    if st.pos.i >= st.input.len()
         { return Ok(None); }
     
-    let sl = &st.input[st.i ..];
+    let sl = &st.input[st.pos.i ..];
     match get_next_utf8_codepoint_as_char(sl) {
         None => {
-            parse_error_string(st, format!("UTF-8 decode error at byte {}", st.i))
+            parse_error_string(st, format!("UTF-8 decode error at byte {}", st.pos.i))
         },
         Some((c, n)) => {
-            st.i += n;
+            st.pos.i += n;
             update_line_col(st, c);
             Ok(Some(c))
         }
     }
 }
 
+/// Skip n code points of the input stream.
 pub fn skip_nchars(st: &mut ParseState, mut n: usize) ->
 ParseResult<()> {
     assert!(n >= 1);
@@ -142,6 +172,8 @@ ParseResult<()> {
     Ok(())
 }
 
+/// Read code points until one is encountered that does not match the
+/// supplied predicate.
 pub fn take_while<F>(st: &mut ParseState, mut filter: F) ->
 ParseResult<Vec<char>>
 where F: FnMut(char) -> bool {
@@ -160,18 +192,22 @@ where F: FnMut(char) -> bool {
     Ok(r)
 }
 
+/// Utility function for constructing parse errors.
 pub fn parse_error_string<X>(st: &ParseState, error_msg: String) -> ParseResult<X> {
     Err(ParseError {
-        line: st.line,
-        col: st.col,
+        line: st.pos.line,
+        col: st.pos.col,
         err: error_msg
     })
 }
 
+/// Utility function for constructing parse errors.
 pub fn parse_error<X>(st: &ParseState, error_msg: &str) -> ParseResult<X> {
     parse_error_string(st, error_msg.to_string())
 }
 
+/// A parser that expects to find a given string, and fails if it does not
+/// find it.
 pub fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
     let mut it = expected.chars();
     let mut error = false;
@@ -204,6 +240,10 @@ pub fn expect_str(st: &mut ParseState, expected: &str) -> ParseResult<()> {
     }
 }
 
+/// A parser that skips whitespace chars, including '#' comments,
+/// and returns the last char skipped, if any, together with the number
+/// of chars skipped. The `include_nl` parameters determines whether
+/// or not newlines ('\n') count as whitespace.
 pub fn skip_space_wc(st: &mut ParseState, include_nl: bool) ->
 ParseResult<(Option<char>, usize)> {
     let mut cc: Option<char> = None;
@@ -211,23 +251,26 @@ ParseResult<(Option<char>, usize)> {
     let mut count = 0;
 
     while let Some(c) = peek_char(st)? {
-        cc = Some(c);
         count += 1;
 
         if c == '\n' {
+            cc = Some(c);
             in_comment = false;
             if !include_nl
                 { return Ok((cc, count)); }
             skip_peeked(st, c);
         }
         else if char::is_whitespace(c) {
+            cc = Some(c);
             skip_peeked(st, c);
         }
         else if c == '#' {
+            cc = Some(c);
             in_comment = true;
             skip_peeked(st, c);
         }
         else if in_comment {
+            cc = Some(c);
             skip_peeked(st, c);
         }
         else {
@@ -239,22 +282,32 @@ ParseResult<(Option<char>, usize)> {
     Ok((cc, count))
 }
 
+/// Skips non-newline whitespace, including '#' comments,
+/// and returns the last char skipped, if any.
 pub fn skip_space(st: &mut ParseState) -> ParseResult<Option<char>> {
     Ok(skip_space_wc(st, false)?.0)
 }
 
-pub fn skip_at_least_one_space(st: &mut ParseState) -> ParseResult<Option<char>> {
+/// Skips non-newline whitespace, including '#' comments, and returns
+/// the last char skipped. Fails if no whitespace characters
+/// are encountered.
+pub fn skip_at_least_one_space(st: &mut ParseState) -> ParseResult<char> {
     let (r, c) = skip_space_wc(st, false)?;
     if c > 0
-        { Ok(r) }
+        { Ok(r.unwrap()) } // 'unwrap' guaranteed not to panic given that c > 0
     else
         { parse_error(st, "Expected whitespace, found '{}'") }
 }
 
+/// Skips whitespace, including newlines and '#' comments, and returns
+/// the last char skipped. Fails if no whitespace characters
+/// are encountered.
 pub fn skip_space_inc_nl(st: &mut ParseState) -> ParseResult<Option<char>> {
     Ok(skip_space_wc(st, true)?.0)
 }
 
+/// Parses an identifier. I.e. an alpha char or '_' followed by 0 or more
+/// instances of an alphanumeric char or '_'.
 pub fn identifier(st: &mut ParseState) -> ParseResult<String> {
     let mut current_str: Vec<char> = Vec::new();
     while let Some(c) = peek_char(st)? {
@@ -275,21 +328,29 @@ pub fn identifier(st: &mut ParseState) -> ParseResult<String> {
     }
 }
 
+/// Repeatedly applies `parser` and `sep` in sequence.
+/// The parse ends successfully when either `parser` or `sep` fails
+/// without advancing the position of the parser. This may happen
+/// immediately, in which case the parse succeeds and yields an
+/// empty vector. If either `sep` or `parser` fails after advancing
+/// the position of the input, the the parse fails with the parse error
+/// return by `sep` or `parser`. This behavior ensures that backtracking
+/// parsers cannot be accidentally constructed.
 pub fn sep_by<R1,R2,F1,F2>(st: &mut ParseState, mut sep: F1, mut parser: F2) -> ParseResult<(Vec<R2>, ParseError)>
 where F1: Parser<R1>,
       F2: Parser<R2> {
 
     let mut rs: Vec<R2> = Vec::new();
-    let mut pos = save_position(st);
+    let mut pos = get_position(st);
 
     loop {
         match parser(st) {
             Ok(r) => {
                 rs.push(r);
-                pos = save_position(st);
+                pos = get_position(st);
             }
             Err(e) => {
-                if pos != save_position(st)
+                if pos != get_position(st)
                     { return Err(e); }
                 else
                     { return Ok((rs, e)); }
@@ -297,21 +358,23 @@ where F1: Parser<R1>,
         }
 
         if let Err(e) = sep(st) {
-            if pos != save_position(st)
+            if pos != get_position(st)
                 { return Err(e); }
             else
                 { return Ok((rs, e)); }
         }
 
-        pos = save_position(st);
+        pos = get_position(st);
     }
 }
 
+/// `space_separated(st, parser)` is equivalent to `sep_by(st, skip_at_least_one_space, parser)`.
 pub fn space_separated<R,F>(st: &mut ParseState, parser: F) -> ParseResult<(Vec<R>, ParseError)>
 where F: Parser<R> {
     sep_by(st, skip_at_least_one_space, parser)
 }
 
+/// Parses a floating point constant as an `f64`.
 pub fn numeric_constant(st: &mut ParseState) -> ParseResult<f64> {
     let mut n = 0;
     let chars = take_while(st, |c| {
