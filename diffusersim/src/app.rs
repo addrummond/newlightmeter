@@ -19,7 +19,7 @@ const HEIGHT: u32 = 480;
 pub struct RunParams {
     pub max_depth: usize,
     pub output_filename: Option<String>, // stdout if not specified
-    pub geom_filename: Option<String>    // stdin if not specified
+    pub geom_filenames: Vec<String>    // stdin if empty
 }
 
 #[derive(Debug)]
@@ -69,13 +69,11 @@ impl fmt::Display for CommandLineError {
 pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineError> {
     let mut opts = Options::new();
     opts.optopt("o", "", "set file output name", "NAME");
-    opts.optopt("i", "", "set input file name", "NAME");
     opts.optopt("d", "maxdepth", "set the maximum recursion depth for tracing", "DEPTH");
     let matches = opts.parse(&args[1..])?;
 
     let mut max_depth = 0;
     let mut output_filename: Option<String> = None;
-    let mut geom_filename: Option<String> = None;
 
     //
     // The 'getopts' library is a bit clunky. There is no way to insist that a flag option must
@@ -95,17 +93,11 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
             Some(v) => { output_filename = Some(v) }
         }
     }
-    if matches.opt_present("i") {
-        match matches.opt_str("i") {
-            None => { return Err(CommandLineError::Custom("'i' option must be given an argument".to_string())) },
-            Some(v) => { geom_filename = Some(v) }
-        }
-    }
 
     Ok(RunParams {
         max_depth: max_depth,
         output_filename: output_filename,
-        geom_filename: geom_filename
+        geom_filenames: matches.free.clone()
     })
 }
 
@@ -147,16 +139,26 @@ fn spit_out_svg(svg: &simplesvg::Svg, outname: Option<&str>) -> Result<(), Box<e
 }
 
 pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
-    let file: Box<io::Read> = match params.geom_filename {
-        None => {
-            Box::new(io::stdin())
-        },
-        Some(ref filename) => {
-            Box::new(fs::File::open(filename)?)
-        }
-    };
+    let mut geoms: Vec<gi::ImportedGeometry> = Vec::new();
 
-    let geom = gi::parse_geometry_file(file)??; // IO error wrapping parse error.
+    if params.geom_filenames.len() == 0 {
+        geoms.push(gi::parse_geometry_file(Box::new(io::stdin()))??);
+    }
+    for filename in &params.geom_filenames {
+        let file = Box::new(fs::File::open(filename)?);
+        geoms.push(gi::parse_geometry_file(file)??);
+    }
+
+    assert!(geoms.len() > 0);
+    let geom;
+    if geoms.len() == 1 {
+        geom = &geoms[0];
+    }
+    else {
+        let (a, b) = geoms.split_at_mut(1);
+        gi::combine_imported_geometry(&mut a[0], b)?;
+        geom = &a[0];
+    }
 
     let mut rays = beams_to_rays(&geom.beams);
 
