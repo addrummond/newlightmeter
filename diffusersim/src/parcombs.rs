@@ -11,7 +11,7 @@
 //!
 //! IMHO the parser combinator approach is a bit clunky in
 //! Rust, and of little benefit in an imperative language that already has
-//! state and sequencing as primitive concepts and built-in support
+//! state and sequencing as primitive concepts and built-in syntactic support
 //! for the Option monad.
 
 use std::str;
