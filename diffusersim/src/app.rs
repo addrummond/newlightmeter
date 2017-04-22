@@ -19,7 +19,8 @@ const HEIGHT: u32 = 480;
 pub struct RunParams {
     pub max_depth: usize,
     pub output_filename: Option<String>, // stdout if not specified
-    pub geom_filenames: Vec<String>    // stdin if empty
+    pub hit_filename: Option<String>,    // hits not written if not specified
+    pub geom_filenames: Vec<String>      // stdin if empty
 }
 
 #[derive(Debug)]
@@ -68,12 +69,14 @@ impl fmt::Display for CommandLineError {
 
 pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineError> {
     let mut opts = Options::new();
-    opts.optopt("o", "", "set file output name", "NAME");
+    opts.optopt("o", "", "set svg file output name", "NAME");
+    opts.optopt("h", "", "set hit file output name", "NAME");
     opts.optopt("d", "maxdepth", "set the maximum recursion depth for tracing", "DEPTH");
     let matches = opts.parse(&args[1..])?;
 
     let mut max_depth = 0;
     let mut output_filename: Option<String> = None;
+    let mut hit_filename: Option<String> = None;
 
     //
     // The 'getopts' library is a bit clunky. There is no way to insist that a flag option must
@@ -93,10 +96,17 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
             Some(v) => { output_filename = Some(v) }
         }
     }
+    if matches.opt_present("h") {
+        match matches.opt_str("h") {
+            None => { return Err(CommandLineError::Custom("'h' option must be given an argument".to_string())) },
+            Some(v) => { hit_filename = Some(v) }
+        }
+    }
 
     Ok(RunParams {
         max_depth: max_depth,
         output_filename: output_filename,
+        hit_filename: hit_filename,
         geom_filenames: matches.free.clone()
     })
 }
@@ -123,7 +133,7 @@ fn beams_to_rays(beams: &Vec<gi::Beam>) -> Vec<(g::Ray, t::LightProperties)> {
     rays
 }
 
-fn spit_out_svg(svg: &simplesvg::Svg, outname: Option<&str>) -> Result<(), Box<error::Error>> {
+fn output_svg(svg: &simplesvg::Svg, outname: Option<&str>) -> Result<(), Box<error::Error>> {
     match outname {
         Some(name) => {
             let f = File::create(name)?;
@@ -136,6 +146,23 @@ fn spit_out_svg(svg: &simplesvg::Svg, outname: Option<&str>) -> Result<(), Box<e
             .map(|_| ()).map_err(|x| -> Box<error::Error> { Box::new(x) })
         }
     }
+}
+
+struct DevSlashNull { }
+impl Write for DevSlashNull {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> { Ok(buf.len()) }
+    fn flush(&mut self) -> io::Result<()> { Ok(()) }
+}
+
+fn get_hit_writer(name: &Option<String>) -> Result<Box<Write>, Box<error::Error>> {
+    Ok(match *name {
+        None => { Box::new(DevSlashNull { }) },
+        Some(ref name) => {
+            let f = File::create(name)?;
+            let f = BufWriter::new(f);
+            Box::new(f)
+        }
+    })
 }
 
 pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
@@ -159,6 +186,9 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
         gi::combine_imported_geometry(&mut a[0], b)?;
         geom = &a[0];
     }
+
+    let mut hit_writer = get_hit_writer(&params.hit_filename)?;
+    write!(hit_writer, "event_type,segment_index,segment_name,x,y\n")?;
 
     let mut rays = beams_to_rays(&geom.beams);
 
@@ -207,17 +237,18 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
         figs.push(render::render_segments(&geom.segments, &t, [0.0, 1.0, 0.0]));
         figs.push(render::render_rays(rayb.get_rays(), &t, [1.0, 0.0, 0.0]));
         count += 1;
-        let finished = t::ray_trace_step(&mut st, &mut rayb, |e: &t::Event| -> () { 
+        let finished = t::ray_trace_step(&mut st, &mut rayb, |e: &t::Event| -> Result<(),Box<error::Error>> { 
             match *e {
                 t::Event::Hit { ref segment_index, ref segment_name, ref point } => {
-                    println!("HIT {} {} ({}, {})", segment_index, segment_name, point.coords[0], point.coords[1]);
+                    write!(hit_writer, "ray_hit_segment,{},{},{},{}\n", segment_index, segment_name, point.coords[0], point.coords[1])?;
+                    Ok(())
                 }
             }
-        });
+        })?;
         if finished
             { break; }
     }
 
     let svg = simplesvg::Svg(figs, WIDTH, (count*HEIGHT));
-    spit_out_svg(&svg, params.output_filename.as_ref().map(|x| x.as_str()))
+    output_svg(&svg, params.output_filename.as_ref().map(|x| x.as_str()))
 }

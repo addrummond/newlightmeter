@@ -28,8 +28,8 @@ pub enum Event<'a> {
     }
 }
 
-pub trait EventHandler where Self: Fn (&Event) -> () { }
-impl<'a,F> EventHandler for F where F: Fn(&Event) -> () { }
+pub trait EventHandler<E> where Self: FnMut(&Event) -> Result<(), E> { }
+impl <'a,E,F> EventHandler<E> for F where F: FnMut(&Event) -> Result<(), E> { }
 
 #[derive(Debug, Clone)]
 pub struct MaterialProperties {
@@ -95,16 +95,15 @@ impl<'a> RayTraceState<'a> {
     }
 }
 
-struct TraceRayArgs<'a,'b:'a,F> where F: 'b + EventHandler {
+struct TraceRayArgs<'a> {
     ray: &'a Ray,
     ray_props: &'a LightProperties,
-    new_rays: &'a mut Vec<(Ray,LightProperties)>,
-    handle_event: &'b F
+    new_rays: &'a mut Vec<(Ray,LightProperties)>
 }
 
-fn trace_ray<F>(st: &mut RayTraceState, args: &mut TraceRayArgs<F>)
--> usize // Returns number of new rays traced
-where F: EventHandler {
+fn trace_ray<F,E>(st: &mut RayTraceState, args: &mut TraceRayArgs, mut handle_event: &mut F)
+-> Result<usize,E> // Returns number of new rays traced
+where F: EventHandler<E> {
 
     let rayline = args.ray.p2 - args.ray.p1;
 
@@ -112,11 +111,11 @@ where F: EventHandler {
     if let Some((segs_with_info, intersect, _)) = st.args.qtree.get_segments_touched_by_ray(args.ray) {
         for (seg, segi) in segs_with_info {
             if let Some(ref name) = st.args.segment_names.get(&segi) {
-                (args.handle_event)(&Event::Hit {
+                handle_event(&Event::Hit {
                     segment_index: segi,
                     segment_name: name.as_str(),
                     point: intersect
-                });
+                })?;
             }
 
             // Is the ray hitting the left surface or the right surface of
@@ -174,12 +173,12 @@ where F: EventHandler {
         }
     }
 
-    num_new_rays
+    Ok(num_new_rays)
 }
 
-fn add_diffuse<F>(
+fn add_diffuse(
     st: &mut RayTraceState,
-    args: &mut TraceRayArgs<F>,
+    args: &mut TraceRayArgs,
     new_intensity: Scalar,
     segline: &Vector2,
     matprops: &MaterialProperties,
@@ -187,7 +186,6 @@ fn add_diffuse<F>(
     surface_normal: &Vector2
 )
 -> usize
-where F: EventHandler
 {
     let _ = matprops; // Not used currently; suppress compiler warning.
 
@@ -221,9 +219,9 @@ where F: EventHandler
     num_new_rays
 }
 
-fn add_specular<F>(
+fn add_specular(
     st: &mut RayTraceState,
-    args: &mut TraceRayArgs<F>,
+    args: &mut TraceRayArgs,
     new_intensity: Scalar,
     rayline: &Vector2,
     matprops: &MaterialProperties,
@@ -231,7 +229,6 @@ fn add_specular<F>(
     surface_normal: &Vector2
 )
 -> usize
-where F: EventHandler
 {
     let _ = matprops; // Not used currently; suppress compiler warning.
 
@@ -261,9 +258,9 @@ where F: EventHandler
     num_new_rays
 }
 
-fn add_refraction<F>(
+fn add_refraction(
     st: &mut RayTraceState,
-    args: &mut TraceRayArgs<F>,
+    args: &mut TraceRayArgs,
     new_intensity: Scalar,
     rayline: &Vector2,
     from_matprops: &MaterialProperties,
@@ -273,7 +270,6 @@ fn add_refraction<F>(
     side: i32
 )
 -> usize
-where F: EventHandler
 {
     assert!(side != 0);
     assert!(from_matprops.cauchy_coeffs.len() > 0);
@@ -325,12 +321,13 @@ where F: EventHandler
     num_new_rays
 }
 
-pub fn ray_trace_step<F>(st: &mut RayTraceState, rayb: &mut RayBuffer, handle_event: F) -> bool
-where F: EventHandler {
+pub fn ray_trace_step<F,E>(st: &mut RayTraceState, rayb: &mut RayBuffer, mut handle_event: F)
+-> Result<bool, E>
+where F: EventHandler<E> {
     if (st.args.ray_limit != 0 && st.ray_count >= st.args.ray_limit) ||
        (st.args.recursion_limit != 0 && st.recursion_level >= st.args.recursion_limit) ||
        (rayb.old_rays.len() == 0) {
-        return true;
+        return Ok(true);
     }
 
     for &(ref ray, ref ray_props) in rayb.old_rays.iter() {
@@ -339,15 +336,15 @@ where F: EventHandler {
             &mut TraceRayArgs {
                 ray: ray,
                 ray_props: ray_props,
-                handle_event: &handle_event,
                 new_rays: rayb.new_rays
-            }
-        );
+            },
+            &mut handle_event
+        )?;
         st.ray_count += n_new_rays;
     }
     rayb.old_rays.clear();
     mem::swap(&mut (rayb.old_rays), &mut (rayb.new_rays));
     st.recursion_level += 1;
 
-    false
+    Ok(false)
 }
