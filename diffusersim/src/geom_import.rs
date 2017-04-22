@@ -48,10 +48,10 @@ pub struct ImportedGeometry {
     pub segment_names: HashMap<usize, String>
 }
 
-pub fn combine_imported_geometry(target: &mut ImportedGeometry, rest: &[&ImportedGeometry]) -> Result<(), String> {
+pub fn combine_imported_geometry(target: &mut ImportedGeometry, rest: &[ImportedGeometry]) -> Result<(), String> {
     let mut attested_segnames: HashSet<String> = HashSet::new();
 
-    for &g in rest {
+    for g in rest {
         // Not efficient, but this code doesn't need to be.
         for n in g.segment_names.values() {
             if attested_segnames.contains(n)
@@ -70,12 +70,12 @@ pub fn combine_imported_geometry(target: &mut ImportedGeometry, rest: &[&Importe
             { return Err(format!("More than 255 materials in total when combining multiple geom files")); }
         target.beams.extend(g.beams.iter().cloned());
 
-        for i in target.left_material_properties.iter_mut().skip(orig_n_materials) {
-            *i += orig_n_materials as u8;
-        }
-        for i in target.right_material_properties.iter_mut().skip(orig_n_materials) {
-            *i += orig_n_materials as u8;
-        }
+        target.left_material_properties.extend(
+            g.left_material_properties.iter().map(|&i: &u8| i + (orig_n_materials as u8))
+        );
+        target.right_material_properties.extend(
+            g.right_material_properties.iter().map(|&i: &u8| i + (orig_n_materials as u8))
+        );
 
         for (k, v) in &g.segment_names {
             target.segment_names.insert(k + orig_n_segments, v.clone());
