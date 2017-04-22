@@ -189,10 +189,9 @@ fn arc_entry(st: &mut p::ParseState, is_circle: bool) -> p::ParseResult<Vec<Entr
     let (i1, i2) = material_pair(st)?;
 
     p::skip_space(st)?;
-
     p::expect_str(st, "(")?;
-
     p::skip_space(st)?;
+
     let n_segs_f = p::numeric_constant(st)? as g::Scalar;
     if n_segs_f < 3.0 || n_segs_f != n_segs_f.floor()
         { return p::parse_error_string(st, format!("Number of segments must be an integer >= 3 for arc/circle, not {}", n_segs_f)); }
