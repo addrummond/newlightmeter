@@ -21,7 +21,8 @@ pub struct RunParams {
     pub max_rays: usize,                 // 0 if no maximum
     pub output_filename: Option<String>, // stdout if not specified
     pub hit_filename: Option<String>,    // hits not written if not specified
-    pub geom_filenames: Vec<String>      // stdin if empty
+    pub geom_filenames: Vec<String>,     // stdin if empty
+    pub looping: bool
 }
 
 #[derive(Debug)]
@@ -74,12 +75,14 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
     opts.optopt("h", "hitfile", "set hit file output name", "NAME");
     opts.optopt("d", "maxdepth", "set the maximum recursion depth for tracing", "DEPTH");
     opts.optopt("r", "maxrays", "set the maximum number of rays to trace", "N");
+    opts.optflag("l", "loop", "loop when trace ends naturally before maximum number of rays is reached");
     let matches = opts.parse(&args[1..])?;
 
     let mut max_depth = 0;
     let mut max_rays = 0;
     let mut output_filename: Option<String> = None;
     let mut hit_filename: Option<String> = None;
+    let mut looping = false;
 
     fn parse_uint(v: &str, err: &str) -> Result<usize, CommandLineError> {
         v.parse::<usize>().map_err(|_| {
@@ -87,35 +90,23 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
         })
     }
 
-    //
-    // The 'getopts' library is a bit clunky. There is no way to insist that a flag option must
-    // have an argument. So after detecting than a flag is present, we must then check whether
-    // it has an argument, signaling an error if not, and then set the value of the relevant
-    // variable.
-    //
-    if matches.opt_present("d") {
-        match matches.opt_str("d") {
-            None => { return Err(CommandLineError::Custom("'d' option must be given an argument".to_string())) },
-            Some(v) => { max_depth = parse_uint(v.as_str(), "Argument to 'd' option must be an integer >= 0")? }
-        }
+    if let Some(v) = matches.opt_str("d") {
+        max_depth = parse_uint(v.as_str(), "Argument to 'd' option must be an integer >= 0")?
     }
-    if matches.opt_present("r") {
-        match matches.opt_str("r") {
-            None => { return Err(CommandLineError::Custom("'r' option must be given an argument".to_string())) },
-            Some(v) => { max_rays = parse_uint(v.as_str(), "Argument to 'r' option must be an integer >= 0")? }
-        }
+    if let Some(v) = matches.opt_str("r") {
+        max_rays = parse_uint(v.as_str(), "Argument to 'r' option must be an integer >= 0")?
     }
-    if matches.opt_present("o") {
-        match matches.opt_str("o") {
-            None => { return Err(CommandLineError::Custom("'o' option must be given an argument".to_string())) },
-            Some(v) => { output_filename = Some(v) }
-        }
+    if let Some(v) = matches.opt_str("o") {
+        output_filename = Some(v)
     }
-    if matches.opt_present("h") {
-        match matches.opt_str("h") {
-            None => { return Err(CommandLineError::Custom("'h' option must be given an argument".to_string())) },
-            Some(v) => { hit_filename = Some(v) }
-        }
+    if let Some(v) = matches.opt_str("h") {
+        hit_filename = Some(v)
+    }
+    
+    if matches.opt_present("l") {
+        if ! matches.opt_present("r")
+            { return Err(CommandLineError::Custom("'l' option can only be used with 'r' option".to_string())) }
+        looping = true;
     }
 
     Ok(RunParams {
@@ -123,7 +114,8 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
         max_rays: max_rays,
         output_filename: output_filename,
         hit_filename: hit_filename,
-        geom_filenames: matches.free.clone()
+        geom_filenames: matches.free.clone(),
+        looping: looping
     })
 }
 
@@ -206,12 +198,11 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
     let mut hit_writer = get_hit_writer(&params.hit_filename)?;
     write!(hit_writer, "event_type,segment_index,segment_name,x,y\n")?;
 
-    let mut rays = beams_to_rays(&geom.beams);
+    let starting_rays = beams_to_rays(&geom.beams);
 
     let mut qtree: g::QTree<t::RayTraceSegmentInfo> = g::QTree::make_empty_qtree();
     qtree.insert_segments(&geom.segments, |i| i);
 
-    let mut new_rays: Vec<(g::Ray, t::LightProperties)> = Vec::new();
     let tracing_props = t::TracingProperties {
         random_seed: [1],
         intensity_threshold: 0.01
@@ -228,8 +219,8 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
     let mut st = t::RayTraceState::initial(&rt_init);
 
     let mut rayb = t::RayBuffer {
-        old_rays: &mut rays,
-        new_rays: &mut new_rays,
+        old_rays: &mut starting_rays.clone(),
+        new_rays: &mut Vec::new()
     };
       
     let mut figs: Vec<simplesvg::Fig> = Vec::new();
@@ -261,10 +252,22 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
         })?;
 
         // Is it time to stop tracing?
-        if rayb.get_n_rays() == 0
-            { break; }
-        if params.max_depth != 0 && result.recursion_level >= params.max_depth
-            { break; }
+        if params.max_rays != 0 && result.ray_count >= params.max_rays {
+            break;
+        }
+        if params.max_depth != 0 && result.recursion_level >= params.max_depth {
+            break;
+        }
+        if rayb.get_n_rays() == 0 {
+            if params.looping {
+                rayb.old_rays.truncate(0); // Hopefully this won't deallocate already-allocated space.
+                rayb.old_rays.extend(starting_rays.iter());
+                rayb.new_rays.truncate(0);
+            }
+            else {
+                break;
+            }
+        }
     }
 
     let svg = simplesvg::Svg(figs, WIDTH, (count*HEIGHT));

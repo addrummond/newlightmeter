@@ -344,7 +344,7 @@ where F: EventHandler<E> {
         )?;
         st.ray_count += n_new_rays;
     }
-    rayb.old_rays.clear();
+    rayb.old_rays.truncate(0); // Hopefully this won't deallocate already-allocated space.
     mem::swap(&mut (rayb.old_rays), &mut (rayb.new_rays));
     st.recursion_level += 1;
 
