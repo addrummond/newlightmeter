@@ -19,12 +19,14 @@ pub enum Beam {
         to: g::Point2,
         n_rays: usize,
         shiny_side_is_left: bool,
-        light_properties: t::LightProperties
+        light_properties: t::LightProperties,
+        n_traces: usize
     },
     Ray {
         from: g::Point2,
         to: g::Point2,
-        light_properties: t::LightProperties
+        light_properties: t::LightProperties,
+        n_traces: usize
     }
 }
 
@@ -432,6 +434,7 @@ fn material_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
 fn ray_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     let mut wavelength: g::Scalar = 0.0;
     let mut intensity: g::Scalar = 0.0;
+    let mut n_traces: usize = 1;
 
     let mut n = 0;
     let assignments = assignment_hash(st)?;
@@ -443,6 +446,11 @@ fn ray_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
         else if k == "i" {
             n += 1;
             intensity = v;
+        }
+        else if k == "t" { // Optional, so we don't increment n
+            if v < 1.0 || v != v.floor()
+                { return p::parse_error(st, "Number of traces ('t') for ray must be an integer >= 1"); }
+            n_traces = v as usize;
         }
         else {
             return p::parse_error(st, "Unrecognized ray property");
@@ -471,7 +479,8 @@ fn ray_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
         light_properties: t::LightProperties {
             wavelength: wavelength,
             intensity: intensity
-        }
+        },
+        n_traces: n_traces
     };
 
     Ok(vec![Entry::Beam(ray)])
@@ -481,6 +490,7 @@ fn colbeam_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     let mut n_rays: usize = 0;
     let mut wavelength: g::Scalar = 0.0;
     let mut intensity: g::Scalar = 0.0;
+    let mut n_traces: usize = 1;
 
     let mut n = 0;
     let assignments = assignment_hash(st)?;
@@ -498,6 +508,11 @@ fn colbeam_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
         else if k == "i" {
             n += 1;
             intensity = v;
+        }
+        else if k == "t" { // Optional, so we don't increment n
+            if v < 1.0 || v != v.floor()
+                { return p::parse_error(st, "Number of traces ('t') for beam must be an integer >= 1"); }
+            n_traces = v as usize;
         }
         else {
             return p::parse_error(st, "Unrecognized beam property");
@@ -551,7 +566,8 @@ fn colbeam_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
         light_properties: t::LightProperties {
             wavelength: wavelength,
             intensity: intensity
-        }
+        },
+        n_traces: n_traces
     };
 
     Ok(vec![Entry::Beam(beam)])

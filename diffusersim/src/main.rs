@@ -2,6 +2,10 @@ extern crate nalgebra;
 extern crate simplesvg;
 extern crate rand;
 extern crate getopts;
+extern crate num_cpus;
+extern crate rayon;
+extern crate regex;
+extern crate tempfile;
 
 pub mod geom;
 pub mod geom_import;

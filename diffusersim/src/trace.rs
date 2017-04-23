@@ -55,22 +55,23 @@ impl MaterialProperties {
 
 pub type RayTraceSegmentInfo = usize;
 
-pub struct RayBuffer<'a> {
-    pub old_rays: &'a mut Vec<(Ray, LightProperties)>,
-    pub new_rays: &'a mut Vec<(Ray, LightProperties)>
+pub struct RayBuffer {
+    pub old_rays: Vec<(Ray, LightProperties, usize)>, // usize gives traces remaining.
+    pub new_rays: Vec<(Ray, LightProperties, usize)>
 }
 
-impl<'a> RayBuffer<'a> {
-    pub fn get_rays(&'a self) -> &'a Vec<(Ray, LightProperties)> {
+impl RayBuffer {
+    pub fn get_rays(&self) -> &Vec<(Ray, LightProperties, usize)> {
         debug_assert!(self.old_rays.len() == 0 || self.new_rays.len() == 0);
-        if self.old_rays.len() == 0 { self.new_rays } else { self.old_rays }
+        if self.old_rays.len() == 0 { &self.new_rays } else { &self.old_rays }
     }
 
-    pub fn get_n_rays(&'a self) -> usize {
+    pub fn get_n_rays(&self) -> usize {
         cmp::max(self.old_rays.len(), self.new_rays.len())
     }
 }
 
+#[derive(Clone)]
 pub struct RayTraceInitArgs<'a> {
     pub tracing_properties: &'a TracingProperties,
     pub qtree: &'a g::QTree<'a, RayTraceSegmentInfo>,
@@ -80,6 +81,7 @@ pub struct RayTraceInitArgs<'a> {
     pub right_material_properties: &'a Vec<u8>
 }
 
+#[derive(Clone)]
 pub struct RayTraceState<'a> {
     args: &'a RayTraceInitArgs<'a>,
     ray_count: usize,
@@ -105,7 +107,7 @@ impl<'a> RayTraceState<'a> {
 struct TraceRayArgs<'a> {
     ray: &'a Ray,
     ray_props: &'a LightProperties,
-    new_rays: &'a mut Vec<(Ray,LightProperties)>
+    new_rays: &'a mut Vec<(Ray,LightProperties,usize)>
 }
 
 fn trace_ray<F,E>(st: &mut RayTraceState, args: &mut TraceRayArgs, mut handle_event: &mut F)
@@ -220,7 +222,7 @@ fn add_diffuse(
 
         //println!("NEW RAY {} {} {} {}", intersect.coords[0], intersect.coords[1], new_ray_p2.coords[0], new_ray_p2.coords[1]);
 
-        args.new_rays.push((new_ray, new_diffuse_ray_props));
+        args.new_rays.push((new_ray, new_diffuse_ray_props, 1));
     }
 
     num_new_rays
@@ -259,7 +261,7 @@ fn add_specular(
             p2: intersect + reflection
         };
 
-        args.new_rays.push((new_ray, new_specular_ray_props));
+        args.new_rays.push((new_ray, new_specular_ray_props, 1));
     }
 
     num_new_rays
@@ -322,7 +324,7 @@ fn add_refraction(
             p2: intersect + vrefract
         };
 
-        args.new_rays.push((new_ray, new_refracted_ray_props));
+        args.new_rays.push((new_ray, new_refracted_ray_props, 1));
     }
 
     num_new_rays
@@ -336,19 +338,32 @@ pub struct TraceStepResult {
 pub fn ray_trace_step<F,E>(st: &mut RayTraceState, rayb: &mut RayBuffer, mut handle_event: F)
 -> Result<TraceStepResult, E>
 where F: EventHandler<E> {
-    for &(ref ray, ref ray_props) in rayb.old_rays.iter() {
+    // Old rays that still have additional traces left will be at the beginning of the buffer.
+    // So to ensure a depth-first trace, we iterate through it in reverse.
+    // We know that any rays with additional traces left will end up together at the beginning
+    // of the buffer, so once we're done we can just truncate it.
+    let mut first_keep_index = 0;
+    let mut i = rayb.old_rays.len();
+    for &mut(ref ray, ref ray_props, ref mut traces_remaining) in rayb.old_rays.iter_mut().rev() {
         let n_new_rays = trace_ray(
             st,
             &mut TraceRayArgs {
                 ray: ray,
                 ray_props: ray_props,
-                new_rays: rayb.new_rays
+                new_rays: &mut rayb.new_rays
             },
             &mut handle_event
         )?;
         st.ray_count += n_new_rays;
+
+        *traces_remaining -= 1;
+        if first_keep_index == 0 && *traces_remaining > 0 {
+            first_keep_index = i;
+        }
+
+        i -= 1;
     }
-    rayb.old_rays.truncate(0); // Hopefully this won't deallocate already-allocated space.
+    rayb.old_rays.truncate(first_keep_index);
     mem::swap(&mut (rayb.old_rays), &mut (rayb.new_rays));
     st.recursion_level += 1;
 

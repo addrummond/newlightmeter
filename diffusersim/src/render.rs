@@ -25,7 +25,7 @@ pub struct DisplayTransformArgs {
 
 pub fn get_display_transform(
     segments: &Vec<g::Segment>,
-    rays: &Vec<(g::Ray, t::LightProperties)>,
+    rays: &Vec<(g::Ray, t::LightProperties, usize)>,
     args: DisplayTransformArgs)
 -> DisplayTransform {
     assert!(args.scale_factor > 0.0 && args.scale_factor <= 1.0);
@@ -68,7 +68,7 @@ pub fn get_display_transform(
         for s in segments {
             fnc(s.p1.coords[0], s.p1.coords[1], s.p2.coords[0], s.p2.coords[1]);
         }
-        for &(r, _) in rays {
+        for &(r, _, _) in rays {
             fnc(r.p1.coords[0], r.p1.coords[1], r.p2.coords[0], r.p2.coords[1]);
         }
     }
@@ -252,10 +252,10 @@ pub fn render_segments(segments: &Vec<g::Segment>, t: &DisplayTransform, color: 
     simplesvg::Fig::Multiple(segs)
 }
 
-pub fn render_rays(rays: &Vec<(g::Ray, t::LightProperties)>, t: &DisplayTransform, color: [f32; 3])
+pub fn render_rays(rays: &Vec<(g::Ray, t::LightProperties, usize)>, t: &DisplayTransform, color: [f32; 3])
 -> simplesvg::Fig {
     let mut figs: Vec<simplesvg::Fig> = Vec::new();
-    for &(ref r, props) in rays {
+    for &(ref r, props, _) in rays {
         let tp1 = tp(r.p1, t);
         let tp2 = tp(edge_clip_ray_dest(r, t), t);
 
