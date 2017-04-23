@@ -10,6 +10,7 @@ use std::error;
 use std::fmt;
 use std::num;
 use std::fs;
+use rand::{Rng};
 use simplesvg;
 use render;
 
@@ -22,7 +23,8 @@ pub struct RunParams {
     pub output_filename: Option<String>, // stdout if not specified
     pub hit_filename: Option<String>,    // hits not written if not specified
     pub geom_filenames: Vec<String>,     // stdin if empty
-    pub looping: bool
+    pub looping: bool,
+    pub random_seed: usize
 }
 
 #[derive(Debug)]
@@ -75,14 +77,16 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
     opts.optopt("h", "hitfile", "set hit file output name", "NAME");
     opts.optopt("d", "maxdepth", "set the maximum recursion depth for tracing", "DEPTH");
     opts.optopt("r", "maxrays", "set the maximum number of rays to trace", "N");
+    opts.optopt("s", "randseed", "set the seed used for generating random numbers", "N");
     opts.optflag("l", "loop", "loop when trace ends naturally before maximum number of rays is reached");
     let matches = opts.parse(&args[1..])?;
 
-    let mut max_depth = 0;
-    let mut max_rays = 0;
+    let mut max_depth: usize = 0;
+    let mut max_rays: usize = 0;
     let mut output_filename: Option<String> = None;
     let mut hit_filename: Option<String> = None;
     let mut looping = false;
+    let mut random_seed: usize = 1;
 
     fn parse_uint(v: &str, err: &str) -> Result<usize, CommandLineError> {
         v.parse::<usize>().map_err(|_| {
@@ -102,6 +106,9 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
     if let Some(v) = matches.opt_str("h") {
         hit_filename = Some(v)
     }
+    if let Some(v) = matches.opt_str("s") {
+        random_seed = parse_uint(v.as_str(), "Argument to 's' option must be an integer >= 0")?
+    }
     
     if matches.opt_present("l") {
         if ! matches.opt_present("r")
@@ -115,7 +122,8 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
         output_filename: output_filename,
         hit_filename: hit_filename,
         geom_filenames: matches.free.clone(),
-        looping: looping
+        looping: looping,
+        random_seed: random_seed
     })
 }
 
@@ -198,13 +206,13 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
     let mut hit_writer = get_hit_writer(&params.hit_filename)?;
     write!(hit_writer, "event_type,segment_index,segment_name,x,y\n")?;
 
-    let starting_rays = beams_to_rays(&geom.beams);
+    let mut starting_rays = beams_to_rays(&geom.beams);
 
     let mut qtree: g::QTree<t::RayTraceSegmentInfo> = g::QTree::make_empty_qtree();
     qtree.insert_segments(&geom.segments, |i| i);
 
     let tracing_props = t::TracingProperties {
-        random_seed: [1],
+        random_seed: [params.random_seed],
         intensity_threshold: 0.01
     };
 
@@ -217,6 +225,10 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
         right_material_properties: &geom.right_material_properties
     };
     let mut st = t::RayTraceState::initial(&rt_init);
+
+    // Shuffle starting rays so that different threads get a roughly equally
+    // "persistent" set of rays.
+    st.get_rng().shuffle(starting_rays.as_mut_slice());
 
     let mut rayb = t::RayBuffer {
         old_rays: &mut starting_rays.clone(),

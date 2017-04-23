@@ -96,6 +96,10 @@ impl<'a> RayTraceState<'a> {
             rng: SeedableRng::from_seed(&(args.tracing_properties.random_seed)[..])
         }
     }
+
+    pub fn get_rng(&mut self) -> &mut StdRng {
+        &mut self.rng
+    }
 }
 
 struct TraceRayArgs<'a> {
