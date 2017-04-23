@@ -81,6 +81,12 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
     let mut output_filename: Option<String> = None;
     let mut hit_filename: Option<String> = None;
 
+    fn parse_uint(v: &str, err: &str) -> Result<usize, CommandLineError> {
+        v.parse::<usize>().map_err(|_| {
+            CommandLineError::Custom(err.to_string())
+        })
+    }
+
     //
     // The 'getopts' library is a bit clunky. There is no way to insist that a flag option must
     // have an argument. So after detecting than a flag is present, we must then check whether
@@ -90,13 +96,13 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
     if matches.opt_present("d") {
         match matches.opt_str("d") {
             None => { return Err(CommandLineError::Custom("'d' option must be given an argument".to_string())) },
-            Some(v) => { max_depth = v.parse::<usize>()? }
+            Some(v) => { max_depth = parse_uint(v.as_str(), "Argument to 'd' option must be an integer >= 0")? }
         }
     }
     if matches.opt_present("r") {
         match matches.opt_str("r") {
             None => { return Err(CommandLineError::Custom("'r' option must be given an argument".to_string())) },
-            Some(v) => { max_rays = v.parse::<usize>()? }
+            Some(v) => { max_rays = parse_uint(v.as_str(), "Argument to 'r' option must be an integer >= 0")? }
         }
     }
     if matches.opt_present("o") {
@@ -143,9 +149,9 @@ fn beams_to_rays(beams: &Vec<gi::Beam>) -> Vec<(g::Ray, t::LightProperties)> {
     rays
 }
 
-fn output_svg(svg: &simplesvg::Svg, outname: Option<&str>) -> Result<(), Box<error::Error>> {
-    match outname {
-        Some(name) => {
+fn output_svg(svg: &simplesvg::Svg, outname: &Option<String>) -> Result<(), Box<error::Error>> {
+    match *outname {
+        Some(ref name) => {
             let f = File::create(name)?;
             let mut f = BufWriter::new(f);
             f.write_all(svg.to_string().as_bytes())
@@ -262,5 +268,5 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
     }
 
     let svg = simplesvg::Svg(figs, WIDTH, (count*HEIGHT));
-    output_svg(&svg, params.output_filename.as_ref().map(|x| x.as_str()))
+    output_svg(&svg, &params.output_filename)
 }
