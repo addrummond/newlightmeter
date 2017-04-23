@@ -108,6 +108,9 @@ fn entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
             if ident == "line" {
                 r = line_entry(st);
             }
+            else if ident == "rect" {
+                r = rect_entry(st);
+            }
             else if ident == "arc" {
                 r = arc_entry(st, false);
             }
@@ -177,7 +180,9 @@ fn optional_name(st: &mut p::ParseState) -> p::ParseResult<Option<String>> {
     }
 }
 
-fn line_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
+// Lines and rects both have same number of points, so the only thing different
+// is the value we construct at the end.
+fn two_point_entry(st: &mut p::ParseState) -> p::ParseResult<(String, String, Option<String>, [g::Scalar; 4])> {
     let (i1, i2) = material_pair(st)?;
     let mut coords: [g::Scalar; 4] = [0.0; 4];
 
@@ -190,11 +195,43 @@ fn line_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
     my_skip_space(st)?;
     let name = optional_name(st)?;
 
+    Ok((i1, i2, name, coords))
+}
+
+fn line_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
+    let (i1, i2, name, coords) = two_point_entry(st)?;
+
     Ok(vec![make_segment_entry(
         coords[0], coords[1], coords[2], coords[3],
         name,
         i1, i2
     )])
+}
+
+fn rect_entry(st: &mut p::ParseState) -> p::ParseResult<Vec<Entry>> {
+    let (i1, i2, name, coords) = two_point_entry(st)?;
+    Ok(vec![
+        make_segment_entry(
+            coords[0], coords[1], coords[2], coords[1], // Top left to top right
+            name.clone().map(|n| format!("{}_1", n)),
+            i1.clone(), i2.clone()
+        ),
+        make_segment_entry(
+            coords[2], coords[1], coords[2], coords[3], // Top right to bottom right
+            name.clone().map(|n| format!("{}_2", n)),
+            i1.clone(), i2.clone()
+        ),
+        make_segment_entry(
+            coords[2], coords[3], coords[0], coords[3], // Bottom right to bottom left
+            name.clone().map(|n| format!("{}_3", n)),
+            i1.clone(), i2.clone()
+        ),
+        make_segment_entry(
+            coords[0], coords[3], coords[0], coords[1], // Bottom left to top left
+            name.map(|n| format!("{}_4", n)),
+            i1, i2
+        )
+    ])
 }
 
 fn arc_entry(st: &mut p::ParseState, is_circle: bool) -> p::ParseResult<Vec<Entry>> {
