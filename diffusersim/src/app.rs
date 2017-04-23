@@ -17,7 +17,8 @@ const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 
 pub struct RunParams {
-    pub max_depth: usize,
+    pub max_depth: usize,                // 0 if no maximum
+    pub max_rays: usize,                 // 0 if no maximum
     pub output_filename: Option<String>, // stdout if not specified
     pub hit_filename: Option<String>,    // hits not written if not specified
     pub geom_filenames: Vec<String>      // stdin if empty
@@ -69,12 +70,14 @@ impl fmt::Display for CommandLineError {
 
 pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineError> {
     let mut opts = Options::new();
-    opts.optopt("o", "", "set svg file output name", "NAME");
-    opts.optopt("h", "", "set hit file output name", "NAME");
+    opts.optopt("o", "output", "set svg file output name", "NAME");
+    opts.optopt("h", "hitfile", "set hit file output name", "NAME");
     opts.optopt("d", "maxdepth", "set the maximum recursion depth for tracing", "DEPTH");
+    opts.optopt("r", "maxrays", "set the maximum number of rays to trace", "N");
     let matches = opts.parse(&args[1..])?;
 
     let mut max_depth = 0;
+    let mut max_rays = 0;
     let mut output_filename: Option<String> = None;
     let mut hit_filename: Option<String> = None;
 
@@ -88,6 +91,12 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
         match matches.opt_str("d") {
             None => { return Err(CommandLineError::Custom("'d' option must be given an argument".to_string())) },
             Some(v) => { max_depth = v.parse::<usize>()? }
+        }
+    }
+    if matches.opt_present("r") {
+        match matches.opt_str("r") {
+            None => { return Err(CommandLineError::Custom("'r' option must be given an argument".to_string())) },
+            Some(v) => { max_rays = v.parse::<usize>()? }
         }
     }
     if matches.opt_present("o") {
@@ -105,6 +114,7 @@ pub fn parse_command_line(args: &Vec<String>) -> Result<RunParams, CommandLineEr
 
     Ok(RunParams {
         max_depth: max_depth,
+        max_rays: max_rays,
         output_filename: output_filename,
         hit_filename: hit_filename,
         geom_filenames: matches.free.clone()
@@ -207,9 +217,7 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
         segment_names: &geom.segment_names,
         materials: &geom.materials,
         left_material_properties: &geom.left_material_properties,
-        right_material_properties: &geom.right_material_properties,
-        recursion_limit: 16,
-        ray_limit: 0
+        right_material_properties: &geom.right_material_properties
     };
     let mut st = t::RayTraceState::initial(&rt_init);
 
@@ -237,7 +245,7 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
         figs.push(render::render_segments(&geom.segments, &t, [0.0, 1.0, 0.0]));
         figs.push(render::render_rays(rayb.get_rays(), &t, [1.0, 0.0, 0.0]));
         count += 1;
-        let finished = t::ray_trace_step(&mut st, &mut rayb, |e: &t::Event| -> Result<(),Box<error::Error>> { 
+        let result = t::ray_trace_step(&mut st, &mut rayb, |e: &t::Event| -> Result<(),Box<error::Error>> { 
             match *e {
                 t::Event::Hit { ref segment_index, ref segment_name, ref point } => {
                     write!(hit_writer, "ray_hit_segment,{},{},{},{}\n", segment_index, segment_name, point.coords[0], point.coords[1])?;
@@ -245,7 +253,11 @@ pub fn do_run(params: &RunParams) -> Result<(), Box<error::Error>> {
                 }
             }
         })?;
-        if finished
+
+        // Is it time to stop tracing?
+        if rayb.get_n_rays() == 0
+            { break; }
+        if params.max_depth != 0 && result.recursion_level >= params.max_depth
             { break; }
     }
 

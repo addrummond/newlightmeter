@@ -1,6 +1,7 @@
 use std::f64::consts;
 use rand::{Rng, SeedableRng, StdRng};
 use std::mem;
+use std::cmp;
 use std::collections::HashMap;
 
 use geom::{Ray,Scalar,Point2,Vector2};
@@ -61,8 +62,12 @@ pub struct RayBuffer<'a> {
 
 impl<'a> RayBuffer<'a> {
     pub fn get_rays(&'a self) -> &'a Vec<(Ray, LightProperties)> {
-        assert!(self.old_rays.len() == 0 || self.new_rays.len() == 0);
+        debug_assert!(self.old_rays.len() == 0 || self.new_rays.len() == 0);
         if self.old_rays.len() == 0 { self.new_rays } else { self.old_rays }
+    }
+
+    pub fn get_n_rays(&'a self) -> usize {
+        cmp::max(self.old_rays.len(), self.new_rays.len())
     }
 }
 
@@ -72,9 +77,7 @@ pub struct RayTraceInitArgs<'a> {
     pub segment_names: &'a HashMap<usize, String>,
     pub materials: &'a Vec<MaterialProperties>,
     pub left_material_properties: &'a Vec<u8>,
-    pub right_material_properties: &'a Vec<u8>,
-    pub recursion_limit: usize,
-    pub ray_limit: usize
+    pub right_material_properties: &'a Vec<u8>
 }
 
 pub struct RayTraceState<'a> {
@@ -271,9 +274,9 @@ fn add_refraction(
 )
 -> usize
 {
-    assert!(side != 0);
-    assert!(from_matprops.cauchy_coeffs.len() > 0);
-    assert!(into_matprops.cauchy_coeffs.len() > 0);
+    debug_assert!(side != 0);
+    debug_assert!(from_matprops.cauchy_coeffs.len() > 0);
+    debug_assert!(into_matprops.cauchy_coeffs.len() > 0);
 
     let mut num_new_rays = 0;
 
@@ -300,7 +303,7 @@ fn add_refraction(
         let rayline = rayline.normalize();
         let n_1 = -nsn;
         let c = nalgebra::dot(&n_1, &rayline);  
-        assert!(c >= 0.0);
+        debug_assert!(c >= 0.0);
 
         let vrefract =
             (ri * rayline) +
@@ -321,15 +324,14 @@ fn add_refraction(
     num_new_rays
 }
 
-pub fn ray_trace_step<F,E>(st: &mut RayTraceState, rayb: &mut RayBuffer, mut handle_event: F)
--> Result<bool, E>
-where F: EventHandler<E> {
-    if (st.args.ray_limit != 0 && st.ray_count >= st.args.ray_limit) ||
-       (st.args.recursion_limit != 0 && st.recursion_level >= st.args.recursion_limit) ||
-       (rayb.old_rays.len() == 0) {
-        return Ok(true);
-    }
+pub struct TraceStepResult {
+    pub ray_count: usize,
+    pub recursion_level: usize
+}
 
+pub fn ray_trace_step<F,E>(st: &mut RayTraceState, rayb: &mut RayBuffer, mut handle_event: F)
+-> Result<TraceStepResult, E>
+where F: EventHandler<E> {
     for &(ref ray, ref ray_props) in rayb.old_rays.iter() {
         let n_new_rays = trace_ray(
             st,
@@ -346,5 +348,8 @@ where F: EventHandler<E> {
     mem::swap(&mut (rayb.old_rays), &mut (rayb.new_rays));
     st.recursion_level += 1;
 
-    Ok(false)
+    Ok(TraceStepResult {
+        recursion_level: st.recursion_level,
+        ray_count: st.ray_count
+    })
 }
