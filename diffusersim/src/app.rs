@@ -24,11 +24,11 @@ const HEIGHT: u32 = 480;
 
 #[derive(Clone)]
 pub struct RunParams {
-    pub max_depth: usize,                // 0 if no maximum
-    pub max_rays: usize,                 // 0 if no maximum
-    pub svg_filename: Option<String>,    // not written if not specified
-    pub hit_filename: Option<String>,    // stdout if not specified
-    pub geom_filenames: Vec<String>,     // stdin if empty
+    pub max_depth: usize,              // 0 if no maximum
+    pub max_rays: usize,               // 0 if no maximum
+    pub svg_filename: Option<String>,  // not written if not specified
+    pub hit_filename: Option<String>,  // stdout if not specified
+    pub geom_filenames: Vec<String>,   // stdin if empty
     pub random_seed: usize,
     pub n_threads: usize
 }
