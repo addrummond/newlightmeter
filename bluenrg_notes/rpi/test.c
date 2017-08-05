@@ -382,8 +382,8 @@ int main()
     const uint8_t ucv_service_handle[] = { service_handle & 0xFF, service_handle >> 8 };
     const uint8_t ucv_char_handle[] = { dev_name_char_handle & 0xFF, dev_name_char_handle >> 8 };
     const uint8_t ucv_val_offset[] = { 0 };
-    const uint8_t ucv_char_value_length[] = { 0x10 };
-    const uint8_t ucv_char_value[] = "Vaquita porpoise";
+    const uint8_t ucv_char_value_length[] = { 25 };
+    const uint8_t ucv_char_value[] = "Alex's BlueNRG test board";
     const Param ucv_params[] = {
         { 2,  ucv_service_handle },
         { 2,  ucv_char_handle },
