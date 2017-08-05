@@ -11,6 +11,9 @@
 #define NORMAL_LOOP_COUNT_TIMEOUT     100000
 #define READ_LOOP_MAX_COUNTS_PER_BYTE 10
 
+#define RESET_PIN 1
+#define IRQ_PIN   0
+
 static const uint8_t SERVER_BDADDR[] = {0x12, 0x34, 0x00, 0xE1, 0x80, 0x02};
 
 typedef struct Param {
@@ -41,7 +44,7 @@ int poll_read_write(unsigned *read, unsigned *write)
 
 void wait_for_irq()
 {
-    while (! digitalRead(0))
+    while (! digitalRead(IRQ_PIN))
         ;
 }
 
@@ -56,7 +59,7 @@ int wait_for_irq_with_timeout()
     long t1n = ts.tv_nsec;
 
     for (unsigned i = 0; i < NORMAL_LOOP_COUNT_TIMEOUT; ++i) {
-        if (digitalRead(0))
+        if (digitalRead(IRQ_PIN))
             return 1;
         
         if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
@@ -72,7 +75,7 @@ int wait_for_irq_with_timeout()
 
 int irq_is_high()
 {
-    return digitalRead(0);
+    return digitalRead(IRQ_PIN);
 }
 
 int wait_to_write_n(unsigned n)
@@ -259,13 +262,13 @@ int main()
     printf("Starting...\n");
 
     wiringPiSetup();
-    pinMode(0, INPUT);
+    pinMode(IRQ_PIN, INPUT);
     pullUpDnControl(1, PUD_OFF);
-    pinMode(1, OUTPUT);
+    pinMode(RESET_PIN, OUTPUT);
 
-    digitalWrite(1, 0);
+    digitalWrite(RESET_PIN, 0);
     delay(10);
-    digitalWrite(1, 1);
+    digitalWrite(RESET_PIN, 1);
 
     wait_for_irq();
 
