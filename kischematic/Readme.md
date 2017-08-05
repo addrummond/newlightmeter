@@ -1,3 +1,9 @@
+PChan MOSFET http://www.mouser.co.uk/ProductDetail/ROHM-Semiconductor/RZM001P02T2L/?qs=sGAEpiMZZMshyDBzk1%2fWi5brl1xcCtmLC2Mq%252brqhxE4aWyoIiu38IQ%3d%3d
+NChan http://www.mouser.co.uk/ProductDetail/ROHM-Semiconductor/RE1C002UNTCL/?qs=sGAEpiMZZMshyDBzk1%2fWi5brl1xcCtmLX9T5kEFqBHnWEMk%2fgV3G4w%3d%3d
+
+Low freq crystal: NX3215SA
+High (16MHz) freq crystal: NX3225SA
+
 USB-C connector protrusion above top layer: 0.475
 USB-C connector protrusion above bottom layer: 2.265
 USB-C total height: 3.34
@@ -14,8 +20,9 @@ Antenna height: 1.07
 Dual MOSFET height: 0.9
 EZMate thing: 1.4
 Screen: 1.45
+Zif connector height: 2
 Low freq crystal: 0.9
-High freq crystal: 0.85
+High freq crystal: 0.55
 
 Newest pair of crystals (available on Mouser):
 http://www.mouser.co.uk/Search/ProductDetail.aspx?R=ECS-.327-12.5-34B-TRvirtualkey59070000virtualkey520-327-12.5-34B
