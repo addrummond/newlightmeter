@@ -21,6 +21,8 @@ typedef struct Param {
     const uint8_t *data;
 } Param;
 
+// Find out how many bytes can be read/written to/from the BlueNRG
+// at the moment.
 int poll_read_write(unsigned *read, unsigned *write)
 {
     uint8_t buf[5];
@@ -78,6 +80,7 @@ int irq_is_high()
     return digitalRead(IRQ_PIN);
 }
 
+// Wait until the BlueNRG is ready to receive at least n bytes.
 int wait_to_write_n(unsigned n)
 {
     unsigned write = 0;
