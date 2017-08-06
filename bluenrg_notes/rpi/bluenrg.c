@@ -154,10 +154,10 @@ static int send_command(unsigned command, const Param params[], unsigned n_param
     buf[7] = command >> 8;
     buf[8] = parm_total_length;
 
-    printf("WRITING: ");
-    for (unsigned i = 0; i < buflen; ++i)
-        printf("%02x ", buf[i]);
-    printf("\n");
+    //printf("WRITING: ");
+    //for (unsigned i = 0; i < buflen; ++i)
+    //    printf("%02x ", buf[i]);
+    //printf("\n");
 
     r = wiringPiSPIDataRW(0, buf, buflen);
     if (r < 0)
