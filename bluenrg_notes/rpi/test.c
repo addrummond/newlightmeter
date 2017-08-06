@@ -99,6 +99,9 @@ int main()
     return 0;
 }
 
+//
+// Below: Some code that turned out not to be necessary to make the device discoverable.
+//
 
     // p. 1061
     // Set_advertising_parameters
