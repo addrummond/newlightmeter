@@ -7,8 +7,8 @@
 #include <time.h>
 #include <assert.h>
 
-static const unsigned NORMAL_TIMEOUT_NS = 1000000;
-static const unsigned NORMAL_LOOP_COUNT_TIMEOUT = 100000;
+static const unsigned NORMAL_TIMEOUT_NS = 100000;
+static const unsigned NORMAL_LOOP_COUNT_TIMEOUT = 10000;
 static const unsigned READ_LOOP_MAX_COUNTS_PER_BYTE = 10;
 
 static const unsigned RESET_PIN = 1;
@@ -459,7 +459,7 @@ int bluenrg_gatt_add_serv(uint8_t uuid_type, const uint8_t *uuid, uint8_t servic
 
 int bluenrg_gatt_add_char(const bluenrg_gatt_add_char_args *args, uint16_t *char_handle)
 {
-    printf("Adding a service characteristic...");
+    printf("Adding a service characteristic...\n");
 
     const uint8_t gac_service_handle[] = { args->service_handle & 0xFF, args->service_handle >> 8 };
     const uint8_t gac_char_value_length[] = { args->char_value_length & 0xFF, args->char_value_length >> 8 };
