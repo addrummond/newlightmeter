@@ -1,4 +1,5 @@
 EESchema Schematic File Version 2
+LIBS:kischematic-rescue
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -490,7 +491,7 @@ $EndComp
 Text GLabel 7650 2350 0    60   Input ~ 0
 ANT
 $Comp
-L CONN_01X01 P1
+L Conn_01x01 P1
 U 1 1 584C7E04
 P 900 950
 F 0 "P1" H 819 725 50  0000 C CNN
@@ -501,7 +502,7 @@ F 3 "" H 900 950 50  0000 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L CONN_01X01 P2
+L Conn_01x01 P2
 U 1 1 584C869F
 P 900 1300
 F 0 "P2" H 819 1075 50  0000 C CNN
@@ -512,7 +513,7 @@ F 3 "" H 900 1300 50  0000 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L CONN_01X01 P3
+L Conn_01x01 P3
 U 1 1 584C8723
 P 900 1650
 F 0 "P3" H 819 1425 50  0000 C CNN
@@ -523,7 +524,7 @@ F 3 "" H 900 1650 50  0000 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L CONN_01X01 P4
+L Conn_01x01 P4
 U 1 1 584C8858
 P 900 2000
 F 0 "P4" H 819 1775 50  0000 C CNN
@@ -542,7 +543,7 @@ SPI_MISO
 Text GLabel 1350 2000 2    60   Input ~ 0
 SPI_MOSI
 $Comp
-L CONN_01X01 P5
+L Conn_01x01 P5
 U 1 1 584CA50F
 P 900 2350
 F 0 "P5" H 819 2125 50  0000 C CNN
@@ -557,7 +558,7 @@ BNRG_SPI_CS
 Text GLabel 2750 3550 0    60   Input ~ 0
 BNRG_SPI_IRQ
 $Comp
-L CONN_01X01 P6
+L Conn_01x01 P6
 U 1 1 584CF18F
 P 900 2650
 F 0 "P6" H 819 2425 50  0000 C CNN
@@ -570,7 +571,7 @@ $EndComp
 Text GLabel 1350 2650 2    60   Input ~ 0
 BNRG_SPI_IRQ
 $Comp
-L CONN_01X01 P7
+L Conn_01x01 P7
 U 1 1 584CF44B
 P 900 3150
 F 0 "P7" H 819 2925 50  0000 C CNN
@@ -2055,7 +2056,7 @@ F 3 "" H 11650 9200 50  0000 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L CONN_01X01 P8
+L Conn_01x01 P8
 U 1 1 589F9501
 P 900 2900
 F 0 "P8" H 819 2675 50  0000 C CNN
